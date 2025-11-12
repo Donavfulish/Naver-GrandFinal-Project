@@ -1,10 +1,3 @@
-// This is your Prisma schema file for the Naver Spaces platform
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// ==========================================
-// CONFIGURATION
-// ==========================================
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,76 +7,75 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ==========================================
-// USER DOMAIN
-// ==========================================
-
 model User {
   id            String   @id @default(uuid())
   name          String
   email         String   @unique
   password_hash String
+  avatar_url    String?
+  is_deleted    Boolean  @default(false)
   created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 
   spaces    Space[]
-  playlists Playlist[]
+  ForkSpace ForkSpace[]
 
   @@map("users")
 }
 
-// ==========================================
-// SPACE DOMAIN
-// ==========================================
-
 model Space {
-  id                String   @id @default(uuid())
-  user_id           String
-  name              String
-  background_gif_id String? // URL or asset ID
-  clock_id          String?
-  created_at        DateTime @default(now())
+  id             String   @id @default(uuid())
+  user_id        String
+  description    String
+  background_id  String?
+  clock_font_id  String?
+  text_font_name String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
-  user             User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  clock            Clock?           @relation(fields: [clock_id], references: [id], onDelete: SetNull)
+  user             User             @relation(fields: [user_id], references: [id])
+  clock            ClockFont?       @relation(fields: [clock_font_id], references: [id])
+  text             TextFont?        @relation(fields: [text_font_name], references: [id])
+  background       Background?      @relation(fields: [background_id], references: [id])
   widget_positions WidgetPosition[]
-  space_playlists  SpacePlaylist[]
+  playlists        Playlist[]
   space_tags       SpaceTag[]
+  ForkSpace        ForkSpace[]      @relation("OriginalSpace")
 
   @@index([user_id])
   @@map("spaces")
 }
 
-// ==========================================
-// PLAYLIST DOMAIN
-// ==========================================
+model Background {
+  id             String   @id @default(uuid())
+  background_url String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
-model Playlist {
-  id                  String   @id @default(uuid())
-  user_id             String
-  name                String
-  spotify_playlist_id String? // For imported Spotify playlists
-  created_at          DateTime @default(now())
+  spaces Space[]
 
-  user            User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  playlist_tracks PlaylistTrack[]
-  space_playlists SpacePlaylist[]
-
-  @@index([user_id])
-  @@map("playlists")
+  @@map("backgrounds")
 }
 
-// ==========================================
-// TRACK DOMAIN
-// ==========================================
+model Playlist {
+  id         String   @id @default(uuid())
+  space_id   String
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  space           Space           @relation(fields: [space_id], references: [id])
+  playlist_tracks PlaylistTrack[]
+
+  @@index([space_id])
+  @@map("playlists")
+}
 
 model Track {
   id               String   @id @default(uuid())
   spotify_track_id String   @unique
-  title            String
-  artist           String
-  album_art_url    String?
-  duration         Int // Duration in seconds
   created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
 
   playlist_tracks PlaylistTrack[]
 
@@ -91,95 +83,95 @@ model Track {
   @@map("tracks")
 }
 
-// ==========================================
-// TAG DOMAIN
-// ==========================================
-
 model Tag {
   id         String   @id @default(uuid())
-  name       String   @unique // e.g., "Happy", "Productive", "Cozy"
+  name       String   @unique
   created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   space_tags SpaceTag[]
 
   @@map("tags")
 }
 
-// ==========================================
-// CLOCK DOMAIN
-// ==========================================
-
-model Clock {
-  id              String   @id @default(uuid())
-  name            String
-  shape           String // e.g., "analog", "digital", "minimalist"
-  default_font_id String? // Font identifier
-  preview_image   String? // URL to preview image
-  created_at      DateTime @default(now())
+model ClockFont {
+  id         String   @id @default(uuid())
+  font_name  String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   spaces Space[]
 
   @@map("clocks")
 }
 
-// ==========================================
-// WIDGET DOMAIN
-// ==========================================
+model TextFont {
+  id         String   @id @default(uuid())
+  font_name  String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  spaces Space[]
+
+  @@map("fonts")
+}
 
 model WidgetPosition {
-  id          String   @id @default(uuid())
-  space_id    String
-  widget_name String // e.g., "clock", "music-player"
-  position_x  Float // X coordinate (pixels or percentage)
-  position_y  Float // Y coordinate (pixels or percentage)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  id         String   @id @default(uuid())
+  space_id   String
+  widget_id  String
+  position   Json
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  space Space @relation(fields: [space_id], references: [id], onDelete: Cascade)
+  space Space @relation(fields: [space_id], references: [id])
 
-  @@unique([space_id, widget_name]) // Each widget appears once per space
   @@index([space_id])
   @@map("widget_positions")
 }
 
-// ==========================================
-// JUNCTION TABLES (Many-to-Many Relationships)
-// ==========================================
-
-model SpacePlaylist {
-  space_id    String
-  playlist_id String
-  created_at  DateTime @default(now())
-
-  space    Space    @relation(fields: [space_id], references: [id], onDelete: Cascade)
-  playlist Playlist @relation(fields: [playlist_id], references: [id], onDelete: Cascade)
-
-  @@id([space_id, playlist_id])
-  @@map("space_playlists")
-}
-
 model PlaylistTrack {
+  id          String   @id @default(uuid())
   playlist_id String
   track_id    String
   track_order Int // Order of track in playlist (1-based)
+  is_deleted  Boolean  @default(false)
   created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
-  playlist Playlist @relation(fields: [playlist_id], references: [id], onDelete: Cascade)
-  track    Track    @relation(fields: [track_id], references: [id], onDelete: Cascade)
+  playlist Playlist @relation(fields: [playlist_id], references: [id])
+  track    Track    @relation(fields: [track_id], references: [id])
 
-  @@id([playlist_id, track_id])
   @@index([playlist_id, track_order])
   @@map("playlist_tracks")
 }
 
 model SpaceTag {
+  id         String   @id @default(uuid())
   space_id   String
   tag_id     String
+  is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  space Space @relation(fields: [space_id], references: [id], onDelete: Cascade)
-  tag   Tag   @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+  space Space @relation(fields: [space_id], references: [id])
+  tag   Tag   @relation(fields: [tag_id], references: [id])
 
-  @@id([space_id, tag_id])
+  @@index([tag_id])
   @@map("space_tags")
+}
+
+model ForkSpace {
+  id                String   @id @default(uuid())
+  user_id           String
+  original_space_id String
+  is_deleted        Boolean  @default(false)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  user           User  @relation(fields: [user_id], references: [id])
+  original_space Space @relation("OriginalSpace", fields: [original_space_id], references: [id])
+
+  @@index([original_space_id])
+  @@map("fork_spaces")
 }

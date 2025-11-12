@@ -1,58 +1,72 @@
-import express from "express"
-import cors from "cors"
-import prisma, { disconnectPrisma } from "./src/db/prisma.js"
+import 'dotenv/config';
+import { PORT, NODE_ENV } from './src/config/env.js';
+import prisma from './src/config/prisma.js';
+import logger from './src/config/logger.js';
+import app from './src/app.js';
+import { fileURLToPath } from 'url';
 
-const app = express();
-const PORT = 8080;
+const start = async () => {
+  try {
+    // ===== Start server =====
+    const port = Number(PORT) || 3000;
+    const server = app.listen(port, '0.0.0.0', () => {
+      logger.info('='.repeat(50));
+      logger.info(`✅ Server started successfully`);
+      logger.info(`Environment: ${NODE_ENV}`);
+      logger.info(`Port: ${port}`);
+      logger.info('='.repeat(50));
+    });
 
-app.use(cors());
-app.use(express.json());
+    // ===== Graceful Shutdown =====
+    const shutdown = async (signal) => {
+      logger.warn(`⚠️  Received ${signal}. Shutting down gracefully...`);
 
-// Health check endpoint
-app.get("/", (req, res) => {
-    res.json({
-        success: true,
-        message: 'connection success'
-    })
-})
+      server.close(async (err) => {
+        if (err) {
+          logger.error('Error closing server:', err);
+          process.exit(1);
+        }
 
-// Database health check endpoint
-app.get("/api/health", async (req, res) => {
-    try {
-        await prisma.$queryRaw`SELECT 1`;
-        res.json({
-            success: true,
-            message: 'Database connection healthy',
-            database: 'connected'
-        })
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Database connection failed',
-            error: error.message
-        })
-    }
-})
+        try {
+          await prisma.$disconnect();
+          logger.info('Prisma disconnected');
+        } catch (e) {
+          logger.warn('Error disconnecting Prisma:', e);
+        }
 
-const server = app.listen(PORT, () => {
-    console.log(`Server is running on PORT ${PORT}`)
-})
+        logger.info('✅ Shutdown complete');
+        process.exit(0);
+      });
 
-// Graceful shutdown handling
-process.on('SIGTERM', async () => {
-    console.log('SIGTERM signal received: closing HTTP server')
-    server.close(async () => {
-        console.log('HTTP server closed')
-        await disconnectPrisma()
-        process.exit(0)
-    })
-})
+      // Force exit sau 10s nếu chưa tắt xong
+      setTimeout(() => {
+        logger.warn('⏰ Forced shutdown (timeout)');
+        process.exit(1);
+      }, 10000).unref();
+    };
 
-process.on('SIGINT', async () => {
-    console.log('SIGINT signal received: closing HTTP server')
-    server.close(async () => {
-        console.log('HTTP server closed')
-        await disconnectPrisma()
-        process.exit(0)
-    })
-})
+    // ===== Signal Handlers =====
+    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('uncaughtException', (err) => {
+      logger.error('Uncaught Exception:', err);
+      shutdown('uncaughtException');
+    });
+    process.on('unhandledRejection', (reason) => {
+      logger.error('Unhandled Rejection:', reason);
+      shutdown('unhandledRejection');
+    });
+
+    return server;
+  } catch (err) {
+    logger.error('❌ Failed to start server:', err);
+    process.exit(1);
+  }
+};
+
+// ===== Run immediately if called directly =====
+if (import.meta.url === `file://${fileURLToPath(import.meta.url)}`) {
+  start();
+}
+
+export { start };
