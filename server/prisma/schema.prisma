@@ -1,0 +1,185 @@
+// This is your Prisma schema file for the Naver Spaces platform
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// ==========================================
+// CONFIGURATION
+// ==========================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// USER DOMAIN
+// ==========================================
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  password_hash String
+  created_at    DateTime @default(now())
+
+  spaces    Space[]
+  playlists Playlist[]
+
+  @@map("users")
+}
+
+// ==========================================
+// SPACE DOMAIN
+// ==========================================
+
+model Space {
+  id                String   @id @default(uuid())
+  user_id           String
+  name              String
+  background_gif_id String? // URL or asset ID
+  clock_id          String?
+  created_at        DateTime @default(now())
+
+  user             User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  clock            Clock?           @relation(fields: [clock_id], references: [id], onDelete: SetNull)
+  widget_positions WidgetPosition[]
+  space_playlists  SpacePlaylist[]
+  space_tags       SpaceTag[]
+
+  @@index([user_id])
+  @@map("spaces")
+}
+
+// ==========================================
+// PLAYLIST DOMAIN
+// ==========================================
+
+model Playlist {
+  id                  String   @id @default(uuid())
+  user_id             String
+  name                String
+  spotify_playlist_id String? // For imported Spotify playlists
+  created_at          DateTime @default(now())
+
+  user            User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  playlist_tracks PlaylistTrack[]
+  space_playlists SpacePlaylist[]
+
+  @@index([user_id])
+  @@map("playlists")
+}
+
+// ==========================================
+// TRACK DOMAIN
+// ==========================================
+
+model Track {
+  id               String   @id @default(uuid())
+  spotify_track_id String   @unique
+  title            String
+  artist           String
+  album_art_url    String?
+  duration         Int // Duration in seconds
+  created_at       DateTime @default(now())
+
+  playlist_tracks PlaylistTrack[]
+
+  @@index([spotify_track_id])
+  @@map("tracks")
+}
+
+// ==========================================
+// TAG DOMAIN
+// ==========================================
+
+model Tag {
+  id         String   @id @default(uuid())
+  name       String   @unique // e.g., "Happy", "Productive", "Cozy"
+  created_at DateTime @default(now())
+
+  space_tags SpaceTag[]
+
+  @@map("tags")
+}
+
+// ==========================================
+// CLOCK DOMAIN
+// ==========================================
+
+model Clock {
+  id              String   @id @default(uuid())
+  name            String
+  shape           String // e.g., "analog", "digital", "minimalist"
+  default_font_id String? // Font identifier
+  preview_image   String? // URL to preview image
+  created_at      DateTime @default(now())
+
+  spaces Space[]
+
+  @@map("clocks")
+}
+
+// ==========================================
+// WIDGET DOMAIN
+// ==========================================
+
+model WidgetPosition {
+  id          String   @id @default(uuid())
+  space_id    String
+  widget_name String // e.g., "clock", "music-player"
+  position_x  Float // X coordinate (pixels or percentage)
+  position_y  Float // Y coordinate (pixels or percentage)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  space Space @relation(fields: [space_id], references: [id], onDelete: Cascade)
+
+  @@unique([space_id, widget_name]) // Each widget appears once per space
+  @@index([space_id])
+  @@map("widget_positions")
+}
+
+// ==========================================
+// JUNCTION TABLES (Many-to-Many Relationships)
+// ==========================================
+
+model SpacePlaylist {
+  space_id    String
+  playlist_id String
+  created_at  DateTime @default(now())
+
+  space    Space    @relation(fields: [space_id], references: [id], onDelete: Cascade)
+  playlist Playlist @relation(fields: [playlist_id], references: [id], onDelete: Cascade)
+
+  @@id([space_id, playlist_id])
+  @@map("space_playlists")
+}
+
+model PlaylistTrack {
+  playlist_id String
+  track_id    String
+  track_order Int // Order of track in playlist (1-based)
+  created_at  DateTime @default(now())
+
+  playlist Playlist @relation(fields: [playlist_id], references: [id], onDelete: Cascade)
+  track    Track    @relation(fields: [track_id], references: [id], onDelete: Cascade)
+
+  @@id([playlist_id, track_id])
+  @@index([playlist_id, track_order])
+  @@map("playlist_tracks")
+}
+
+model SpaceTag {
+  space_id   String
+  tag_id     String
+  created_at DateTime @default(now())
+
+  space Space @relation(fields: [space_id], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@id([space_id, tag_id])
+  @@map("space_tags")
+}
