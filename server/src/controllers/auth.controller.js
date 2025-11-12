@@ -52,10 +52,6 @@ const authController = {
 
   // DELETE /api/auth/:id/logout - Logout user (placeholder)
   logout: asyncHandler(async (req, res) => {
-    const { id } = req.params;
-
-    // TODO: Implement logout logic (clear session, invalidate token, etc.)
-
     res.status(200).json({
       success: true,
       data: { message: 'Logged out successfully' },

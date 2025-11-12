@@ -18,10 +18,6 @@ const spaceService = {
     return await spaceRepository.findAll(filters);
   },
 
-  async getSpacesByUserId(userId) {
-    return await spaceRepository.findByUserId(userId);
-  },
-
   async updateSpace(id, data) {
     const space = await spaceRepository.findById(id);
     if (!space) {

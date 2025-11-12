@@ -55,10 +55,15 @@ const userService = {
     return userWithoutPassword;
   },
 
-  // Lấy tất cả users
-  async getAllUsers() {
-    return await userRepository.findAll();
-  },
+  // Lấy toàn bộ spaces của user
+    async getSpacesByUserId(userId) {
+        const user = await userRepository.findById(userId);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        return await userRepository.findSpacesByUserId(userId);
+    },
 
   // Cập nhật thông tin user
   async updateUser(id, data) {

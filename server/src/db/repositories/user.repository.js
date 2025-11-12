@@ -62,6 +62,13 @@ const userRepository = {
     });
     return count > 0;
   },
+
+  // Lấy toàn bộ spaces của user
+    async findSpacesByUserId(userId) {
+        return await prisma.space.findMany({
+            where: { user_id: userId },
+        });
+    },
 };
 
 export default userRepository;

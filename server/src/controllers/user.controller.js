@@ -25,6 +25,27 @@ const userController = {
     }
   }),
 
+
+  // GET /api/users/:id/spaces - Get spaces by user ID
+  getSpacesByUserId: asyncHandler(async (req, res) => {
+      const { id } = req.params;
+      try {
+          const spaces = await userService.getSpacesByUserId(id);
+          res.status(200).json({
+              success: true,
+              data: spaces,
+          });
+      } catch (error) {
+          return res.status(500).json({
+              success: false,
+              error: {
+                  code: ErrorCodes.USER_SPACES_FETCH_FAILED,
+                  message: 'Failed to fetch user spaces',
+              },
+          });
+      }
+  }),
+
   // PUT /api/users/:id/name - Update user name
   updateName: asyncHandler(async (req, res) => {
     const { id } = req.params;
@@ -122,6 +143,30 @@ const userController = {
           message: 'Failed to update user avatar',
         },
       });
+    }
+  }),
+
+  // PUT /api/users/:id/password - Update user password
+  updatePassword: asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { password } = req.body;
+
+    try {
+        const user = await userService.updateUser(id, { password });
+        res.status(200).json({
+            success: true,
+            data: user,
+        });
+    } catch (error) {
+        if (error.message === 'User not found') {
+            return res.status(404).json({
+                success: false,
+                error: {
+                    code: ErrorCodes.USER_NOT_FOUND,
+                    message: 'User not found',
+                },
+            });
+        }
     }
   }),
 

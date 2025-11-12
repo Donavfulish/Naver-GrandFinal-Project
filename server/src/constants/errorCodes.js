@@ -18,6 +18,7 @@ const ErrorCodes = {
     USER_NOT_FOUND: 'USER_1101',
     USER_UPDATE_FAILED: 'USER_1102',
     USER_DELETE_FAILED: 'USER_1103',
+    USER_SPACES_FETCH_FAILED: 'USER_1104',
 
     // Space Errors (1200-1299)
     SPACE_NOT_FOUND: 'SPACE_1201',
@@ -74,6 +75,7 @@ const ErrorStatusCodes = {
     [ErrorCodes.USER_NOT_FOUND]: 404,
     [ErrorCodes.AUTH_EMAIL_NOT_FOUND]: 404,
     [ErrorCodes.SPACE_NOT_FOUND]: 404,
+    [ErrorCodes.USER_SPACES_FETCH_FAILED]: 404,
 
     // 409 Conflict
     [ErrorCodes.AUTH_EMAIL_ALREADY_EXISTS]: 409,

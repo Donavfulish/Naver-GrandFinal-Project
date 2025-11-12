@@ -13,6 +13,13 @@ const router = express.Router();
 // GET /api/users/:id - Get user by ID
 router.get("/:id", validate(userIdSchema, 'params'), userController.getById);
 
+// GET /api/users/:id/spaces - Get spaces by user ID
+router.get(
+  "/:id/spaces",
+  validate(userIdSchema, 'params'),
+  userController.getSpacesByUserId
+);
+
 // PUT /api/users/:id/name - Update user name
 router.put(
   "/:id/name",
@@ -36,6 +43,15 @@ router.put(
   validate(updateUserAvatarSchema),
   userController.updateAvatar
 );
+
+// PUT /api/users/:id/password - Update user password
+router.put(
+  "/:id/password",
+  validate(userIdSchema, 'params'),
+  validate(updateUserAvatarSchema),
+  userController.updatePassword
+);
+
 
 // DELETE /api/users/:id - Delete user
 router.delete("/:id", validate(userIdSchema, 'params'), userController.delete);
