@@ -30,6 +30,7 @@ model Space {
   background_id  String?
   clock_font_id  String?
   text_font_name String
+  is_deleted     Boolean  @default(false)
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
@@ -49,8 +50,9 @@ model Space {
 model Background {
   id             String   @id @default(uuid())
   background_url String
+  is_deleted     Boolean  @default(false)
   created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  updated_at     DateTime @default(now())
 
   spaces Space[]
 
@@ -61,8 +63,9 @@ model Playlist {
   id         String   @id @default(uuid())
   space_id   String
   name       String
+  is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at DateTime @default(now())
 
   space           Space           @relation(fields: [space_id], references: [id])
   playlist_tracks PlaylistTrack[]
@@ -74,8 +77,9 @@ model Playlist {
 model Track {
   id               String   @id @default(uuid())
   spotify_track_id String   @unique
+  is_deleted       Boolean  @default(false)
   created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+  updated_at       DateTime @default(now())
 
   playlist_tracks PlaylistTrack[]
 
@@ -86,8 +90,9 @@ model Track {
 model Tag {
   id         String   @id @default(uuid())
   name       String   @unique
+  is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at DateTime @default(now())
 
   space_tags SpaceTag[]
 
@@ -97,8 +102,9 @@ model Tag {
 model ClockFont {
   id         String   @id @default(uuid())
   font_name  String
+  is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at DateTime @default(now())
 
   spaces Space[]
 
@@ -108,8 +114,9 @@ model ClockFont {
 model TextFont {
   id         String   @id @default(uuid())
   font_name  String
+  is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at DateTime @default(now())
 
   spaces Space[]
 
@@ -121,8 +128,9 @@ model WidgetPosition {
   space_id   String
   widget_id  String
   position   Json
+  is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at DateTime @default(now())
 
   space Space @relation(fields: [space_id], references: [id])
 
@@ -137,7 +145,7 @@ model PlaylistTrack {
   track_order Int // Order of track in playlist (1-based)
   is_deleted  Boolean  @default(false)
   created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  updated_at  DateTime @default(now())
 
   playlist Playlist @relation(fields: [playlist_id], references: [id])
   track    Track    @relation(fields: [track_id], references: [id])
@@ -152,7 +160,7 @@ model SpaceTag {
   tag_id     String
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at DateTime @default(now())
 
   space Space @relation(fields: [space_id], references: [id])
   tag   Tag   @relation(fields: [tag_id], references: [id])
@@ -167,7 +175,7 @@ model ForkSpace {
   original_space_id String
   is_deleted        Boolean  @default(false)
   created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  updated_at        DateTime @default(now())
 
   user           User  @relation(fields: [user_id], references: [id])
   original_space Space @relation("OriginalSpace", fields: [original_space_id], references: [id])
