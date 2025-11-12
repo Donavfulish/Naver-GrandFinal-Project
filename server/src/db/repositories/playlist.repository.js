@@ -60,8 +60,9 @@ const playlistRepository = {
   },
 
   async delete(id) {
-    return await prisma.playlist.delete({
+    return await prisma.playlist.update({
       where: { id },
+      data: { is_deleted: true },
     });
   },
 
@@ -87,4 +88,3 @@ const playlistRepository = {
 };
 
 export default playlistRepository;
-

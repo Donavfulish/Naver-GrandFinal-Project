@@ -31,8 +31,9 @@ const trackRepository = {
   },
 
   async delete(id) {
-    return await prisma.track.delete({
+    return await prisma.track.update({
       where: { id },
+      data: { is_deleted: true },
     });
   },
 
@@ -46,4 +47,3 @@ const trackRepository = {
 };
 
 export default trackRepository;
-

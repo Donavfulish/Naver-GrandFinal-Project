@@ -61,11 +61,11 @@ const spaceRepository = {
   },
 
   async delete(id) {
-    return await prisma.space.delete({
+    return await prisma.space.update({
       where: { id },
+      data: { is_deleted: true },
     });
   },
 };
 
 export default spaceRepository;
-

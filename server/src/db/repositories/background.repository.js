@@ -25,11 +25,11 @@ const backgroundRepository = {
   },
 
   async delete(id) {
-    return await prisma.background.delete({
+    return await prisma.background.update({
       where: { id },
+      data: { is_deleted: true },
     });
   },
 };
 
 export default backgroundRepository;
-

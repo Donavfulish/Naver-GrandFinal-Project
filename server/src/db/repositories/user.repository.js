@@ -47,10 +47,11 @@ const userRepository = {
     });
   },
 
-  // Xóa user
+  // Xóa user (soft delete)
   async delete(id) {
-    return await prisma.user.delete({
+    return await prisma.user.update({
       where: { id },
+      data: { is_deleted: true },
     });
   },
 
@@ -64,4 +65,3 @@ const userRepository = {
 };
 
 export default userRepository;
-

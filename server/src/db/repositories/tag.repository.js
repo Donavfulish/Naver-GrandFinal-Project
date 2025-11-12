@@ -34,8 +34,9 @@ const tagRepository = {
   },
 
   async delete(id) {
-    return await prisma.tag.delete({
+    return await prisma.tag.update({
       where: { id },
+      data: { is_deleted: true },
     });
   },
 
@@ -49,4 +50,3 @@ const tagRepository = {
 };
 
 export default tagRepository;
-
