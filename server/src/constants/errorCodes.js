@@ -1,0 +1,97 @@
+/**
+ * Error Codes - Backend
+ * Centralized error code definitions
+ */
+
+const ErrorCodes = {
+    // Authentication Errors (1000-1099)
+    AUTH_INVALID_CREDENTIALS: 'AUTH_1001',
+    AUTH_EMAIL_NOT_FOUND: 'AUTH_1002',
+    AUTH_INVALID_TOKEN: 'AUTH_1005',
+    AUTH_TOKEN_EXPIRED: 'AUTH_1006',
+    AUTH_EMAIL_ALREADY_EXISTS: 'AUTH_1009',
+    AUTH_WEAK_PASSWORD: 'AUTH_1010',
+    AUTH_UNAUTHORIZED: 'AUTH_1017',
+    AUTH_TOKEN_REQUIRED: 'AUTH_1022',
+
+    // User Errors (1100-1199)
+    USER_NOT_FOUND: 'USER_1101',
+    USER_UPDATE_FAILED: 'USER_1102',
+    USER_DELETE_FAILED: 'USER_1103',
+    USER_SPACES_FETCH_FAILED: 'USER_1104',
+
+    // Space Errors (1200-1299)
+    SPACE_NOT_FOUND: 'SPACE_1201',
+    SPACE_CREATE_FAILED: 'SPACE_1202',
+    SPACE_UPDATE_FAILED: 'SPACE_1203',
+    SPACE_DELETE_FAILED: 'SPACE_1204',
+    SPACE_FORK_FAILED: 'SPACE_1205',
+
+    // Validation Errors (2000-2099)
+    VALIDATION_FAILED: 'VALIDATION_2001',
+    VALIDATION_EMAIL_INVALID: 'VALIDATION_2002',
+    VALIDATION_REQUIRED_FIELD: 'VALIDATION_2003',
+    VALIDATION_FIELD_TOO_LONG: 'VALIDATION_2004',
+    VALIDATION_FIELD_TOO_SHORT: 'VALIDATION_2005',
+    VALIDATION_INVALID_FORMAT: 'VALIDATION_2006',
+    VALIDATION_INVALID_VALUE: 'VALIDATION_2007',
+
+    // File Errors (3000-3099)
+    FILE_UPLOAD_FAILED: 'FILE_3001',
+    FILE_TOO_LARGE: 'FILE_3002',
+    FILE_TYPE_NOT_ALLOWED: 'FILE_3003',
+
+    // Server Errors (5000-5099)
+    SERVER_ERROR: 'SERVER_5001',
+    DATABASE_ERROR: 'SERVER_5002',
+};
+
+// HTTP Status Code mapping
+const ErrorStatusCodes = {
+    // 400 Bad Request
+    [ErrorCodes.VALIDATION_FAILED]: 400,
+    [ErrorCodes.VALIDATION_EMAIL_INVALID]: 400,
+    [ErrorCodes.VALIDATION_REQUIRED_FIELD]: 400,
+    [ErrorCodes.VALIDATION_FIELD_TOO_LONG]: 400,
+    [ErrorCodes.VALIDATION_FIELD_TOO_SHORT]: 400,
+    [ErrorCodes.VALIDATION_INVALID_FORMAT]: 400,
+    [ErrorCodes.VALIDATION_INVALID_VALUE]: 400,
+    [ErrorCodes.AUTH_WEAK_PASSWORD]: 400,
+    [ErrorCodes.FILE_TYPE_NOT_ALLOWED]: 400,
+    [ErrorCodes.FILE_UPLOAD_FAILED]: 400,
+
+    // 413 Payload Too Large
+    [ErrorCodes.FILE_TOO_LARGE]: 413,
+
+
+    // 401 Unauthorized
+    [ErrorCodes.AUTH_INVALID_CREDENTIALS]: 401,
+    [ErrorCodes.AUTH_INVALID_TOKEN]: 401,
+    [ErrorCodes.AUTH_TOKEN_EXPIRED]: 401,
+    [ErrorCodes.AUTH_UNAUTHORIZED]: 401,
+    [ErrorCodes.AUTH_TOKEN_REQUIRED]: 401,
+
+    // 404 Not Found
+    [ErrorCodes.USER_NOT_FOUND]: 404,
+    [ErrorCodes.AUTH_EMAIL_NOT_FOUND]: 404,
+    [ErrorCodes.SPACE_NOT_FOUND]: 404,
+    [ErrorCodes.USER_SPACES_FETCH_FAILED]: 404,
+
+    // 409 Conflict
+    [ErrorCodes.AUTH_EMAIL_ALREADY_EXISTS]: 409,
+
+    // 500 Internal Server Error
+    [ErrorCodes.SERVER_ERROR]: 500,
+    [ErrorCodes.DATABASE_ERROR]: 500,
+    [ErrorCodes.USER_UPDATE_FAILED]: 500,
+    [ErrorCodes.USER_DELETE_FAILED]: 500,
+    [ErrorCodes.SPACE_CREATE_FAILED]: 500,
+    [ErrorCodes.SPACE_UPDATE_FAILED]: 500,
+    [ErrorCodes.SPACE_DELETE_FAILED]: 500,
+    [ErrorCodes.SPACE_FORK_FAILED]: 500,
+};
+
+export {
+    ErrorCodes,
+    ErrorStatusCodes,
+};
