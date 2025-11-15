@@ -5,6 +5,6 @@ export const metadata = {
   description: "Your personalized immersive digital environment.",
 }
 
-export default function Page({ params }: { params: { id: string } }) {
+export default function Page({ params }: { params: {id: string}}) {
   return <ViewSpacePage spaceId={params.id} />
 }
