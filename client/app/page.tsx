@@ -13,12 +13,12 @@ export const metadata = {
 export default function Home() {
   return (
     <main className="min-h-screen bg-[#1E1E1E]">
-      <Header />
+      {/* <Header /> */}
       <Hero />
       <HowItWorks />
       <Community />
       <Testimonials />
-      <Footer />
+      {/* <Footer /> */}
     </main>
   )
 }
