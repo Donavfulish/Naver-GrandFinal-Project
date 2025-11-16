@@ -317,7 +317,31 @@ const spaceService = {
     await spaceRepository.delete(id);
     return { message: 'Space deleted successfully' };
   },
+
+  async searchSpaces(searchParams) {
+    const { q, title, tag, author, limit, offset } = searchParams;
+
+    // Validate tag exists if provided
+    if (tag) {
+      const tagExists = await tagRepository.findById(tag);
+      if (!tagExists || tagExists.is_deleted) {
+        const error = new Error('Invalid tag ID');
+        error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
+        error.statusCode = 422;
+        throw error;
+      }
+    }
+
+    // Search spaces
+    return await spaceRepository.search({
+      q,
+      title,
+      tag,
+      author,
+      limit,
+      offset,
+    });
+  },
 };
 
 export default spaceService;
-

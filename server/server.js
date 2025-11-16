@@ -4,18 +4,52 @@ import prisma from './src/config/prisma.js';
 import logger from './src/config/logger.js';
 import app from './src/app.js';
 import { fileURLToPath } from 'url';
+import https from 'https';
+import fs from 'fs';
 
 const start = async () => {
   try {
-    // ===== Start server =====
-    const port = Number(PORT) || 3000;
-    const server = app.listen(port, '0.0.0.0', () => {
-      logger.info('='.repeat(50));
-      logger.info(`✅ Server started successfully`);
-      logger.info(`Environment: ${NODE_ENV}`);
-      logger.info(`Port: ${port}`);
-      logger.info('='.repeat(50));
-    });
+    const port = Number(PORT) || 5000;
+    let server;
+
+    if (NODE_ENV === 'production') {
+      // ===== PRODUCTION: HTTPS (hosting có certificate hoặc tự cung cấp cert) =====
+      const options = {
+        key: fs.readFileSync(process.env.SSL_KEY_PATH || './cert/key.pem'),
+        cert: fs.readFileSync(process.env.SSL_CERT_PATH || './cert/cert.pem')
+      };
+
+      server = https.createServer(options, app).listen(port, '0.0.0.0', () => {
+        logger.info('='.repeat(50));
+        logger.info(`✅ HTTPS Server (production) started successfully`);
+        logger.info(`Environment: ${NODE_ENV}`);
+        logger.info(`Port: ${port}`);
+        logger.info('='.repeat(50));
+      });
+    } else {
+      // ===== DEV: HTTP hoặc HTTPS self-signed =====
+      if (process.env.LOCAL_USE_HTTPS === 'true') {
+        const options = {
+          key: fs.readFileSync('./cert/key.pem'),
+          cert: fs.readFileSync('./cert/cert.pem')
+        };
+        server = https.createServer(options, app).listen(port, '0.0.0.0', () => {
+          logger.info('='.repeat(50));
+          logger.info(`✅ HTTPS Server (dev) started successfully`);
+          logger.info(`Environment: ${NODE_ENV}`);
+          logger.info(`Port: ${port}`);
+          logger.info('='.repeat(50));
+        });
+      } else {
+        server = app.listen(port, '0.0.0.0', () => {
+          logger.info('='.repeat(50));
+          logger.info(`✅ HTTP Server (dev) started successfully`);
+          logger.info(`Environment: ${NODE_ENV}`);
+          logger.info(`Port: ${port}`);
+          logger.info('='.repeat(50));
+        });
+      }
+    }
 
     // ===== Graceful Shutdown =====
     const shutdown = async (signal) => {
@@ -38,7 +72,6 @@ const start = async () => {
         process.exit(0);
       });
 
-      // Force exit sau 10s nếu chưa tắt xong
       setTimeout(() => {
         logger.warn('⏰ Forced shutdown (timeout)');
         process.exit(1);

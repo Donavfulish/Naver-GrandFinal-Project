@@ -55,9 +55,9 @@ describe('POST /api/space - Create Space', () => {
 
     it('should create a space with multiple tags', async () => {
       const user = await testHelper.createUser();
-      const tag1 = await testHelper.createTag({ name: 'relax' });
-      const tag2 = await testHelper.createTag({ name: 'work' });
-      const tag3 = await testHelper.createTag({ name: 'study' });
+      const tag1 = await testHelper.createTag({ name: 'productivity' });
+      const tag2 = await testHelper.createTag({ name: 'music' });
+      const tag3 = await testHelper.createTag({ name: 'relax' });
 
       const payload = fixtures.validCreateSpacePayload(user.id, [tag1.id, tag2.id, tag3.id]);
 
@@ -74,20 +74,15 @@ describe('POST /api/space - Create Space', () => {
       expect(tagIds).toContain(tag3.id);
     });
 
-    it('should create a space with custom assets', async () => {
+    it('should create a space with custom background', async () => {
       const user = await testHelper.createUser();
       const tag = await testHelper.createTag();
-      const background = await testHelper.createBackground();
-      const clockFont = await testHelper.createClockFont();
-      const textFont = await testHelper.createTextFont();
+      const background = await testHelper.createBackground({ background_url: 'https://example.com/bg.jpg' });
 
-      const payload = fixtures.completeCreateSpacePayload(
-        user.id,
-        [tag.id],
-        background.id,
-        clockFont.id,
-        textFont.id
-      );
+      const payload = {
+        ...fixtures.minimalCreateSpacePayload(user.id, [tag.id]),
+        background_id: background.id,
+      };
 
       const response = await request(app)
         .post('/api/space')
@@ -96,6 +91,26 @@ describe('POST /api/space - Create Space', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.background_id).toBe(background.id);
+    });
+
+    it('should create a space with custom fonts', async () => {
+      const user = await testHelper.createUser();
+      const tag = await testHelper.createTag();
+      const clockFont = await testHelper.createClockFont({ font_name: 'Roboto' });
+      const textFont = await testHelper.createTextFont({ font_name: 'Arial' });
+
+      const payload = {
+        ...fixtures.minimalCreateSpacePayload(user.id, [tag.id]),
+        clock_font_id: clockFont.id,
+        text_font_name: textFont.id,
+      };
+
+      const response = await request(app)
+        .post('/api/space')
+        .send(payload)
+        .expect(201);
+
+      expect(response.body.success).toBe(true);
       expect(response.body.data.clock_font_id).toBe(clockFont.id);
       expect(response.body.data.text_font_name).toBe(textFont.id);
     });
@@ -103,20 +118,13 @@ describe('POST /api/space - Create Space', () => {
     it('should create a space with playlists', async () => {
       const user = await testHelper.createUser();
       const tag = await testHelper.createTag();
-      const playlist1 = await testHelper.createPlaylist({ name: 'Chill Vibes' });
-      const playlist2 = await testHelper.createPlaylist({ name: 'Focus Music' });
-      const background = await testHelper.createBackground();
-      const clockFont = await testHelper.createClockFont();
-      const textFont = await testHelper.createTextFont();
+      const playlist1 = await testHelper.createPlaylist({ name: 'Playlist 1' });
+      const playlist2 = await testHelper.createPlaylist({ name: 'Playlist 2' });
 
-      const payload = fixtures.completeCreateSpacePayload(
-        user.id,
-        [tag.id],
-        background.id,
-        clockFont.id,
-        textFont.id,
-        [playlist1.id, playlist2.id]
-      );
+      const payload = {
+        ...fixtures.minimalCreateSpacePayload(user.id, [tag.id]),
+        playlist_ids: [playlist1.id, playlist2.id],
+      };
 
       const response = await request(app)
         .post('/api/space')
@@ -133,17 +141,11 @@ describe('POST /api/space - Create Space', () => {
     it('should create a space with widget positions', async () => {
       const user = await testHelper.createUser();
       const tag = await testHelper.createTag();
-      const background = await testHelper.createBackground();
-      const clockFont = await testHelper.createClockFont();
-      const textFont = await testHelper.createTextFont();
 
-      const payload = fixtures.completeCreateSpacePayload(
-        user.id,
-        [tag.id],
-        background.id,
-        clockFont.id,
-        textFont.id
-      );
+      const payload = {
+        ...fixtures.minimalCreateSpacePayload(user.id, [tag.id]),
+        widget_positions: fixtures.widgetPositions,
+      };
 
       const response = await request(app)
         .post('/api/space')
@@ -155,14 +157,68 @@ describe('POST /api/space - Create Space', () => {
       expect(response.body.data.widget_positions[0]).toHaveProperty('widget_id');
       expect(response.body.data.widget_positions[0]).toHaveProperty('position');
     });
+
+    it('should assign default background if not provided', async () => {
+      const user = await testHelper.createUser();
+      const tag = await testHelper.createTag();
+      await testHelper.createBackground({ background_url: 'https://default.com/bg.jpg' });
+
+      const payload = fixtures.minimalCreateSpacePayload(user.id, [tag.id]);
+
+      const response = await request(app)
+        .post('/api/space')
+        .send(payload)
+        .expect(201);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.background_id).toBeDefined();
+    });
+
+    it('should assign default fonts if not provided', async () => {
+      const user = await testHelper.createUser();
+      const tag = await testHelper.createTag();
+      await testHelper.createClockFont({ font_name: 'Default Clock' });
+      await testHelper.createTextFont({ font_name: 'Default Text' });
+
+      const payload = fixtures.minimalCreateSpacePayload(user.id, [tag.id]);
+
+      const response = await request(app)
+        .post('/api/space')
+        .send(payload)
+        .expect(201);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.clock_font_id).toBeDefined();
+      expect(response.body.data.text_font_name).toBeDefined();
+    });
   });
 
-  describe('Validation Error Cases', () => {
+  describe('Validation Errors', () => {
+    it('should return 400 when user_id is missing', async () => {
+      const tag = await testHelper.createTag();
+
+      const payload = {
+        name: 'Test Space',
+        tags: [tag.id],
+      };
+
+      const response = await request(app)
+        .post('/api/space')
+        .send(payload)
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('VALIDATION_2001');
+    });
+
     it('should return 400 when name is missing', async () => {
       const user = await testHelper.createUser();
       const tag = await testHelper.createTag();
 
-      const payload = fixtures.invalidPayloadMissingName(user.id, [tag.id]);
+      const payload = {
+        user_id: user.id,
+        tags: [tag.id],
+      };
 
       const response = await request(app)
         .post('/api/space')
@@ -176,7 +232,10 @@ describe('POST /api/space - Create Space', () => {
     it('should return 400 when tags are missing', async () => {
       const user = await testHelper.createUser();
 
-      const payload = fixtures.invalidPayloadMissingTags(user.id);
+      const payload = {
+        user_id: user.id,
+        name: 'Test Space',
+      };
 
       const response = await request(app)
         .post('/api/space')

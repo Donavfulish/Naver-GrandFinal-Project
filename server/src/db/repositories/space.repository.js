@@ -271,6 +271,93 @@ const spaceRepository = {
       return { success: true };
     });
   },
+
+  async search({ q, title, tag, author, limit = 20, offset = 0 }) {
+    const whereConditions = {
+      is_deleted: false,
+    };
+
+    // Build AND conditions
+    const andConditions = [];
+
+    // General search query (searches in title and description)
+    if (q) {
+      andConditions.push({
+        OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { description: { contains: q, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    // Specific title search
+    if (title) {
+      andConditions.push({
+        name: { contains: title, mode: 'insensitive' },
+      });
+    }
+
+    // Filter by author (user_id)
+    if (author) {
+      andConditions.push({
+        user_id: author,
+      });
+    }
+
+    // Filter by tag
+    if (tag) {
+      andConditions.push({
+        space_tags: {
+          some: {
+            tag_id: tag,
+            is_deleted: false,
+          },
+        },
+      });
+    }
+
+    // Add all conditions to where clause
+    if (andConditions.length > 0) {
+      whereConditions.AND = andConditions;
+    }
+
+    // Execute query with pagination
+    const [spaces, total] = await Promise.all([
+      prisma.space.findMany({
+        where: whereConditions,
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, avatar_url: true },
+            where: { is_deleted: false },
+          },
+          background: {
+            where: { is_deleted: false },
+          },
+          space_tags: {
+            where: { is_deleted: false },
+            include: {
+              tag: {
+                where: { is_deleted: false },
+              },
+            },
+          },
+        },
+        skip: offset,
+        take: limit,
+        orderBy: { created_at: 'desc' },
+      }),
+      prisma.space.count({
+        where: whereConditions,
+      }),
+    ]);
+
+    return {
+      spaces,
+      total,
+      limit,
+      offset,
+    };
+  },
 };
 
 export default spaceRepository;

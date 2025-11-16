@@ -17,10 +17,26 @@ model User {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  spaces    Space[]
-  ForkSpace ForkSpace[]
+  spaces       Space[]
+  ForkSpace    ForkSpace[]
+  SpotifyToken SpotifyToken[]
 
   @@map("users")
+}
+
+model SpotifyToken {
+  id            String   @id @default(uuid())
+  user_id       String   @unique
+  access_token  String
+  refresh_token String
+  expires_at    DateTime
+  is_deleted    Boolean  @default(false)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("spotify_tokens")
 }
 
 model Space {

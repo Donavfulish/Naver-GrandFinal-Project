@@ -101,3 +101,30 @@ export const spaceIdSchema = Joi.object({
     'any.required': 'Space ID is required',
   }),
 });
+
+// GET /search/spaces query validation
+export const searchSpacesSchema = Joi.object({
+  q: Joi.string().min(1).max(200).optional().messages({
+    'string.min': 'Search query cannot be empty',
+    'string.max': 'Search query must not exceed 200 characters',
+  }),
+  title: Joi.string().min(1).max(200).optional().messages({
+    'string.min': 'Title search cannot be empty',
+    'string.max': 'Title search must not exceed 200 characters',
+  }),
+  tag: Joi.string().uuid().optional().messages({
+    'string.uuid': 'Invalid tag ID format',
+  }),
+  author: Joi.string().uuid().optional().messages({
+    'string.uuid': 'Invalid author ID format',
+  }),
+  limit: Joi.number().integer().min(1).max(100).default(20).optional().messages({
+    'number.min': 'Limit must be at least 1',
+    'number.max': 'Limit must not exceed 100',
+  }),
+  offset: Joi.number().integer().min(0).default(0).optional().messages({
+    'number.min': 'Offset must be at least 0',
+  }),
+}).min(1).messages({
+  'object.min': 'At least one search parameter is required',
+});
