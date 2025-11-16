@@ -26,10 +26,11 @@ model User {
 model Space {
   id             String   @id @default(uuid())
   user_id        String
-  description    String
+  name           String
+  description    String?
   background_id  String?
   clock_font_id  String?
-  text_font_name String
+  text_font_name String?
   is_deleted     Boolean  @default(false)
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
@@ -61,13 +62,13 @@ model Background {
 
 model Playlist {
   id         String   @id @default(uuid())
-  space_id   String
+  space_id   String?
   name       String
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 
-  space           Space           @relation(fields: [space_id], references: [id])
+  space           Space?          @relation(fields: [space_id], references: [id])
   playlist_tracks PlaylistTrack[]
 
   @@index([space_id])

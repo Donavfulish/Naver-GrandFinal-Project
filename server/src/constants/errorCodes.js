@@ -26,6 +26,7 @@ const ErrorCodes = {
     SPACE_UPDATE_FAILED: 'SPACE_1203',
     SPACE_DELETE_FAILED: 'SPACE_1204',
     SPACE_FORK_FAILED: 'SPACE_1205',
+    SPACE_VALIDATION_FAILED: 'SPACE_1206',
 
     // Validation Errors (2000-2099)
     VALIDATION_FAILED: 'VALIDATION_2001',
@@ -59,6 +60,7 @@ const ErrorStatusCodes = {
     [ErrorCodes.AUTH_WEAK_PASSWORD]: 400,
     [ErrorCodes.FILE_TYPE_NOT_ALLOWED]: 400,
     [ErrorCodes.FILE_UPLOAD_FAILED]: 400,
+    [ErrorCodes.SPACE_VALIDATION_FAILED]: 400,
 
     // 413 Payload Too Large
     [ErrorCodes.FILE_TOO_LARGE]: 413,
