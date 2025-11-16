@@ -42,9 +42,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={manrope.className}>
       <body className={`font-sans antialiased flex flex-col min-h-screen`}>
-        <Header />
+        {/* <Header /> */}
         <div className="flex-1">{children}</div>
-        <Footer />
+        {/* <Footer /> */}
         <Analytics />
       </body>
     </html>
