@@ -49,14 +49,6 @@ const authController = {
       });
     }
   }),
-
-  // DELETE /api/auth/:id/logout - Logout user (placeholder)
-  logout: asyncHandler(async (req, res) => {
-    res.status(200).json({
-      success: true,
-      data: { message: 'Logged out successfully' },
-    });
-  }),
 };
 
 export default authController;

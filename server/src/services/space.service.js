@@ -4,7 +4,7 @@ import playlistRepository from '../db/repositories/playlist.repository.js';
 import backgroundRepository from '../db/repositories/background.repository.js';
 import clockFontRepository from '../db/repositories/clockFont.repository.js';
 import textFontRepository from '../db/repositories/textFont.repository.js';
-import { ErrorCodes } from '../constants/errorCodes.js';
+import {ErrorCodes} from '../constants/errorCodes.js';
 
 const spaceService = {
   async createSpace(data) {
@@ -136,14 +136,12 @@ const spaceService = {
     };
 
     // Create space with all relations
-    const space = await spaceRepository.create(
-      spaceData,
-      tags,
-      playlist_ids,
-      widget_positions
+    return await spaceRepository.create(
+        spaceData,
+        tags,
+        playlist_ids,
+        widget_positions
     );
-
-    return space;
   },
 
   async getSpaceById(id) {
@@ -299,16 +297,14 @@ const spaceService = {
     }
 
     // Perform update
-    const updatedSpace = await spaceRepository.update(
-      id,
-      spaceData,
-      tagIds,
-      playlistLinksAdd,
-      playlistLinksRemove,
-      widgetPositions
+    return await spaceRepository.update(
+        id,
+        spaceData,
+        tagIds,
+        playlistLinksAdd,
+        playlistLinksRemove,
+        widgetPositions
     );
-
-    return updatedSpace;
   },
 
   async deleteSpace(id) {

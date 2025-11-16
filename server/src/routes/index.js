@@ -8,7 +8,7 @@ const router = express.Router();
 // Mount routes
 router.use('/auth', authRoutes);       // /api/auth/*
 router.use('/users', userRoutes);      // /api/users/*
-router.use('/space', spaceRoutes);     // /api/space/*
+router.use('/spaces', spaceRoutes);     // /api/spaces/*
 
 export default router;
 
