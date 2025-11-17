@@ -140,6 +140,20 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
                         </Link>
                     </motion.div>
 
+                    {/* Title — adapted for fullscreen */}
+                    <motion.h1
+                        className={`font-bold text-white 
+              ${isFullscreen
+                                ? "absolute top-8 left-8 text-xl md:text-2xl text-left"
+                                : " text-4xl md:text-2xl absolute z-30 top-20 left-10 text-center mb-8"
+                            }`}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.4 }}
+                    >
+                        {space.name}
+                    </motion.h1>
+
                     {/* right buttons */}
                     <motion.div
                         className="absolute top-8 right-8 z-20 flex flex-col gap-4"
@@ -177,7 +191,7 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
 
                 {/* CLOCK (iOS LOCKSCREEN STYLE + CORRECT FONT) */}
                 <motion.div
-                    className={`absolute top-[30%] cursor-grab active:cursor-grabbing ${fontMap[space.clockFont]}`}
+                    className={`absolute top-[20%] cursor-grab active:cursor-grabbing ${fontMap[space.clockFont]}`}
                     initial={{ opacity: 0, y: -40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.3 }}
@@ -185,8 +199,9 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
                     dragElastic={0.2}
                     dragMomentum={false}
                 >
+                    <div className="text-6xl mb-4 text-center">{getClockIcon()}</div>
                     {/* DATE */}
-                    <p className="text-white/80 text-lg font-light tracking-wide capitalize">
+                    <p className="text-white/80 text-center text-lg font-light tracking-wide capitalize">
                         {new Date().toLocaleDateString("en-US", {
                             weekday: "long",
                             month: "long",
@@ -203,23 +218,9 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
                     </p>
                 </motion.div>
 
-                {/* Title — adapted for fullscreen */}
-                <motion.h1
-                    className={`font-bold text-white 
-              ${isFullscreen
-                            ? "absolute top-8 left-8 text-xl md:text-2xl text-left"
-                            : " text-4xl md:text-2xl absolute z-30 top-20 left-10 text-center mb-8"
-                        }`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.4 }}
-                >
-                    {space.name}
-                </motion.h1>
-
                 {/* SPOTIFY LOCKSCREEN PLAYER */}
                 <motion.div
-                    className="w-full max-w-sm mt-40 bg-black/20 backdrop-blur-2xl rounded-3xl p-5 border border-white/10 shadow-xl"
+                    className={`absolute ${isFullscreen ? "top-[44%]" : "top-[48%]"} w-full max-w-sm bg-black/20 backdrop-blur-2xl rounded-3xl p-5 border border-white/10 shadow-xl`}
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.5 }}
