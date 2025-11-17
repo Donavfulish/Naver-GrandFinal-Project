@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Geist, Geist_Mono, Manrope } from "next/font/google"
+import { Geist, Geist_Mono, Manrope, Inter, Orbitron, VT323 } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import FullscreenWrapper from "./FullScreenWrapper"
@@ -7,6 +7,17 @@ import FullscreenWrapper from "./FullScreenWrapper"
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 const manrope = Manrope({ subsets: ["latin"] })
+
+export const inter = Inter({ subsets: ["latin"] })
+export const orbitron = Orbitron({ subsets: ["latin"] })
+export const vt323 = VT323({ subsets: ["latin"], weight: "400" })
+
+
+export const fontMap = {
+    Inter: inter.className,
+    Orbitron: orbitron.className,
+    VT323: vt323.className,
+}
 
 export const metadata: Metadata = {
     title: "AuraSpace - Design Your Mood. Live Your Space.",

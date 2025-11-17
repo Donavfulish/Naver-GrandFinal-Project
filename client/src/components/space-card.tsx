@@ -19,12 +19,12 @@ interface SpaceCardProps {
 export default function SpaceCard({ space }: SpaceCardProps) {
     return (
         <motion.div
-            className="group relative p-6 rounded-3xl bg-gradient-to-br from-[#2A2A2A] to-[#1E1E1E] border border-[#C7A36B]/20 hover:border-[#C7A36B]/50 transition overflow-hidden"
+            className="group relative rounded-3xl bg-gradient-to-br from-[#2A2A2A] to-[#1E1E1E] border border-[#C7A36B]/20 hover:border-[#C7A36B]/50 transition overflow-hidden"
             whileHover={{ y: -4 }}
             transition={{ duration: 0.2 }}
         >
             {/* Background + Title + Tags */}
-            <div className="w-full h-48 rounded-2xl mb-4 relative overflow-hidden">
+            <div className="w-full h-50 rounded-2xl rounded-b-none mb-6 relative overflow-hidden">
                 <Image
                     src={space.img}
                     alt={space.name}
@@ -55,7 +55,7 @@ export default function SpaceCard({ space }: SpaceCardProps) {
             </div>
 
             {/* Footer Actions */}
-            <div className="flex gap-2 pt-4 border-t border-[#2A2A2A]">
+            <div className="flex gap-2 p-6 border-t  border-[#2A2A2A]">
                 <Link
                     href={`/view-space/${space.id}`}
                     className="flex-1 px-4 py-2 bg-[#C7A36B] text-[#1E1E1E] rounded-xl text-sm font-medium hover:bg-[#D4B896] transition flex items-center justify-center gap-2"

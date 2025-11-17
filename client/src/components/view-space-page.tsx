@@ -6,6 +6,20 @@ import Link from "next/link"
 import Image from "next/image"
 import { ChevronLeft, Settings, MessageCircle, Sliders, X, Maximize } from 'lucide-react'
 import { mockSpaces } from "@/lib/mock-spaces"
+import { SkipBack, SkipForward, Play, Pause } from "lucide-react"
+
+// FONT IMPORTS
+import { Inter, Orbitron, VT323 } from "next/font/google"
+
+const inter = Inter({ subsets: ["latin"] })
+const orbitron = Orbitron({ subsets: ["latin"] })
+const vt323 = VT323({ subsets: ["latin"], weight: "400" })
+
+const fontMap: any = {
+    Inter: inter.className,
+    Orbitron: orbitron.className,
+    VT323: vt323.className,
+}
 
 interface ViewSpacePageProps {
     spaceId: string
@@ -16,6 +30,7 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
     const [showSettings, setShowSettings] = useState(false)
     const [headerOpacity, setHeaderOpacity] = useState(1)
     const [isFullscreen, setIsFullscreen] = useState(false)
+    const [isPlaying, setIsPlaying] = useState(false)
 
     // ------------------------------
     // LOAD SPACE DATA
@@ -160,9 +175,9 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
             {/* ------------------------------ */}
             <div className="relative w-full h-screen flex flex-col items-center justify-center px-6">
 
-                {/* Clock Widget */}
+                {/* CLOCK (iOS LOCKSCREEN STYLE + CORRECT FONT) */}
                 <motion.div
-                    className="mb-12 p-8 bg-black/70 backdrop-blur-lg rounded-2xl border border-white/20 shadow-2xl"
+                    className={`absolute top-[30%] cursor-grab active:cursor-grabbing ${fontMap[space.clockFont]}`}
                     initial={{ opacity: 0, y: -40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.3 }}
@@ -170,17 +185,22 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
                     dragElastic={0.2}
                     dragMomentum={false}
                 >
-                    <div className="text-center">
-                        <div className="text-6xl mb-4">{getClockIcon()}</div>
-                        <p className="text-gray-300 text-sm capitalize mb-2">{space.clockStyle} Clock</p>
-                        <div className="text-3xl font-bold text-[#C7A36B] font-mono">
-                            {new Date().toLocaleTimeString("en-US", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                second: "2-digit",
-                            })}
-                        </div>
-                    </div>
+                    {/* DATE */}
+                    <p className="text-white/80 text-lg font-light tracking-wide capitalize">
+                        {new Date().toLocaleDateString("en-US", {
+                            weekday: "long",
+                            month: "long",
+                            day: "numeric",
+                        })}
+                    </p>
+
+                    {/* TIME */}
+                    <p className="text-white text-6xl md:text-7xl font-semibold mt-1 leading-none">
+                        {new Date().toLocaleTimeString("en-US", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                        })}
+                    </p>
                 </motion.div>
 
                 {/* Title — adapted for fullscreen */}
@@ -188,7 +208,7 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
                     className={`font-bold text-white 
               ${isFullscreen
                             ? "absolute top-8 left-8 text-xl md:text-2xl text-left"
-                            : "text-4xl md:text-5xl text-center mb-8"
+                            : " text-4xl md:text-2xl absolute z-30 top-20 left-10 text-center mb-8"
                         }`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -197,36 +217,61 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
                     {space.name}
                 </motion.h1>
 
-                {/* Playlist Widget */}
+                {/* SPOTIFY LOCKSCREEN PLAYER */}
                 <motion.div
-                    className="p-8 bg-black/70 backdrop-blur-lg rounded-2xl border border-white/20 shadow-2xl max-w-md"
+                    className="w-full max-w-sm mt-40 bg-black/20 backdrop-blur-2xl rounded-3xl p-5 border border-white/10 shadow-xl"
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.5 }}
                     drag
                     dragElastic={0.2}
                     dragMomentum={false}
+
                 >
+
+                    {/* TRACK INFO */}
+                    <div className="mb-4">
+                        <p className="text-white text-lg font-semibold leading-tight">
+                            {space.currentTrack}
+                        </p>
+                        <p className="text-white/60 text-sm mt-1">
+                            {space.artist}
+                        </p>
+                    </div>
+
+                    {/* PROGRESS BAR */}
                     <div>
-                        <p className="text-gray-300 text-sm mb-4 font-semibold">Now Playing</p>
-                        <div className="space-y-3">
-                            {space.playlist.map((track, index) => (
-                                <motion.div
-                                    key={index}
-                                    className="p-3 bg-black/40 rounded-lg border border-white/20 hover:border-white/50 transition"
-                                    whileHover={{ x: 4 }}
-                                >
-                                    <p className="text-white text-sm font-medium">{track}</p>
-                                    <p className="text-gray-300 text-xs mt-1">
-                                        ♫ {Math.floor(Math.random() * 4) + 3}:
-                                        {String(Math.floor(Math.random() * 60)).padStart(2, "0")}
-                                    </p>
-                                </motion.div>
-                            ))}
+                        <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={40}
+                            className="w-full accent-white cursor-pointer"
+                        />
+                        <div className="flex justify-between text-white/50 text-xs mt-1">
+                            <span>2:49</span>
+                            <span>5:56</span>
                         </div>
                     </div>
-                </motion.div>
 
+                    {/* CONTROLS */}
+                    <div className="flex items-center justify-center gap-10 mt-6 text-white">
+                        <button className="opacity-80 hover:opacity-100 transition">
+                            <SkipBack size={28} />
+                        </button>
+
+                        <button
+                            onClick={() => setIsPlaying(!isPlaying)}
+                            className="opacity-90 hover:opacity-100 transition"
+                        >
+                            {isPlaying ? <Pause size={40} /> : <Play size={40} />}
+                        </button>
+
+                        <button className="opacity-80 hover:opacity-100 transition">
+                            <SkipForward size={28} />
+                        </button>
+                    </div>
+                </motion.div>
             </div>
 
             {/* SETTINGS PANEL */}

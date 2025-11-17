@@ -1,3 +1,4 @@
+// mock-spaces.ts
 export const mockSpaces = [
   {
     id: 1,
@@ -5,7 +6,11 @@ export const mockSpaces = [
     tags: ["Focus", "Productive"],
     background: "/focus-rain.jpg",
     clockStyle: "minimal",
+    clockFont: "Inter", // FONT FOR CLOCK
     img: "/img/calming-ambient-environment.png",
+    currentTrack: "Lo-fi Beat 01",
+    artist: "Lo-Fi Collective",
+    albumArt: "/img/album1.png",
     playlist: ["Lo-fi Beat 01", "Study Flow", "Chillhop Focus"],
   },
   {
@@ -14,7 +19,11 @@ export const mockSpaces = [
     tags: ["Relax", "Calm"],
     background: "/evening-calm.jpg",
     clockStyle: "modern",
+    clockFont: "Orbitron",
     img: "/img/minimalist-focus-workspace.png",
+    currentTrack: "Soft Jazz",
+    artist: "Evening Trio",
+    albumArt: "/img/album2.png",
     playlist: ["Soft Jazz", "Night Breeze", "City Lights"],
   },
   {
@@ -23,7 +32,11 @@ export const mockSpaces = [
     tags: ["Inspire", "Bright"],
     background: "/creative-vibes.jpg",
     clockStyle: "retro",
+    clockFont: "VT323",
     img: "/img/calming-ambient-environment.png",
+    currentTrack: "Indie Wave",
+    artist: "Dreaming Kids",
+    albumArt: "/img/album3.png",
     playlist: ["Indie Wave", "Morning Drive", "Pop Dreams"],
   },
 ]
