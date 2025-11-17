@@ -158,14 +158,6 @@ export default function SettingsPanel({
               className="w-full text-sm text-white/80"
             />
 
-            <label className="block text-sm text-white/70 mt-2">Or paste image URL</label>
-            <input
-              type="text"
-              value={background}
-              onChange={handleBackgroundLink}
-              placeholder="https://..."
-              className="w-full px-3 py-2 rounded bg-[#222222] text-white"
-            />
           </div>
         </section>
 

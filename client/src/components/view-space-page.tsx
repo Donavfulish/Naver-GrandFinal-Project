@@ -95,14 +95,14 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
             return {
                 clockClass: "absolute top-[20%] left-1/2 -translate-x-1/2",
                 playerClass: "absolute top-[48%] left-1/2 -translate-x-1/2",
-                backdropClass: "bg-black/30 backdrop-blur-2xl",
+                backdropClass: "bg-black/20 backdrop-blur-sm",
             }
         }
         // corner
         return {
-            clockClass: "absolute top-12 left-12",
+            clockClass: "absolute bottom-70 left-18",
             playerClass: "absolute bottom-12 left-12",
-            backdropClass: "bg-black/10 backdrop-blur-0",
+            backdropClass: "",
         }
     }, [preview.layout])
 
@@ -149,7 +149,13 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
             </div>
 
             {/* overlay */}
-            <div className="absolute inset-0 bg-black/10" />
+            <div
+                className={`
+        absolute inset-0 pointer-events-none
+        transition-all duration-300
+        ${layoutStyle.backdropClass}
+    `}
+            ></div>
 
             {/* Header */}
             {!isFullscreen && (
@@ -197,7 +203,7 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
 
             {/* Title */}
             <motion.h1
-                className={`font-bold text-white ${isFullscreen ? "absolute top-8 left-8 text-xl md:text-2xl" : "text-4xl md:text-5xl text-center mb-8 absolute top-20 left-10 z-30"}`}
+                className={`font-bold text-white ${isFullscreen ? "absolute top-8 left-8 text-xl md:text-xl" : "text-2xl md:text-2xl text-center mb-8 absolute top-20 left-10 z-30"}`}
             >
                 {space.name}
             </motion.h1>
