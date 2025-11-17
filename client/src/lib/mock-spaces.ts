@@ -5,6 +5,7 @@ export const mockSpaces = [
     tags: ["Focus", "Productive"],
     background: "/focus-rain.jpg",
     clockStyle: "minimal",
+    img: "/img/calming-ambient-environment.png",
     playlist: ["Lo-fi Beat 01", "Study Flow", "Chillhop Focus"],
   },
   {
@@ -13,6 +14,7 @@ export const mockSpaces = [
     tags: ["Relax", "Calm"],
     background: "/evening-calm.jpg",
     clockStyle: "modern",
+    img: "/img/minimalist-focus-workspace.png",
     playlist: ["Soft Jazz", "Night Breeze", "City Lights"],
   },
   {
@@ -21,6 +23,7 @@ export const mockSpaces = [
     tags: ["Inspire", "Bright"],
     background: "/creative-vibes.jpg",
     clockStyle: "retro",
+    img: "/img/calming-ambient-environment.png",
     playlist: ["Indie Wave", "Morning Drive", "Pop Dreams"],
   },
 ]
