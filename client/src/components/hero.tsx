@@ -21,7 +21,7 @@ export default function Hero() {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.8, ease: "easeOut" },
+      transition: { duration: 0.8 },
     },
   }
 
@@ -72,27 +72,6 @@ export default function Hero() {
           >
             Try AI Generator
           </Link>
-        </motion.div>
-
-        {/* Preview section */}
-        <motion.div variants={itemVariants} className="mt-16 relative">
-          <div className="bg-gradient-to-b from-[#2A2A2A] to-transparent p-1 rounded-3xl">
-            <div className="bg-[#1E1E1E] rounded-3xl p-8 flex items-center justify-center min-h-80">
-              <div className="text-center">
-                <div className="text-sm text-[#B3B3B3] mb-4">Featured Spaces Preview</div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {["Focus", "Chill", "Calm", "Happy"].map((space) => (
-                    <div
-                      key={space}
-                      className="h-20 bg-[#2A2A2A] rounded-2xl border border-[#C7A36B]/20 hover:border-[#C7A36B]/50 transition flex items-center justify-center text-[#B3B3B3] text-sm"
-                    >
-                      {space}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
         </motion.div>
       </motion.div>
     </section>
