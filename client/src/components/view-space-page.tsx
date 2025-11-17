@@ -1,21 +1,30 @@
+// components/ViewSpacePage.tsx
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
-import { ChevronLeft, Settings, MessageCircle, Sliders, X, Maximize } from 'lucide-react'
+import {
+    ChevronLeft,
+    Settings,
+    MessageCircle,
+    Maximize,
+    SkipBack,
+    SkipForward,
+    Play,
+    Pause,
+} from "lucide-react"
+import SettingsPanel, { SettingsPreview } from "./setting-panel"
 import { mockSpaces } from "@/lib/mock-spaces"
-import { SkipBack, SkipForward, Play, Pause } from "lucide-react"
 
-// FONT IMPORTS
+// fonts (next/font)
 import { Inter, Orbitron, VT323 } from "next/font/google"
-
 const inter = Inter({ subsets: ["latin"] })
 const orbitron = Orbitron({ subsets: ["latin"] })
 const vt323 = VT323({ subsets: ["latin"], weight: "400" })
 
-const fontMap: any = {
+const fontMap: Record<string, string> = {
     Inter: inter.className,
     Orbitron: orbitron.className,
     VT323: vt323.className,
@@ -32,28 +41,28 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
     const [isFullscreen, setIsFullscreen] = useState(false)
     const [isPlaying, setIsPlaying] = useState(false)
 
-    // ------------------------------
-    // LOAD SPACE DATA
-    // ------------------------------
+    // editable preview state
+    const [preview, setPreview] = useState<SettingsPreview | null>(null)
+
     useEffect(() => {
         const found = mockSpaces.find((s) => s.id === Number(spaceId))
-        if (found) setSpace(found)
+        if (found) {
+            setSpace(found)
+            setPreview({
+                clockStyle: found.clockStyle,
+                clockFont: found.clockFont || "Inter",
+                background: found.background || found.img || "/img/calming-ambient-environment.png",
+                layout: "centered-blur",
+            })
+        }
     }, [spaceId])
 
-    // ------------------------------
-    // SCROLL FADE HEADER
-    // ------------------------------
     useEffect(() => {
-        const handleScroll = () => {
-            setHeaderOpacity(Math.max(0, 1 - window.scrollY / 100))
-        }
+        const handleScroll = () => setHeaderOpacity(Math.max(0, 1 - window.scrollY / 100))
         window.addEventListener("scroll", handleScroll)
         return () => window.removeEventListener("scroll", handleScroll)
     }, [])
 
-    // ------------------------------
-    // FULLSCREEN DETECT (F11 + API)
-    // ------------------------------
     const detectFullscreen = () => {
         const domFs = Boolean(document.fullscreenElement)
         const browserFs = window.innerHeight === screen.height
@@ -70,15 +79,9 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
         }
     }, [])
 
-    // ------------------------------
-    // FULLSCREEN TOGGLE BUTTON
-    // ------------------------------
-    const enterFullscreen = () => {
-        if (isFullscreen) return
-        document.documentElement.requestFullscreen?.()
-    }
+    const enterFullscreen = () => document.documentElement.requestFullscreen?.()
 
-    if (!space) {
+    if (!space || !preview) {
         return (
             <div className="w-full h-screen bg-[#1E1E1E] flex items-center justify-center">
                 <p className="text-[#B3B3B3]">Space not found</p>
@@ -86,12 +89,44 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
         )
     }
 
-    const getClockIcon = () => {
-        switch (space.clockStyle) {
-            case "minimal": return "🕐"
-            case "modern": return "⏰"
-            case "retro": return "⌚"
-            default: return "🕐"
+    // layout classes based on selected preset
+    const layoutStyle = useMemo(() => {
+        if (preview.layout === "centered-blur") {
+            return {
+                clockClass: "absolute top-[20%] left-1/2 -translate-x-1/2",
+                playerClass: "absolute top-[48%] left-1/2 -translate-x-1/2",
+                backdropClass: "bg-black/30 backdrop-blur-2xl",
+            }
+        }
+        // corner
+        return {
+            clockClass: "absolute top-12 left-12",
+            playerClass: "absolute bottom-12 left-12",
+            backdropClass: "bg-black/10 backdrop-blur-0",
+        }
+    }, [preview.layout])
+
+    // live preview -> update preview via SettingsPanel
+    const handlePreviewChange = (p: Partial<SettingsPreview>) => {
+        setPreview((prev) => ({ ...(prev as SettingsPreview), ...p }))
+    }
+
+    // Save settings: apply to space (in-memory). You can extend to save server-side.
+    const handleSave = (p: SettingsPreview) => {
+        setSpace((s) => (s ? { ...s, clockStyle: p.clockStyle, clockFont: p.clockFont, background: p.background } : s))
+        // Update preview already handled
+    }
+
+    const getClockIcon = (style: string) => {
+        switch (style) {
+            case "minimal":
+                return "🕐"
+            case "modern":
+                return "⏰"
+            case "retro":
+                return "⌚"
+            default:
+                return "🕐"
         }
     }
 
@@ -102,11 +137,10 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
         >
-
-            {/* BACKGROUND IMAGE */}
+            {/* Background */}
             <div className="absolute inset-0">
                 <Image
-                    src={space.img}
+                    src={preview.background}
                     alt={space.name}
                     fill
                     className="object-cover"
@@ -114,22 +148,17 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
                 />
             </div>
 
-            {/* overlays */}
-            <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/30" />
+            {/* overlay */}
+            <div className="absolute inset-0 bg-black/10" />
 
-            {/* ------------------------------ */}
-            {/* HEADER BUTTONS (hide in FS) */}
-            {/* ------------------------------ */}
+            {/* Header */}
             {!isFullscreen && (
                 <>
-                    {/* back button */}
                     <motion.div
                         className="absolute top-8 left-8 z-20"
                         style={{ opacity: headerOpacity }}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.6, delay: 0.2 }}
                     >
                         <Link
                             href="/dashboard"
@@ -140,32 +169,16 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
                         </Link>
                     </motion.div>
 
-                    {/* Title — adapted for fullscreen */}
-                    <motion.h1
-                        className={`font-bold text-white 
-              ${isFullscreen
-                                ? "absolute top-8 left-8 text-xl md:text-2xl text-left"
-                                : " text-4xl md:text-2xl absolute z-30 top-20 left-10 text-center mb-8"
-                            }`}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.4 }}
-                    >
-                        {space.name}
-                    </motion.h1>
-
-                    {/* right buttons */}
                     <motion.div
                         className="absolute top-8 right-8 z-20 flex flex-col gap-4"
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.6, delay: 0.2 }}
                     >
                         <button
-                            onClick={() => setShowSettings(!showSettings)}
-                            className="p-3 bg-black/40 backdrop-blur-lg rounded-xl text-white hover:bg-white/20 transition border border-white/20 group"
+                            onClick={() => setShowSettings(true)}
+                            className="p-3 bg-black/40 backdrop-blur-lg rounded-xl text-white hover:bg-white/20 transition border border-white/20"
                         >
-                            <Settings size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+                            <Settings size={20} />
                         </button>
 
                         <button
@@ -175,137 +188,95 @@ export default function ViewSpacePage({ spaceId }: ViewSpacePageProps) {
                             <Maximize size={20} />
                         </button>
 
-                        <button
-                            className="p-3 bg-black/40 backdrop-blur-lg rounded-xl text-white hover:bg-white/20 transition border border-white/20"
-                        >
+                        <button className="p-3 bg-black/40 backdrop-blur-lg rounded-xl text-white hover:bg-white/20 transition border border-white/20">
                             <MessageCircle size={20} />
                         </button>
                     </motion.div>
                 </>
             )}
 
-            {/* ------------------------------ */}
-            {/* MAIN CONTENT */}
-            {/* ------------------------------ */}
-            <div className="relative w-full h-screen flex flex-col items-center justify-center px-6">
+            {/* Title */}
+            <motion.h1
+                className={`font-bold text-white ${isFullscreen ? "absolute top-8 left-8 text-xl md:text-2xl" : "text-4xl md:text-5xl text-center mb-8 absolute top-20 left-10 z-30"}`}
+            >
+                {space.name}
+            </motion.h1>
 
-                {/* CLOCK (iOS LOCKSCREEN STYLE + CORRECT FONT) */}
-                <motion.div
-                    className={`absolute top-[20%] cursor-grab active:cursor-grabbing ${fontMap[space.clockFont]}`}
-                    initial={{ opacity: 0, y: -40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.3 }}
-                    drag
-                    dragElastic={0.2}
-                    dragMomentum={false}
-                >
-                    <div className="text-6xl mb-4 text-center">{getClockIcon()}</div>
-                    {/* DATE */}
-                    <p className="text-white/80 text-center text-lg font-light tracking-wide capitalize">
-                        {new Date().toLocaleDateString("en-US", {
-                            weekday: "long",
-                            month: "long",
-                            day: "numeric",
-                        })}
+            {/* CLOCK (draggable) */}
+            <motion.div
+                drag
+                dragElastic={0.2}
+                dragMomentum={false}
+                className={`cursor-grab active:cursor-grabbing ${layoutStyle.clockClass} z-30`}
+            >
+                <div className={`select-none text-center ${fontMap[preview.clockFont]}`}>
+                    <div className="text-6xl mb-2">{getClockIcon(preview.clockStyle)}</div>
+                    <p className="text-white/80 text-lg font-light tracking-wide capitalize">
+                        {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
                     </p>
-
-                    {/* TIME */}
                     <p className="text-white text-6xl md:text-7xl font-semibold mt-1 leading-none">
-                        {new Date().toLocaleTimeString("en-US", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                        })}
+                        {new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                     </p>
-                </motion.div>
+                </div>
+            </motion.div>
 
-                {/* SPOTIFY LOCKSCREEN PLAYER */}
-                <motion.div
-                    className={`absolute ${isFullscreen ? "top-[44%]" : "top-[48%]"} w-full max-w-sm bg-black/20 backdrop-blur-2xl rounded-3xl p-5 border border-white/10 shadow-xl`}
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.5 }}
-                    drag
-                    dragElastic={0.2}
-                    dragMomentum={false}
+            {/* PLAYER (draggable) */}
+            <motion.div
+                drag
+                dragElastic={0.2}
+                dragMomentum={false}
+                className={`z-30 ${layoutStyle.playerClass} w-full max-w-sm rounded-3xl p-5 border border-white/10 shadow-xl ${preview.layout === "centered-blur" ? "bg-black/30 backdrop-blur-2xl" : "bg-black/10"}`}
+            >
+                {/* Track info */}
+                <div className="mb-3">
+                    <p className="text-white text-lg font-semibold">{space.currentTrack}</p>
+                    <p className="text-white/60 text-sm mt-1">{space.artist}</p>
+                </div>
 
-                >
-
-                    {/* TRACK INFO */}
-                    <div className="mb-4">
-                        <p className="text-white text-lg font-semibold leading-tight">
-                            {space.currentTrack}
-                        </p>
-                        <p className="text-white/60 text-sm mt-1">
-                            {space.artist}
-                        </p>
+                {/* Progress */}
+                <div>
+                    <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={40}
+                        onChange={() => { }}
+                        className="w-full accent-white cursor-pointer"
+                        aria-label="progress"
+                    />
+                    <div className="flex justify-between text-white/50 text-xs mt-1">
+                        <span>2:49</span>
+                        <span>5:56</span>
                     </div>
+                </div>
 
-                    {/* PROGRESS BAR */}
-                    <div>
-                        <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            value={40}
-                            className="w-full accent-white cursor-pointer"
-                        />
-                        <div className="flex justify-between text-white/50 text-xs mt-1">
-                            <span>2:49</span>
-                            <span>5:56</span>
-                        </div>
-                    </div>
+                {/* Controls */}
+                <div className="flex items-center justify-center gap-10 mt-6 text-white">
+                    <button className="opacity-80 hover:opacity-100 transition">
+                        <SkipBack size={28} />
+                    </button>
 
-                    {/* CONTROLS */}
-                    <div className="flex items-center justify-center gap-10 mt-6 text-white">
-                        <button className="opacity-80 hover:opacity-100 transition">
-                            <SkipBack size={28} />
-                        </button>
+                    <button
+                        onClick={() => setIsPlaying((v) => !v)}
+                        className="opacity-90 hover:opacity-100 transition"
+                    >
+                        {isPlaying ? <Pause size={40} /> : <Play size={40} />}
+                    </button>
 
-                        <button
-                            onClick={() => setIsPlaying(!isPlaying)}
-                            className="opacity-90 hover:opacity-100 transition"
-                        >
-                            {isPlaying ? <Pause size={40} /> : <Play size={40} />}
-                        </button>
+                    <button className="opacity-80 hover:opacity-100 transition">
+                        <SkipForward size={28} />
+                    </button>
+                </div>
+            </motion.div>
 
-                        <button className="opacity-80 hover:opacity-100 transition">
-                            <SkipForward size={28} />
-                        </button>
-                    </div>
-                </motion.div>
-            </div>
-
-            {/* SETTINGS PANEL */}
-            <AnimatePresence>
-                {showSettings && (
-                    <>
-                        <motion.div
-                            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setShowSettings(false)}
-                        />
-
-                        <motion.div
-                            className="fixed top-0 right-0 h-screen w-full sm:w-96 bg-gradient-to-b from-[#2A2A2A] to-[#1E1E1E] border-l border-[#C7A36B]/20 z-40 overflow-y-auto"
-                            initial={{ x: 400 }}
-                            animate={{ x: 0 }}
-                            exit={{ x: 400 }}
-                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        >
-                            <button
-                                onClick={() => setShowSettings(false)}
-                                className="absolute top-6 right-6 p-2 hover:bg-[#2A2A2A] rounded-lg transition"
-                            >
-                                <X size={24} className="text-white" />
-                            </button>
-
-                            {/* ... giữ nội dung setting nguyên ... */}
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
+            {/* Settings panel */}
+            <SettingsPanel
+                open={showSettings}
+                onClose={() => setShowSettings(false)}
+                initial={preview}
+                onPreviewChange={handlePreviewChange}
+                onSave={handleSave}
+            />
         </motion.div>
     )
 }
