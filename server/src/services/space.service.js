@@ -5,6 +5,7 @@ import backgroundRepository from '../db/repositories/background.repository.js';
 import clockFontRepository from '../db/repositories/clockFont.repository.js';
 import textFontRepository from '../db/repositories/textFont.repository.js';
 import {ErrorCodes} from '../constants/errorCodes.js';
+import logger from '../config/logger.js';
 
 const spaceService = {
   async createSpace(data) {
@@ -13,7 +14,7 @@ const spaceService = {
       name,
       tags,
       description,
-      background_id,
+      background_url,
       clock_font_id,
       text_font_name,
       playlist_ids = [],
@@ -45,15 +46,24 @@ const spaceService = {
       throw error;
     }
 
-    // Validate and set background (or use default)
-    let validatedBackgroundId = background_id;
-    if (background_id) {
-      const background = await backgroundRepository.findById(background_id);
-      if (!background || background.is_deleted) {
-        const error = new Error('Invalid background ID');
-        error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
-        error.statusCode = 422;
-        throw error;
+    // Handle background URL
+    let validatedBackgroundId = null;
+
+    if (background_url) {
+      try {
+        // Create background record with the provided URL
+        const newBackground = await backgroundRepository.create({
+          background_url: background_url,
+        });
+
+        validatedBackgroundId = newBackground.id;
+        logger.info(`Background created for space with URL: ${background_url}`);
+      } catch (error) {
+        logger.error(`Failed to create background: ${error.message}`);
+        const err = new Error(`Failed to create background: ${error.message}`);
+        err.code = ErrorCodes.SPACE_VALIDATION_FAILED;
+        err.statusCode = 400;
+        throw err;
       }
     } else {
       // Get default background
@@ -167,7 +177,14 @@ const spaceService = {
       throw error;
     }
 
-    const { metadata, appearance, tags, playlist_links, widgets } = data;
+    const {
+      metadata,
+      appearance,
+      tags,
+      playlist_links,
+      widgets,
+    } = data;
+
     const spaceData = {};
     let tagIds = null;
     let playlistLinksAdd = [];
@@ -186,17 +203,27 @@ const spaceService = {
 
     // Process appearance updates
     if (appearance) {
-      if (appearance.background_id !== undefined) {
-        if (appearance.background_id) {
-          const background = await backgroundRepository.findById(appearance.background_id);
-          if (!background || background.is_deleted) {
-            const error = new Error('Invalid background ID');
-            error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
-            error.statusCode = 422;
-            throw error;
+      // Handle background URL
+      if (appearance.background_url !== undefined) {
+        if (appearance.background_url) {
+          try {
+            // Create new background record with the provided URL
+            const newBackground = await backgroundRepository.create({
+              background_url: appearance.background_url,
+            });
+
+            spaceData.background_id = newBackground.id;
+            logger.info(`Background created for space update with URL: ${appearance.background_url}`);
+          } catch (error) {
+            logger.error(`Failed to create background: ${error.message}`);
+            const err = new Error(`Failed to create background: ${error.message}`);
+            err.code = ErrorCodes.SPACE_VALIDATION_FAILED;
+            err.statusCode = 400;
+            throw err;
           }
+        } else {
+          spaceData.background_id = null;
         }
-        spaceData.background_id = appearance.background_id;
       }
 
       if (appearance.clock_font_id !== undefined) {

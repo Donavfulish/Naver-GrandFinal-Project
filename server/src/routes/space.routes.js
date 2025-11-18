@@ -22,13 +22,8 @@ router.post("/", validate(createSpaceSchema), spaceController.create);
 // GET /api/space/:id - Get space by ID
 router.get("/:id", validate(spaceIdSchema, 'params'), spaceController.getById);
 
-// PATCH /api/space/:id - Update space (metadata, appearance, tags, playlists, widgets)
-router.patch(
-  "/:id",
-  validate(spaceIdSchema, 'params'),
-  validate(updateSpaceSchema),
-  spaceController.update
-);
+// PATCH /api/space/:id - Update space
+router.patch("/:id", validate(spaceIdSchema, 'params'), validate(updateSpaceSchema), spaceController.update);
 
 // DELETE /api/space/:id - Soft delete space
 router.delete("/:id", validate(spaceIdSchema, 'params'), spaceController.delete);

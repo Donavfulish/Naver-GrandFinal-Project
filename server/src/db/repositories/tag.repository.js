@@ -11,7 +11,14 @@ const tagRepository = {
     return await prisma.tag.findUnique({
       where: { id },
       include: {
-        space_tags: { include: { space: true } },
+        space_tags: {
+          where: { is_deleted: false },
+          include: {
+            space: {
+              where: { is_deleted: false },
+            },
+          },
+        },
       },
     });
   },
@@ -23,20 +30,17 @@ const tagRepository = {
   },
 
   async findAll() {
-    return await prisma.tag.findMany();
+    return await prisma.tag.findMany({
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
   },
 
   async update(id, data) {
     return await prisma.tag.update({
       where: { id },
       data,
-    });
-  },
-
-  async delete(id) {
-    return await prisma.tag.update({
-      where: { id },
-      data: { is_deleted: true },
     });
   },
 

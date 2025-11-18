@@ -7,7 +7,12 @@ const playlistRepository = {
       include: {
         space: true,
         playlist_tracks: {
-          include: { track: true },
+          where: { is_deleted: false },
+          include: {
+            track: {
+              where: { is_deleted: false },
+            },
+          },
           orderBy: { track_order: 'asc' },
         },
       },
@@ -16,11 +21,19 @@ const playlistRepository = {
 
   async findById(id) {
     return await prisma.playlist.findUnique({
-      where: { id },
+      where: {
+        id,
+        is_deleted: false,
+      },
       include: {
         space: true,
         playlist_tracks: {
-          include: { track: true },
+          where: { is_deleted: false },
+          include: {
+            track: {
+              where: { is_deleted: false },
+            },
+          },
           orderBy: { track_order: 'asc' },
         },
       },
@@ -29,23 +42,42 @@ const playlistRepository = {
 
   async findAll(filters = {}) {
     return await prisma.playlist.findMany({
-      where: filters,
+      where: {
+        ...filters,
+        is_deleted: false,
+      },
       include: {
         space: true,
         playlist_tracks: {
-          include: { track: true },
+          where: { is_deleted: false },
+          include: {
+            track: {
+              where: { is_deleted: false },
+            },
+          },
           orderBy: { track_order: 'asc' },
         },
+      },
+      orderBy: {
+        created_at: 'desc',
       },
     });
   },
 
   async findBySpaceId(spaceId) {
     return await prisma.playlist.findMany({
-      where: { space_id: spaceId },
+      where: {
+        space_id: spaceId,
+        is_deleted: false,
+      },
       include: {
         playlist_tracks: {
-          include: { track: true },
+          where: { is_deleted: false },
+          include: {
+            track: {
+              where: { is_deleted: false },
+            },
+          },
           orderBy: { track_order: 'asc' },
         },
       },
@@ -54,14 +86,20 @@ const playlistRepository = {
 
   async update(id, data) {
     return await prisma.playlist.update({
-      where: { id },
+      where: {
+        id,
+        is_deleted: false,
+      },
       data,
     });
   },
 
   async delete(id) {
     return await prisma.playlist.update({
-      where: { id },
+      where: {
+        id,
+        is_deleted: false,
+      },
       data: { is_deleted: true },
     });
   },
@@ -78,10 +116,14 @@ const playlistRepository = {
   },
 
   async removeTrack(playlistId, trackId) {
-    return await prisma.playlistTrack.deleteMany({
+    return await prisma.playlistTrack.updateMany({
       where: {
         playlist_id: playlistId,
         track_id: trackId,
+        is_deleted: false,
+      },
+      data: {
+        is_deleted: true,
       },
     });
   },

@@ -11,7 +11,7 @@ const router = express.Router();
 // GET /api/search/spaces
 router.get(
   "/spaces",
-  validate({ query: searchSpacesSchema }),
+  validate(searchSpacesSchema, 'query'),
   asyncHandler(async (req, res) => {
     const { q, title, tag, author, limit = 20, offset = 0 } = req.query;
 

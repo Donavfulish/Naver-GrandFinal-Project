@@ -13,6 +13,9 @@ const clockFontRepository = {
   async findAll() {
     return await prisma.clockFont.findMany({
       where: { is_deleted: false },
+      orderBy: {
+        created_at: 'desc',
+      },
     });
   },
 
@@ -31,14 +34,20 @@ const clockFontRepository = {
 
   async update(id, data) {
     return await prisma.clockFont.update({
-      where: { id },
+      where: {
+        id,
+        is_deleted: false,
+      },
       data,
     });
   },
 
   async delete(id) {
     return await prisma.clockFont.update({
-      where: { id },
+      where: {
+        id,
+        is_deleted: false,
+      },
       data: { is_deleted: true },
     });
   },

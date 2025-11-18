@@ -7,19 +7,21 @@ const backgroundService = {
 
   async getBackgroundById(id) {
     const background = await backgroundRepository.findById(id);
-    if (!background) {
+    if (!background || background.is_deleted) {
       throw new Error('Background not found');
     }
     return background;
   },
 
   async getAllBackgrounds() {
-    return await backgroundRepository.findAll();
+    return await backgroundRepository.findAll({
+      where: { is_deleted: false }
+    });
   },
 
   async updateBackground(id, data) {
     const background = await backgroundRepository.findById(id);
-    if (!background) {
+    if (!background || background.is_deleted) {
       throw new Error('Background not found');
     }
     return await backgroundRepository.update(id, data);
@@ -27,13 +29,12 @@ const backgroundService = {
 
   async deleteBackground(id) {
     const background = await backgroundRepository.findById(id);
-    if (!background) {
+    if (!background || background.is_deleted) {
       throw new Error('Background not found');
     }
-    await backgroundRepository.delete(id);
+    await backgroundRepository.update(id, { is_deleted: true });
     return { message: 'Background deleted successfully' };
   },
 };
 
 export default backgroundService;
-

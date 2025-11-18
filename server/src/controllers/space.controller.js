@@ -83,7 +83,40 @@ const spaceController = {
     }
   }),
 
-  // PATCH /api/space/:id - Update space (metadata, appearance, tags, playlists, widgets)
+  // DELETE /api/space/:id - Soft delete space
+  delete: asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    try {
+      await spaceService.deleteSpace(id);
+
+      res.status(200).json({
+        success: true,
+        data: { message: 'Space deleted successfully' },
+      });
+    } catch (error) {
+      if (error.code === ErrorCodes.SPACE_NOT_FOUND) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: ErrorCodes.SPACE_DELETE_FAILED,
+          message: 'Failed to delete space',
+          details: error.message,
+        },
+      });
+    }
+  }),
+
+  // PATCH /api/space/:id - Update space
   update: asyncHandler(async (req, res) => {
     const { id } = req.params;
 
@@ -125,40 +158,6 @@ const spaceController = {
       });
     }
   }),
-
-  // DELETE /api/space/:id - Soft delete space
-  delete: asyncHandler(async (req, res) => {
-    const { id } = req.params;
-
-    try {
-      await spaceService.deleteSpace(id);
-
-      res.status(200).json({
-        success: true,
-        data: { message: 'Space deleted successfully' },
-      });
-    } catch (error) {
-      if (error.code === ErrorCodes.SPACE_NOT_FOUND) {
-        return res.status(404).json({
-          success: false,
-          error: {
-            code: error.code,
-            message: error.message,
-          },
-        });
-      }
-
-      return res.status(500).json({
-        success: false,
-        error: {
-          code: ErrorCodes.SPACE_DELETE_FAILED,
-          message: 'Failed to delete space',
-          details: error.message,
-        },
-      });
-    }
-  }),
 };
 
 export default spaceController;
-

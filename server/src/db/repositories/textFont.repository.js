@@ -13,6 +13,9 @@ const textFontRepository = {
   async findAll() {
     return await prisma.textFont.findMany({
       where: { is_deleted: false },
+      orderBy: {
+        created_at: 'desc',
+      },
     });
   },
 
@@ -31,14 +34,20 @@ const textFontRepository = {
 
   async update(id, data) {
     return await prisma.textFont.update({
-      where: { id },
+      where: {
+        id,
+        is_deleted: false,
+      },
       data,
     });
   },
 
   async delete(id) {
     return await prisma.textFont.update({
-      where: { id },
+      where: {
+        id,
+        is_deleted: false,
+      },
       data: { is_deleted: true },
     });
   },

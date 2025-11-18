@@ -33,8 +33,8 @@ export const createSpaceSchema = Joi.object({
   description: Joi.string().max(1000).allow(null, '').messages({
     'string.max': 'Description must not exceed 1000 characters',
   }),
-  background_id: Joi.string().uuid().allow(null).messages({
-    'string.uuid': 'Invalid background ID format',
+  background_url: Joi.string().uri().allow(null, '').messages({
+    'string.uri': 'Invalid background URL format',
   }),
   clock_font_id: Joi.string().uuid().allow(null).messages({
     'string.uuid': 'Invalid clock font ID format',
@@ -60,8 +60,8 @@ export const updateSpaceSchema = Joi.object({
     }),
   }).optional(),
   appearance: Joi.object({
-    background_id: Joi.string().uuid().allow(null).messages({
-      'string.uuid': 'Invalid background ID format',
+    background_url: Joi.string().uri().allow(null, '').messages({
+      'string.uri': 'Invalid background URL format',
     }),
     clock_font_id: Joi.string().uuid().allow(null).messages({
       'string.uuid': 'Invalid clock font ID format',

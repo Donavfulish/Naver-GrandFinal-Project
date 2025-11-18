@@ -15,7 +15,8 @@
     "db:reset": "npx prisma migrate reset --force",
     "db:seed": "node prisma/seed.js",
     "db:setup": "npm run db:migrate && npm run db:seed",
-    "db:refresh": "npm run db:reset && npm run db:seed"
+    "db:refresh": "npm run db:reset && npm run db:seed",
+    "db:init": "node src/db/system/track.system.js && node src/db/system/background.system.js"
   },
   "author": "",
   "license": "ISC",
