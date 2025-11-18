@@ -3,21 +3,6 @@ import asyncHandler from '../middleware/asyncHandler.js';
 import { ErrorCodes } from '../constants/errorCodes.js';
 
 const spaceController = {
-  // GET /api/space - Get all spaces with optional filtering
-  getAll: asyncHandler(async (req, res) => {
-    const filters = {};
-    if (req.query.user_id) {
-      filters.user_id = req.query.user_id;
-    }
-
-    const spaces = await spaceService.getAllSpaces(filters);
-
-    res.status(200).json({
-      success: true,
-      data: spaces,
-    });
-  }),
-
   // GET /api/space/:id - Get space by ID
   getById: asyncHandler(async (req, res) => {
     const { id } = req.params;
