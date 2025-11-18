@@ -3,6 +3,7 @@ import authRoutes from './auth.routes.js';
 import userRoutes from './user.routes.js';
 import spaceRoutes from './space.routes.js';
 import trackRoutes from './track.routes.js';
+import aiRoutes from './ai.routes.js';
 
 const router = express.Router();
 
@@ -11,6 +12,7 @@ router.use('/auth', authRoutes);       // /api/auth/*
 router.use('/users', userRoutes);      // /api/users/*
 router.use('/spaces', spaceRoutes);     // /api/spaces/*
 router.use('/tracks', trackRoutes);     // /api/tracks/*
+router.use('/ai', aiRoutes);            // /api/ai/*
 
 
 export default router;

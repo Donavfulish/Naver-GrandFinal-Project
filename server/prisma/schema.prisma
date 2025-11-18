@@ -31,7 +31,6 @@ model Space {
   clock_font_id String?
   text_font_id  String?
   is_deleted    Boolean  @default(false)
-  ai_genarated  String?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
@@ -40,10 +39,11 @@ model Space {
   text       TextFont?   @relation(fields: [text_font_id], references: [id])
   background Background? @relation(fields: [background_id], references: [id])
 
-  widget_positions WidgetPosition[]
-  playlists        Playlist[]
-  space_tags       SpaceTag[]
-  notes            Note[]
+  widget_positions   WidgetPosition[]
+  playlists          Playlist[]
+  space_tags         SpaceTag[]
+  notes              Note[]
+  AiGeneratedContent AiGeneratedContent[]
 
   @@index([user_id])
   @@index([background_id])
@@ -204,4 +204,18 @@ model SpaceTag {
   @@index([tag_id])
   @@index([space_id])
   @@map("space_tags")
+}
+
+model AiGeneratedContent {
+  id         String   @id @default(uuid())
+  space_id   String
+  prompt     String?
+  content    String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  space Space @relation(fields: [space_id], references: [id])
+
+  @@index([space_id])
+  @@map("ai_generated_contents")
 }

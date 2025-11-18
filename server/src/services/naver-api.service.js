@@ -22,6 +22,7 @@ class NaverApiService {
     this.retryDelay = 1000; // Initial delay in milliseconds
   }
 
+
   /**
    * Sleep utility for retry delays
    * @param {number} ms - Milliseconds to sleep
@@ -284,7 +285,79 @@ class NaverApiService {
       throw error;
     }
   }
+
+  /**
+   * Generate space configuration from user prompt using NAVER CLOVA Studio
+   * @param {string} prompt - User's prompt describing the desired space
+   * @param {Object} context - Context containing available options
+   * @param {Array<string>} context.emotions - Available emotion keywords
+   * @param {Array<string>} context.tags - Available tag keywords
+   * @param {Array<string>} context.textFonts - Available text fonts
+   * @param {Array<string>} context.clockFonts - Available clock fonts
+   * @returns {Promise<Object>} AI generated space configuration
+   * @returns {string} return.name - Generated space name
+   * @returns {string} return.description - Generated space description
+   * @returns {string} return.clockFont - Selected clock font name
+   * @returns {string} return.textFont - Selected text font name
+   * @returns {Array<string>} return.emotions - Selected emotions (2-4 items)
+   * @returns {Array<string>} return.tags - Selected tags (3-6 items)
+   */
+  async generateSpaceFromPrompt(prompt, context) {
+    // TODO: Implement AI-based space generation
+    // This method should:
+    // 1. Construct a system prompt with context (emotions, tags, fonts)
+    // 2. Call chatCompletion with user's prompt
+    // 3. Parse AI response to extract: name, description, clockFont, textFont, emotions, tags
+    // 4. Validate and return structured response
+
+    // Temporary implementation - will be replaced with actual AI logic
+    const messages = [
+      {
+        role: 'system',
+        content: `You are a space designer AI. Based on user's description, generate a space configuration.
+Available emotions: ${context.emotions.join(', ')}
+Available tags: ${context.tags.join(', ')}
+Available text fonts: ${context.textFonts.join(', ')}
+Available clock fonts: ${context.clockFonts.join(', ')}
+
+Respond in JSON format:
+{
+  "name": "space name",
+  "description": "space description",
+  "clockFont": "selected clock font",
+  "textFont": "selected text font",
+  "emotions": ["emotion1", "emotion2"],
+  "tags": ["tag1", "tag2", "tag3"]
+}`
+      },
+      {
+        role: 'user',
+        content: prompt
+      }
+    ];
+
+    const response = await this.chatCompletion(messages, {
+      temperature: 0.7,
+      maxTokens: 1000
+    });
+
+    // Parse JSON response
+    try {
+      const parsed = JSON.parse(response);
+      return parsed;
+    } catch (error) {
+      logger.error('[NAVER API] Failed to parse AI response', { error: error.message, response });
+      // Fallback to mock response
+      return {
+        name: `AI Generated Space`,
+        description: `Space created based on: ${prompt.substring(0, 100)}`,
+        clockFont: context.clockFonts[0],
+        textFont: context.textFonts[0],
+        emotions: ['calm', 'peaceful'],
+        tags: ['ambient', 'relax', 'focus']
+      };
+    }
+  }
 }
 
 export default new NaverApiService();
-

@@ -1,19 +1,10 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { CLOCK_FONTS } from '../../constants/state.js';
 
 const prisma = new PrismaClient();
 
-const CLOCK_FONTS = [
-  'Roboto',
-  'Momo signature',
-  'Permanent Marker',
-  'Indie Flower',
-  'Edu TAS Beginner',
-  'Andika',
-  'Hanalei Fill',
-  'Spectral',
-  'Special Elite'
-];
+
 
 async function importClockFonts() {
   try {

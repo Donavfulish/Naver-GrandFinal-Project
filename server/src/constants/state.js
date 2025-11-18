@@ -156,3 +156,28 @@ export const TAG_KEYWORDS = [
     'ambient-sound',
     'soundscape'
 ];
+
+export const TEXT_FONTS = [
+    'Roboto',
+    'Momo signature',
+    'Permanent Marker',
+    'Indie Flower',
+    'Edu TAS Beginner',
+    'Andika',
+    'Hanalei Fill',
+    'Spectral',
+    'Special Elite'
+];
+
+
+export const CLOCK_FONTS = [
+    'Roboto',
+    'Momo signature',
+    'Permanent Marker',
+    'Indie Flower',
+    'Edu TAS Beginner',
+    'Andika',
+    'Hanalei Fill',
+    'Spectral',
+    'Special Elite'
+];
