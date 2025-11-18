@@ -95,6 +95,7 @@ model Background {
 model Track {
   id         String      @id @default(uuid())
   name       String
+  thumbnail  String?
   track_url  String
   emotion    String[]    @default([])
   tags       String[]    @default([])
@@ -115,7 +116,7 @@ model Note {
   note_order Int
   is_delete  Boolean  @default(false)
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at DateTime @default(now())
 
   space Space @relation(fields: [space_id], references: [id])
 
@@ -127,7 +128,7 @@ model Tag {
   id         String   @id @default(uuid())
   name       String   @unique
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at DateTime @default(now())
 
   space_tags SpaceTag[]
 
@@ -139,7 +140,7 @@ model ClockFont {
   font_name  String
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at DateTime @default(now())
 
   spaces Space[]
 
@@ -151,7 +152,7 @@ model TextFont {
   font_name  String
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at DateTime @default(now())
 
   spaces Space[]
 
@@ -164,7 +165,7 @@ model WidgetPosition {
   position   Json
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at DateTime @default(now())
 
   space Space @relation(fields: [space_id], references: [id])
 
@@ -179,7 +180,7 @@ model PlaylistTrack {
   track_order Int
   is_deleted  Boolean  @default(false)
   created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  updated_at  DateTime @default(now())
 
   playlist Playlist @relation(fields: [playlist_id], references: [id])
   track    Track    @relation(fields: [track_id], references: [id])

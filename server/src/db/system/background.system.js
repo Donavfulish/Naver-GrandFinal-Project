@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
+import { EMOTION_KEYWORDS, TAG_KEYWORDS } from '../../constants/state.js';
 
 const prisma = new PrismaClient();
 const BG_DIR = path.join(process.cwd(), 'storage', 'background');
@@ -9,14 +10,13 @@ const BG_DIR = path.join(process.cwd(), 'storage', 'background');
 // Danh sách định dạng ảnh hợp lệ
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
 
-// Một số emotion mẫu
-const EMOTION_SAMPLES = [
-  "Calm", "Happy", "Warm", "Dark", "Energetic",
-  "Peaceful", "Moody", "Inspiring"
-];
+function pickRandom(arr, count = 1) {
+  const shuffled = [...arr].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
 
-function pickRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 async function importAllBackgrounds() {
@@ -36,19 +36,27 @@ async function importAllBackgrounds() {
     for (const file of imageFiles) {
       const filePath = path.join(BG_DIR, file);
 
-      const emotionCount = Math.floor(Math.random() * 3) + 1; // 1 → 3 emotion
-      const emotion = Array.from({ length: emotionCount }, () => pickRandom(EMOTION_SAMPLES));
+      // Random 2-4 emotions từ EMOTION_KEYWORDS
+      const emotionCount = getRandomInt(2, 4);
+      const emotion = pickRandom(EMOTION_KEYWORDS, emotionCount);
+
+      // Random 3-6 tags từ TAG_KEYWORDS
+      const tagCount = getRandomInt(3, 6);
+      const tags = pickRandom(TAG_KEYWORDS, tagCount);
 
       const newBg = await prisma.background.create({
         data: {
           background_url: filePath,
           emotion,
+          tags,
           source: "SYSTEM",
           is_deleted: false,
         },
       });
 
       console.log(`Imported: ${file} -> ID: ${newBg.id}`);
+      console.log(`  Emotions: ${emotion.join(', ')}`);
+      console.log(`  Tags: ${tags.join(', ')}\n`);
     }
 
     console.log('\nHoàn tất import background!');

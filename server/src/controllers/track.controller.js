@@ -8,6 +8,104 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
+ * Get all tracks with preview information
+ * GET /tracks
+ */
+export const getAllTracks = async (req, res) => {
+  try {
+    const { emotion, tags, source, limit = 50, offset = 0 } = req.query;
+
+    // Build filter conditions
+    const whereConditions = {
+      is_deleted: false,
+    };
+
+    // Filter by emotion
+    if (emotion) {
+      whereConditions.emotion = {
+        has: emotion,
+      };
+    }
+
+    // Filter by tags
+    if (tags) {
+      const tagArray = Array.isArray(tags) ? tags : [tags];
+      whereConditions.tags = {
+        hasSome: tagArray,
+      };
+    }
+
+    // Filter by source (SYSTEM or USER)
+    if (source) {
+      whereConditions.source = source.toUpperCase();
+    }
+
+    // Query tracks from database
+    const [tracks, total] = await Promise.all([
+      prisma.track.findMany({
+        where: whereConditions,
+        select: {
+          id: true,
+          name: true,
+          thumbnail: true,
+          track_url: true,
+          emotion: true,
+          tags: true,
+          source: true,
+          created_at: true,
+          updated_at: true,
+        },
+        take: parseInt(limit),
+        skip: parseInt(offset),
+        orderBy: {
+          created_at: 'desc',
+        },
+      }),
+      prisma.track.count({
+        where: whereConditions,
+      }),
+    ]);
+
+    // Transform tracks to include preview/stream URL
+    const tracksWithPreview = tracks.map(track => ({
+      id: track.id,
+      name: track.name,
+      thumbnail: track.thumbnail,
+      emotion: track.emotion,
+      tags: track.tags,
+      source: track.source,
+      preview_url: `/api/tracks/${track.id}/stream`,
+      is_external: track.track_url.startsWith('http://') || track.track_url.startsWith('https://'),
+      created_at: track.created_at,
+      updated_at: track.updated_at,
+    }));
+
+    logger.info(`Retrieved ${tracks.length} tracks (total: ${total})`);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        tracks: tracksWithPreview,
+        pagination: {
+          total,
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          hasMore: parseInt(offset) + tracks.length < total,
+        },
+      },
+    });
+
+  } catch (error) {
+    logger.error(`Error in getAllTracks: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve tracks',
+      error: error.message,
+    });
+  }
+};
+
+/**
  * Stream a track by ID
  * GET /tracks/:id/stream
  */
@@ -157,4 +255,3 @@ export const streamTrack = async (req, res) => {
     }
   }
 };
-

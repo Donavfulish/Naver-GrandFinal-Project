@@ -16,8 +16,6 @@ async function main() {
   await prisma.track.deleteMany();
   await prisma.background.deleteMany();
   await prisma.tag.deleteMany();
-  await prisma.clockFont.deleteMany();
-  await prisma.textFont.deleteMany();
   await prisma.user.deleteMany();
 
   console.log('Cleared existing data');
@@ -36,20 +34,26 @@ async function main() {
 
   console.log('Created user:', user.email);
 
-  // Create fonts
-  const clockFonts = await Promise.all([
-    prisma.clockFont.create({ data: { font_name: 'Roboto', is_deleted: false } }),
-    prisma.clockFont.create({ data: { font_name: 'Arial', is_deleted: false } }),
-    prisma.clockFont.create({ data: { font_name: 'Times New Roman', is_deleted: false } }),
-  ]);
+  // Query existing fonts (đã được import từ system files)
+  const clockFonts = await prisma.clockFont.findMany({
+    where: { is_deleted: false },
+    take: 9, // Lấy tối đa 9 fonts
+  });
 
-  const textFonts = await Promise.all([
-    prisma.textFont.create({ data: { font_name: 'Open Sans', is_deleted: false } }),
-    prisma.textFont.create({ data: { font_name: 'Lato', is_deleted: false } }),
-    prisma.textFont.create({ data: { font_name: 'Montserrat', is_deleted: false } }),
-  ]);
+  const textFonts = await prisma.textFont.findMany({
+    where: { is_deleted: false },
+    take: 9, // Lấy tối đa 9 fonts
+  });
 
-  console.log('Created fonts');
+  if (clockFonts.length === 0 || textFonts.length === 0) {
+    console.error('⚠️ Không tìm thấy fonts trong database!');
+    console.error('Hãy chạy system files trước:');
+    console.error('  node src/db/system/clockFont.system.js');
+    console.error('  node src/db/system/textFont.system.js');
+    throw new Error('Fonts not found in database');
+  }
+
+  console.log(`Found ${clockFonts.length} clock fonts and ${textFonts.length} text fonts`);
 
   // Create backgrounds
   const backgrounds = await Promise.all([
@@ -107,6 +111,7 @@ async function main() {
     prisma.track.create({
       data: {
         name: 'Lofi Hip Hop Beat',
+        thumbnail: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d',
         track_url: 'https://example.com/tracks/lofi-beat.mp3',
         emotion: ['calm', 'focused'],
         tags: ['lofi', 'study'],
@@ -117,6 +122,7 @@ async function main() {
     prisma.track.create({
       data: {
         name: 'Jazz Piano',
+        thumbnail: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0',
         track_url: 'https://example.com/tracks/jazz-piano.mp3',
         emotion: ['relaxed', 'sophisticated'],
         tags: ['jazz', 'instrumental'],
@@ -127,6 +133,7 @@ async function main() {
     prisma.track.create({
       data: {
         name: 'Ambient Soundscape',
+        thumbnail: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae',
         track_url: 'https://example.com/tracks/ambient.mp3',
         emotion: ['peaceful', 'meditative'],
         tags: ['ambient', 'meditation'],
@@ -137,6 +144,7 @@ async function main() {
     prisma.track.create({
       data: {
         name: 'Upbeat Electronic',
+        thumbnail: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d89',
         track_url: 'https://example.com/tracks/electronic.mp3',
         emotion: ['energetic', 'motivated'],
         tags: ['electronic', 'workout'],
@@ -147,6 +155,7 @@ async function main() {
     prisma.track.create({
       data: {
         name: 'Classical Symphony',
+        thumbnail: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76',
         track_url: 'https://example.com/tracks/classical.mp3',
         emotion: ['focused', 'inspired'],
         tags: ['classical', 'orchestral'],
@@ -223,8 +232,8 @@ async function main() {
       name: 'Creative Studio',
       description: 'Inspiring space for creative work and brainstorming',
       background_id: backgrounds[3].id,
-      clock_font_id: clockFonts[0].id,
-      text_font_id: textFonts[2].id,
+      clock_font_id: clockFonts[3] ? clockFonts[3].id : clockFonts[0].id,
+      text_font_id: textFonts[3] ? textFonts[3].id : textFonts[2].id,
       is_deleted: false,
     },
   });
@@ -237,8 +246,8 @@ async function main() {
       name: 'Beach Vibes',
       description: 'Tropical paradise for a peaceful work environment',
       background_id: backgrounds[4].id,
-      clock_font_id: clockFonts[1].id,
-      text_font_id: textFonts[1].id,
+      clock_font_id: clockFonts[4] ? clockFonts[4].id : clockFonts[1].id,
+      text_font_id: textFonts[4] ? textFonts[4].id : textFonts[1].id,
       is_deleted: false,
     },
   });

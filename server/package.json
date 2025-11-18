@@ -16,7 +16,7 @@
     "db:seed": "node src/db/seed/seed.js",
     "db:setup": "npm run db:migrate && npm run db:seed",
     "db:refresh": "npm run db:reset && npm run db:seed",
-    "db:init": "node src/db/system/track.system.js && node src/db/system/background.system.js"
+    "db:init": "node src/db/system/track.system.js && node src/db/system/background.system.js && node src/db/system/clockFont.system.js  && node src/db/system/textFont.system.js"
   },
   "author": "",
   "license": "ISC",
@@ -28,6 +28,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "joi": "^18.0.1",
+    "music-metadata": "^11.10.1",
     "node-cache": "^5.1.2",
     "prisma": "^6.19.0",
     "winston": "^3.18.3"

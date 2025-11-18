@@ -2,16 +2,11 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
+import * as mm from 'music-metadata';
+import { EMOTION_KEYWORDS, TAG_KEYWORDS } from '../../constants/state.js';
 
 const prisma = new PrismaClient();
 const TRACK_DIR = path.join(process.cwd(), 'storage', 'track');
-
-// danh sách từ khóa cảm xúc đơn giản
-const EMOTION_KEYWORDS = [
-  'calm', 'relaxing', 'relax', 'soft', 'emotional',
-  'happy', 'sad', 'dark', 'bright', 'chill', 'peaceful',
-  'inspiring', 'inspiration', 'romantic', 'focus'
-];
 
 function capitalizeWords(str) {
   return str
@@ -21,45 +16,96 @@ function capitalizeWords(str) {
     .join(' ');
 }
 
-function extractWords(file) {
-  return file
-    .replace('.mp3', '')
+function extractWords(fileName) {
+  return fileName
+    .toLowerCase()
+    .replace(/\.mp3$/, '')
     .split('-')
-    .filter(Boolean)
-    .map(w => w.toLowerCase());
+    .filter(Boolean);
 }
 
+function pickRandom(arr, count = 1) {
+  const shuffled = [...arr].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// Lấy thumbnail embedded trong metadata của MP3
+async function extractEmbeddedThumbnail(mp3File) {
+  try {
+    const fullPath = path.join(TRACK_DIR, mp3File);
+    const metadata = await mm.parseFile(fullPath);
+
+    const picture = metadata.common.picture?.[0];
+    if (!picture) return null; // ❌ không có thumbnail trong MP3
+
+    const ext = picture.format.includes('png') ? '.png' : '.jpg';
+    const outputFilename = mp3File.replace(/\.mp3$/i, ext);
+    const outputPath = path.join(TRACK_DIR, outputFilename);
+
+    fs.writeFileSync(outputPath, picture.data);
+
+    return outputFilename; // trả về tên file thumbnail
+  } catch (err) {
+    console.error('Lỗi đọc metadata MP3:', err);
+    return null;
+  }
+}
+
+// Import track
 async function importAllTracks() {
   try {
     const files = fs.readdirSync(TRACK_DIR);
     const mp3Files = files.filter(f => f.toLowerCase().endsWith('.mp3'));
 
-    if (!mp3Files.length) {
-      console.log('Không tìm thấy file MP3 nào trong folder:', TRACK_DIR);
+    if (mp3Files.length === 0) {
+      console.log('Không tìm thấy file MP3 nào.');
       return;
     }
 
-    console.log(`Tìm thấy ${mp3Files.length} file MP3. Bắt đầu import...`);
+    console.log(`Tìm thấy ${mp3Files.length} file MP3. Bắt đầu import...\n`);
 
     for (const file of mp3Files) {
-      const filePath = path.join(TRACK_DIR, file);
       const words = extractWords(file);
+      const name = capitalizeWords(path.parse(file).name);
 
-      // name đẹp
-      const name = capitalizeWords(file.replace('.mp3', ''));
+      // 🔥 CHỈ ĐỌC METADATA – KHÔNG tìm ảnh rời
+      const thumbnail = await extractEmbeddedThumbnail(file);
 
-      // emotion = từ khớp keyword cảm xúc
-      const emotion = words.filter(w => EMOTION_KEYWORDS.includes(w));
+      // Lấy emotion từ filename nếu có trong EMOTION_KEYWORDS
+      const extractedEmotions = words.filter(w => EMOTION_KEYWORDS.includes(w));
 
-      // tags = toàn bộ từ
-      const tags = words;
+      // Nếu không đủ emotion từ filename, random thêm để đảm bảo có ít nhất 2-3 emotions
+      const emotionCount = Math.max(2, extractedEmotions.length);
+      const randomEmotions = pickRandom(
+        EMOTION_KEYWORDS.filter(e => !extractedEmotions.includes(e)),
+        Math.max(0, emotionCount - extractedEmotions.length)
+      );
+      const emotion = [...new Set([...extractedEmotions, ...randomEmotions])];
 
-      console.log(`Import: ${file}`);
+      // Lấy tags từ filename nếu có trong TAG_KEYWORDS
+      const extractedTags = words.filter(w => TAG_KEYWORDS.includes(w));
+
+      // Nếu không đủ tags từ filename, random thêm để đảm bảo có ít nhất 3-5 tags
+      const tagCount = Math.max(3, extractedTags.length);
+      const randomTags = pickRandom(
+        TAG_KEYWORDS.filter(t => !extractedTags.includes(t)),
+        Math.max(0, tagCount - extractedTags.length)
+      );
+      const tags = [...new Set([...extractedTags, ...randomTags])];
+
+      console.log(`Import: ${file} → ${thumbnail ? `embedded thumbnail: ${thumbnail}` : 'no thumbnail in metadata'}`);
+      console.log(`  Emotions: ${emotion.join(', ')}`);
+      console.log(`  Tags: ${tags.join(', ')}\n`);
 
       await prisma.track.create({
         data: {
           name,
-          track_url: filePath,
+          thumbnail: thumbnail ? `track/${thumbnail}` : null,
+          track_url: `track/${file}`,
           emotion,
           tags,
           source: 'SYSTEM',
@@ -68,7 +114,7 @@ async function importAllTracks() {
       });
     }
 
-    console.log('Hoàn tất import!');
+    console.log('\nHoàn tất import!');
   } catch (error) {
     console.error('Lỗi khi import track:', error);
   } finally {
