@@ -50,9 +50,27 @@ const spaceRepository = {
         where: { id: space.id },
         include: {
           user: { select: { id: true, name: true, email: true } },
-          background: true,
-          clock: true,
-          text: true,
+          background: {
+            select: {
+              id: true,
+              background_url: true,
+              emotion: true,
+              tags: true,
+              source: true,
+            },
+          },
+          clock: {
+            select: {
+              id: true,
+              font_name: true,
+            },
+          },
+          text: {
+            select: {
+              id: true,
+              font_name: true,
+            },
+          },
           widget_positions: {
             where: { is_deleted: false },
           },
@@ -70,6 +88,17 @@ const spaceRepository = {
             where: { is_deleted: false },
             include: { tag: true },
           },
+          notes: {
+            where: { is_delete: false },
+            select: {
+              id: true,
+              content: true,
+              note_order: true,
+              created_at: true,
+              updated_at: true,
+            },
+            orderBy: { note_order: 'asc' },
+          },
         },
       });
     });
@@ -83,9 +112,27 @@ const spaceRepository = {
       },
       include: {
         user: { select: { id: true, name: true, email: true } },
-        background: true,
-        clock: true,
-        text: true,
+        background: {
+          select: {
+            id: true,
+            background_url: true,
+            emotion: true,
+            tags: true,
+            source: true,
+          },
+        },
+        clock: {
+          select: {
+            id: true,
+            font_name: true,
+          },
+        },
+        text: {
+          select: {
+            id: true,
+            font_name: true,
+          },
+        },
         widget_positions: {
           where: { is_deleted: false },
         },
@@ -100,8 +147,18 @@ const spaceRepository = {
           },
         },
         space_tags: {
-          where: { is_deleted: false },
           include: { tag: true },
+        },
+        notes: {
+          where: { is_delete: false },
+          select: {
+            id: true,
+            content: true,
+            note_order: true,
+            created_at: true,
+            updated_at: true,
+          },
+          orderBy: { note_order: 'asc' },
         },
       },
     });
@@ -115,10 +172,40 @@ const spaceRepository = {
       },
       include: {
         user: { select: { id: true, name: true, email: true } },
-        background: true,
+        background: {
+          select: {
+            id: true,
+            background_url: true,
+            emotion: true,
+            tags: true,
+            source: true,
+          },
+        },
+        clock: {
+          select: {
+            id: true,
+            font_name: true,
+          },
+        },
+        text: {
+          select: {
+            id: true,
+            font_name: true,
+          },
+        },
         space_tags: {
-          where: { is_deleted: false },
           include: { tag: true },
+        },
+        notes: {
+          where: { is_delete: false },
+          select: {
+            id: true,
+            content: true,
+            note_order: true,
+            created_at: true,
+            updated_at: true,
+          },
+          orderBy: { note_order: 'asc' },
         },
       },
     });
@@ -217,9 +304,27 @@ const spaceRepository = {
         where: { id },
         include: {
           user: { select: { id: true, name: true, email: true } },
-          background: true,
-          clock: true,
-          text: true,
+          background: {
+            select: {
+              id: true,
+              background_url: true,
+              emotion: true,
+              tags: true,
+              source: true,
+            },
+          },
+          clock: {
+            select: {
+              id: true,
+              font_name: true,
+            },
+          },
+          text: {
+            select: {
+              id: true,
+              font_name: true,
+            },
+          },
           widget_positions: {
             where: { is_deleted: false },
           },
@@ -236,6 +341,17 @@ const spaceRepository = {
           space_tags: {
             where: { is_deleted: false },
             include: { tag: true },
+          },
+          notes: {
+            where: { is_delete: false },
+            select: {
+              id: true,
+              content: true,
+              note_order: true,
+              created_at: true,
+              updated_at: true,
+            },
+            orderBy: { note_order: 'asc' },
           },
         },
       });

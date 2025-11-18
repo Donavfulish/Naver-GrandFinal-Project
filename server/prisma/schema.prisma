@@ -31,6 +31,7 @@ model Space {
   clock_font_id String?
   text_font_id  String?
   is_deleted    Boolean  @default(false)
+  ai_genarated  String?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
@@ -42,6 +43,7 @@ model Space {
   widget_positions WidgetPosition[]
   playlists        Playlist[]
   space_tags       SpaceTag[]
+  notes            Note[]
 
   @@index([user_id])
   @@index([background_id])
@@ -108,11 +110,17 @@ model Track {
 
 model Note {
   id         String   @id @default(uuid())
+  space_id   String
   content    String
   note_order Int
   is_delete  Boolean  @default(false)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  space Space @relation(fields: [space_id], references: [id])
+
+  @@index([space_id])
+  @@map("notes")
 }
 
 model Tag {

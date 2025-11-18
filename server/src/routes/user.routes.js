@@ -52,7 +52,6 @@ router.patch(
   userController.updatePassword
 );
 
-
 // POST /api/users/:id - Delete user
 router.post("/:id", validate(userIdSchema, 'params'), userController.delete);
 

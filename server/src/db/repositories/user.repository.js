@@ -92,6 +92,34 @@ const userRepository = {
         user_id: userId,
         is_deleted: false,
       },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        created_at: true,
+        updated_at: true,
+        background: {
+          select: {
+            id: true,
+            background_url: true,
+            emotion: true,
+            tags: true,
+          },
+        },
+        space_tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
     });
   },
 };

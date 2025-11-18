@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(requestLogger);
 
 // ===== API Routes =====
-app.use('/api', apiRoutes);
+app.use(apiRoutes);
 
 // ===== 404 handler =====
 app.use(notFoundLogger);

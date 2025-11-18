@@ -10,9 +10,6 @@ import {
 
 const router = express.Router();
 
-// TODO: Add authentication middleware
-// TODO: Add ownership verification middleware
-
 // GET /api/space - List spaces with optional filtering
 router.get("/", validate(getSpacesQuerySchema, 'query'), spaceController.getAll);
 
