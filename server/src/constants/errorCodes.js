@@ -45,6 +45,13 @@ const ErrorCodes = {
     // Server Errors (5000-5099)
     SERVER_ERROR: 'SERVER_5001',
     DATABASE_ERROR: 'SERVER_5002',
+
+    // NAVER API Errors (6000-6099)
+    NAVER_API_ERROR: 'NAVER_6001',
+    NAVER_API_AUTH_FAILED: 'NAVER_6002',
+    NAVER_API_RATE_LIMIT: 'NAVER_6003',
+    NAVER_API_INVALID_REQUEST: 'NAVER_6004',
+    NAVER_API_TIMEOUT: 'NAVER_6005',
 };
 
 // HTTP Status Code mapping
@@ -82,6 +89,9 @@ const ErrorStatusCodes = {
     // 409 Conflict
     [ErrorCodes.AUTH_EMAIL_ALREADY_EXISTS]: 409,
 
+    // 429 Too Many Requests
+    [ErrorCodes.NAVER_API_RATE_LIMIT]: 429,
+
     // 500 Internal Server Error
     [ErrorCodes.SERVER_ERROR]: 500,
     [ErrorCodes.DATABASE_ERROR]: 500,
@@ -91,6 +101,12 @@ const ErrorStatusCodes = {
     [ErrorCodes.SPACE_UPDATE_FAILED]: 500,
     [ErrorCodes.SPACE_DELETE_FAILED]: 500,
     [ErrorCodes.SPACE_FORK_FAILED]: 500,
+    [ErrorCodes.NAVER_API_ERROR]: 500,
+    [ErrorCodes.NAVER_API_TIMEOUT]: 500,
+
+    // 502 Bad Gateway
+    [ErrorCodes.NAVER_API_AUTH_FAILED]: 502,
+    [ErrorCodes.NAVER_API_INVALID_REQUEST]: 502,
 };
 
 export {
