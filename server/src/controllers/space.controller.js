@@ -143,6 +143,48 @@ const spaceController = {
       });
     }
   }),
+
+  // GET /api/space/fonts/clock - Get all clock fonts
+  getClockFonts: asyncHandler(async (req, res) => {
+    try {
+      const clockFonts = await spaceService.getClockFonts();
+
+      res.status(200).json({
+        success: true,
+        data: clockFonts,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: ErrorCodes.SERVER_ERROR,
+          message: 'Failed to retrieve clock fonts',
+          details: error.message,
+        },
+      });
+    }
+  }),
+
+  // GET /api/space/fonts/text - Get all text fonts
+  getTextFonts: asyncHandler(async (req, res) => {
+    try {
+      const textFonts = await spaceService.getTextFonts();
+
+      res.status(200).json({
+        success: true,
+        data: textFonts,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: ErrorCodes.SERVER_ERROR,
+          message: 'Failed to retrieve text fonts',
+          details: error.message,
+        },
+      });
+    }
+  }),
 };
 
 export default spaceController;

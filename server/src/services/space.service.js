@@ -386,6 +386,22 @@ const spaceService = {
       offset,
     });
   },
+
+  /**
+   * Get all clock fonts
+   * @returns {Promise<Array>} List of clock fonts
+   */
+  async getClockFonts() {
+    return await clockFontRepository.findAll();
+  },
+
+  /**
+   * Get all text fonts
+   * @returns {Promise<Array>} List of text fonts
+   */
+  async getTextFonts() {
+    return await textFontRepository.findAll();
+  },
 };
 
 export default spaceService;

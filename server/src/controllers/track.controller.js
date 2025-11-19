@@ -74,7 +74,7 @@ export const getAllTracks = async (req, res) => {
       emotion: track.emotion,
       tags: track.tags,
       source: track.source,
-      preview_url: `/api/tracks/${track.id}/stream`,
+      preview_url: `/tracks/${track.id}/stream`,
       is_external: track.track_url.startsWith('http://') || track.track_url.startsWith('https://'),
       created_at: track.created_at,
       updated_at: track.updated_at,

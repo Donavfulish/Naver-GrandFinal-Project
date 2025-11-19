@@ -359,7 +359,6 @@ RULES:
 AVAILABLE LISTS:
 - Emotions: ${context.emotions.join(', ')}
 - Tags: ${context.tags.join(', ')}
-- Moods: ${context.moods.join(', ')}
 - Text Font Names: ${context.textFonts.join(', ')}
 - Clock Font Styles: ${context.clockFonts.join(', ')}
 

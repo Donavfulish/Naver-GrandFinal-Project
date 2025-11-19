@@ -1,4 +1,4 @@
-import {CLOCK_FONTS_STYLE, EMOTION_KEYWORDS, MOOD_KEYWORDS, TAG_KEYWORDS, TEXT_FONTS} from '../constants/state.js';
+import {CLOCK_FONTS_STYLE, EMOTION_KEYWORDS, TAG_KEYWORDS, TEXT_FONTS} from '../constants/state.js';
 import prisma from '../config/prisma.js';
 import naverApiService from './naver-api.service.js';
 
@@ -114,7 +114,6 @@ export async function generateSpace(prompt) {
     tags: TAG_KEYWORDS,
     textFonts: TEXT_FONTS,      // Array of font names
     clockFonts: CLOCK_FONTS_STYLE,  // Array of font styles
-    moods: MOOD_KEYWORDS             // Array of mood keywords (emotions)
   };
 
   // Call Naver AI to generate space configuration

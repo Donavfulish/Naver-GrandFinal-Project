@@ -9,6 +9,12 @@ import {
 
 const router = express.Router();
 
+// GET /api/space/fonts/clock - Must be before /:id route
+router.get("/fonts/clock", spaceController.getClockFonts);
+
+// GET /api/space/fonts/text - Must be before /:id route
+router.get("/fonts/text", spaceController.getTextFonts);
+
 // POST /api/space - Create new space
 router.post("/", validate(createSpaceSchema), spaceController.create);
 
