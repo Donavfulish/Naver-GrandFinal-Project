@@ -10,6 +10,6 @@ const router = express.Router();
 router.post('/generate', validate(generateSchema), aiController.generate);
 
 // POST /api/ai/generate/confirm - Confirm and save AI generated space
-router.post('/generate/confirm', authenticate, validate(confirmGenerateSchema), aiController.confirmGenerate);
+router.post('/generate/confirm', validate(confirmGenerateSchema), aiController.confirmGenerate);
 
 export default router;
