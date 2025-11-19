@@ -43,7 +43,7 @@ model Space {
   playlists          Playlist[]
   space_tags         SpaceTag[]
   notes              Note[]
-  AiGeneratedContent AiGeneratedContent[]
+  AiGeneratedContent AiGeneratedContent?
 
   @@index([user_id])
   @@index([background_id])
@@ -194,7 +194,7 @@ model SpaceTag {
 
 model AiGeneratedContent {
   id         String   @id @default(uuid())
-  space_id   String
+  space_id   String   @unique // 1-1: mỗi space chỉ có 1 AI content
   prompt     String?
   mood       String
   content    String

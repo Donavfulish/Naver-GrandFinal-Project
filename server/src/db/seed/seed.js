@@ -7,6 +7,7 @@ async function main() {
   console.log('Starting seed...');
 
   // Clear existing data (in reverse order of dependencies)
+  await prisma.aiGeneratedContent.deleteMany();
   await prisma.spaceTag.deleteMany();
   await prisma.playlistTrack.deleteMany();
   await prisma.note.deleteMany();
@@ -43,7 +44,7 @@ async function main() {
 
   if (clockFonts.length === 0 || textFonts.length === 0) {
     console.error('⚠️ Missing fonts in DB!');
-    throw new Error('Fonts not found');
+    throw new Error('Fonts not found. Please run font seeder first.');
   }
 
   console.log(`Found ${clockFonts.length} clock fonts and ${textFonts.length} text fonts`);
@@ -56,7 +57,7 @@ async function main() {
 
   if (backgrounds.length === 0) {
     console.error('⚠️ Missing backgrounds in DB!');
-    throw new Error('Backgrounds not found');
+    throw new Error('Backgrounds not found. Please run background seeder first.');
   }
 
   console.log(`Found ${backgrounds.length} backgrounds`);
@@ -69,7 +70,7 @@ async function main() {
 
   if (tracks.length === 0) {
     console.error('⚠️ Missing tracks in DB!');
-    throw new Error('Tracks not found');
+    throw new Error('Tracks not found. Please run track seeder first.');
   }
 
   console.log(`Found ${tracks.length} tracks`);
@@ -83,11 +84,13 @@ async function main() {
     prisma.tag.create({ data: { name: 'meditation' } }),
     prisma.tag.create({ data: { name: 'focus' } }),
     prisma.tag.create({ data: { name: 'creative' } }),
+    prisma.tag.create({ data: { name: 'chill' } }),
+    prisma.tag.create({ data: { name: 'peaceful' } }),
   ]);
 
   console.log('Created tags');
 
-  // Create 5 spaces
+  // Create 5 spaces with different themes
   const spaces = [];
 
   const space1 = await prisma.space.create({
@@ -98,6 +101,8 @@ async function main() {
       background_id: backgrounds[0].id,
       clock_font_id: clockFonts[0].id,
       text_font_id: textFonts[0].id,
+      duration: 0,
+      is_deleted: false,
     },
   });
 
@@ -109,6 +114,8 @@ async function main() {
       background_id: backgrounds[1]?.id ?? backgrounds[0].id,
       clock_font_id: clockFonts[1]?.id ?? clockFonts[0].id,
       text_font_id: textFonts[1]?.id ?? textFonts[0].id,
+      duration: 3600,
+      is_deleted: false,
     },
   });
 
@@ -120,6 +127,8 @@ async function main() {
       background_id: backgrounds[2]?.id ?? backgrounds[0].id,
       clock_font_id: clockFonts[2]?.id ?? clockFonts[0].id,
       text_font_id: textFonts[2]?.id ?? textFonts[0].id,
+      duration: 1800,
+      is_deleted: false,
     },
   });
 
@@ -131,6 +140,8 @@ async function main() {
       background_id: backgrounds[3]?.id ?? backgrounds[0].id,
       clock_font_id: clockFonts[3]?.id ?? clockFonts[0].id,
       text_font_id: textFonts[3]?.id ?? textFonts[0].id,
+      duration: 5400,
+      is_deleted: false,
     },
   });
 
@@ -142,6 +153,8 @@ async function main() {
       background_id: backgrounds[4]?.id ?? backgrounds[0].id,
       clock_font_id: clockFonts[4]?.id ?? clockFonts[0].id,
       text_font_id: textFonts[4]?.id ?? textFonts[0].id,
+      duration: 7200,
+      is_deleted: false,
     },
   });
 
@@ -152,15 +165,17 @@ async function main() {
   // Add tags to spaces
   await prisma.spaceTag.createMany({
     data: [
-      { space_id: space1.id, tag_id: tags[2].id },
-      { space_id: space1.id, tag_id: tags[5].id },
-      { space_id: space2.id, tag_id: tags[0].id },
-      { space_id: space2.id, tag_id: tags[3].id },
-      { space_id: space3.id, tag_id: tags[1].id },
-      { space_id: space3.id, tag_id: tags[4].id },
-      { space_id: space4.id, tag_id: tags[6].id },
-      { space_id: space4.id, tag_id: tags[3].id },
-      { space_id: space5.id, tag_id: tags[1].id },
+      { space_id: space1.id, tag_id: tags[2].id }, // study
+      { space_id: space1.id, tag_id: tags[5].id }, // focus
+      { space_id: space2.id, tag_id: tags[0].id }, // productivity
+      { space_id: space2.id, tag_id: tags[3].id }, // work
+      { space_id: space3.id, tag_id: tags[1].id }, // relaxation
+      { space_id: space3.id, tag_id: tags[4].id }, // meditation
+      { space_id: space3.id, tag_id: tags[7].id }, // chill
+      { space_id: space4.id, tag_id: tags[6].id }, // creative
+      { space_id: space4.id, tag_id: tags[3].id }, // work
+      { space_id: space5.id, tag_id: tags[1].id }, // relaxation
+      { space_id: space5.id, tag_id: tags[8].id }, // peaceful
     ],
   });
 
@@ -168,23 +183,43 @@ async function main() {
 
   // Create playlists
   const playlist1 = await prisma.playlist.create({
-    data: { space_id: space1.id, name: 'Study Focus Mix' },
+    data: {
+      space_id: space1.id,
+      name: 'Study Focus Mix',
+      is_deleted: false,
+    },
   });
 
   const playlist2 = await prisma.playlist.create({
-    data: { space_id: space2.id, name: 'Work Productivity' },
+    data: {
+      space_id: space2.id,
+      name: 'Work Productivity',
+      is_deleted: false,
+    },
   });
 
   const playlist3 = await prisma.playlist.create({
-    data: { space_id: space3.id, name: 'Meditation & Calm' },
+    data: {
+      space_id: space3.id,
+      name: 'Meditation & Calm',
+      is_deleted: false,
+    },
   });
 
   const playlist4 = await prisma.playlist.create({
-    data: { space_id: space4.id, name: 'Creative Flow' },
+    data: {
+      space_id: space4.id,
+      name: 'Creative Flow',
+      is_deleted: false,
+    },
   });
 
   const playlist5 = await prisma.playlist.create({
-    data: { space_id: space5.id, name: 'Beach Tunes' },
+    data: {
+      space_id: space5.id,
+      name: 'Beach Tunes',
+      is_deleted: false,
+    },
   });
 
   console.log('Created playlists');
@@ -192,52 +227,89 @@ async function main() {
   // Add tracks to playlists
   await prisma.playlistTrack.createMany({
     data: [
-      { playlist_id: playlist1.id, track_id: tracks[0].id, track_order: 1 },
-      { playlist_id: playlist1.id, track_id: tracks[1]?.id ?? tracks[0].id, track_order: 2 },
+      { playlist_id: playlist1.id, track_id: tracks[0].id, track_order: 1, is_deleted: false },
+      { playlist_id: playlist1.id, track_id: tracks[1]?.id ?? tracks[0].id, track_order: 2, is_deleted: false },
 
-      { playlist_id: playlist2.id, track_id: tracks[2]?.id ?? tracks[0].id, track_order: 1 },
-      { playlist_id: playlist2.id, track_id: tracks[3]?.id ?? tracks[0].id, track_order: 2 },
+      { playlist_id: playlist2.id, track_id: tracks[2]?.id ?? tracks[0].id, track_order: 1, is_deleted: false },
+      { playlist_id: playlist2.id, track_id: tracks[3]?.id ?? tracks[0].id, track_order: 2, is_deleted: false },
 
-      { playlist_id: playlist3.id, track_id: tracks[1]?.id ?? tracks[0].id, track_order: 1 },
-      { playlist_id: playlist3.id, track_id: tracks[0].id, track_order: 2 },
+      { playlist_id: playlist3.id, track_id: tracks[1]?.id ?? tracks[0].id, track_order: 1, is_deleted: false },
+      { playlist_id: playlist3.id, track_id: tracks[0].id, track_order: 2, is_deleted: false },
 
-      { playlist_id: playlist4.id, track_id: tracks[3]?.id ?? tracks[0].id, track_order: 1 },
-      { playlist_id: playlist4.id, track_id: tracks[2]?.id ?? tracks[0].id, track_order: 2 },
+      { playlist_id: playlist4.id, track_id: tracks[3]?.id ?? tracks[0].id, track_order: 1, is_deleted: false },
+      { playlist_id: playlist4.id, track_id: tracks[2]?.id ?? tracks[0].id, track_order: 2, is_deleted: false },
 
-      { playlist_id: playlist5.id, track_id: tracks[4]?.id ?? tracks[0].id, track_order: 1 },
-      { playlist_id: playlist5.id, track_id: tracks[1]?.id ?? tracks[0].id, track_order: 2 },
+      { playlist_id: playlist5.id, track_id: tracks[4]?.id ?? tracks[0].id, track_order: 1, is_deleted: false },
+      { playlist_id: playlist5.id, track_id: tracks[1]?.id ?? tracks[0].id, track_order: 2, is_deleted: false },
     ],
   });
 
   console.log('Added tracks to playlists');
 
-  // Create notes
+  // Create notes (using is_delete not is_deleted)
   await prisma.note.createMany({
     data: [
-      { space_id: space1.id, content: 'Review chapter 5 for exam', note_order: 1 },
-      { space_id: space1.id, content: 'Complete assignment due Friday', note_order: 2 },
-      { space_id: space1.id, content: 'Study group meeting at 3pm', note_order: 3 },
+      { space_id: space1.id, content: 'Review chapter 5 for exam', note_order: 1, is_delete: false },
+      { space_id: space1.id, content: 'Complete assignment due Friday', note_order: 2, is_delete: false },
+      { space_id: space1.id, content: 'Study group meeting at 3pm', note_order: 3, is_delete: false },
 
-      { space_id: space2.id, content: 'Prepare presentation for meeting', note_order: 1 },
-      { space_id: space2.id, content: 'Review quarterly reports', note_order: 2 },
+      { space_id: space2.id, content: 'Prepare presentation for meeting', note_order: 1, is_delete: false },
+      { space_id: space2.id, content: 'Review quarterly reports', note_order: 2, is_delete: false },
+      { space_id: space2.id, content: 'Schedule team standup', note_order: 3, is_delete: false },
 
-      { space_id: space3.id, content: 'Practice meditation', note_order: 1 },
-      { space_id: space3.id, content: 'Deep breathing exercises', note_order: 2 },
+      { space_id: space3.id, content: 'Practice meditation for 20 minutes', note_order: 1, is_delete: false },
+      { space_id: space3.id, content: 'Deep breathing exercises', note_order: 2, is_delete: false },
 
-      { space_id: space4.id, content: 'Brainstorm project ideas', note_order: 1 },
-      { space_id: space4.id, content: 'Sketch design concepts', note_order: 2 },
-      { space_id: space4.id, content: 'Research color palettes', note_order: 3 },
+      { space_id: space4.id, content: 'Brainstorm project ideas', note_order: 1, is_delete: false },
+      { space_id: space4.id, content: 'Sketch design concepts', note_order: 2, is_delete: false },
+      { space_id: space4.id, content: 'Research color palettes', note_order: 3, is_delete: false },
 
-      { space_id: space5.id, content: 'Read a good book', note_order: 1 },
-      { space_id: space5.id, content: 'Listen to ocean sounds', note_order: 2 },
+      { space_id: space5.id, content: 'Read a good book', note_order: 1, is_delete: false },
+      { space_id: space5.id, content: 'Listen to ocean sounds', note_order: 2, is_delete: false },
     ],
   });
 
   console.log('Created notes');
 
+  // Create AI Generated Content for some spaces
+  await prisma.aiGeneratedContent.createMany({
+    data: [
+      {
+        space_id: space1.id,
+        prompt: 'I need a study space for focused learning',
+        mood: 'Content',
+        content: JSON.stringify({
+          tags: ['study', 'focus'],
+          purpose: 'focused studying'
+        }),
+      },
+      {
+        space_id: space2.id,
+        prompt: 'Professional workspace for productivity',
+        mood: 'Inspired',
+        content: JSON.stringify({
+          tags: ['productivity', 'work'],
+          purpose: 'professional work'
+        }),
+      },
+      {
+        space_id: space3.id,
+        prompt: 'Relaxing meditation space',
+        mood: 'Content',
+        content: JSON.stringify({
+          tags: ['relaxation', 'meditation'],
+          purpose: 'meditation and relaxation'
+        }),
+      },
+    ],
+  });
+
+  console.log('Created AI generated content');
+
   console.log('\n=== Seed completed successfully! ===');
   console.log(`User created: ${user.email} (password: password123)`);
   console.log(`Spaces created: ${spaces.length}`);
+  console.log(`Tags created: ${tags.length}`);
 }
 
 main()

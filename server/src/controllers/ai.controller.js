@@ -89,7 +89,29 @@ export const confirmGenerate = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * GET /api/ai/spaces/:id/summary
+ * Get AI-generated summary and mood analysis for a space
+ */
+export const getSpaceSummary = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    throw new ApiError(400, 'Space ID is required');
+  }
+
+  // Generate AI summary and mood
+  const summary = await aiService.generateSpaceSummary(id);
+
+  res.status(200).json({
+    success: true,
+    message: 'Space summary generated successfully',
+    data: summary
+  });
+});
+
 export default {
   generate,
-  confirmGenerate
+  confirmGenerate,
+  getSpaceSummary
 };

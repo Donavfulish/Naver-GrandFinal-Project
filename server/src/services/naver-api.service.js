@@ -449,6 +449,124 @@ JSON FORMAT:
       };
     }
   }
+
+  /**
+   * Generate space summary and mood analysis using NAVER CLOVA Studio
+   * @param {Object} spaceContext - Space context data
+   * @param {string} spaceContext.name - Space name
+   * @param {string} spaceContext.description - Space description (optional)
+   * @param {Array<string>} spaceContext.tags - Space tags
+   * @param {Array<string>} spaceContext.notes - Note contents
+   * @param {string} spaceContext.originalPrompt - Original creation prompt (optional)
+   * @param {Array<string>} moodKeywords - Available mood keywords
+   * @returns {Promise<Object>} AI generated summary with advice and mood
+   * @returns {string} return.advice - Personalized advice (2-3 sentences)
+   * @returns {string} return.mood - Selected mood keyword
+   */
+  async generateSpaceSummary(spaceContext, moodKeywords) {
+    // Build AI prompt
+    const systemPrompt = `You are an empathetic AI assistant that analyzes user's workspace and provides personalized advice.
+
+AVAILABLE MOOD KEYWORDS (you MUST select exactly ONE from this list):
+${moodKeywords.join(', ')}
+
+TASK:
+Analyze the user's space based on the provided information and:
+1. Provide a personalized, encouraging advice or reflection (2-3 sentences in English)
+2. Select ONE mood keyword from the available list that best matches the overall vibe
+
+OUTPUT FORMAT (return ONLY valid JSON, no markdown):
+{
+  "advice": "Your personalized advice here (2-3 sentences)",
+  "mood": "Exact mood keyword from the list"
+}
+
+GUIDELINES:
+- Be warm, supportive, and understanding
+- Focus on the positive aspects while acknowledging challenges
+- Make the advice actionable and relevant to their space usage
+- Choose the mood that best reflects the overall emotional state suggested by the space content`;
+
+    const userPrompt = `Analyze this user's space:
+
+Space Name: ${spaceContext.name}
+${spaceContext.description ? `Description: ${spaceContext.description}` : ''}
+${spaceContext.originalPrompt ? `Original Intent: ${spaceContext.originalPrompt}` : ''}
+${spaceContext.tags.length > 0 ? `Tags: ${spaceContext.tags.join(', ')}` : ''}
+${spaceContext.notes.length > 0 ? `Notes:\n${spaceContext.notes.map((note, i) => `${i + 1}. ${note}`).join('\n')}` : 'No notes yet.'}
+
+Based on this information, provide your analysis.`;
+
+    const messages = [
+      {
+        role: 'system',
+        content: systemPrompt
+      },
+      {
+        role: 'user',
+        content: userPrompt
+      }
+    ];
+
+    const response = await this.chatCompletion(messages, {
+      temperature: 0.7,
+      maxTokens: 512
+    });
+
+    // Parse JSON response
+    try {
+      let cleanedResponse = response.trim();
+
+      // Remove markdown code blocks if present
+      if (cleanedResponse.startsWith('```')) {
+        const firstNewline = cleanedResponse.indexOf('\n');
+        if (firstNewline !== -1) {
+          cleanedResponse = cleanedResponse.substring(firstNewline + 1);
+        }
+        cleanedResponse = cleanedResponse.replace(/```\s*$/, '').trim();
+      }
+
+      const parsed = JSON.parse(cleanedResponse);
+
+      // Validate response structure
+      if (!parsed.advice || typeof parsed.advice !== 'string') {
+        throw new Error('Invalid advice in AI response');
+      }
+
+      if (!parsed.mood || typeof parsed.mood !== 'string') {
+        throw new Error('Invalid mood in AI response');
+      }
+
+      // Validate mood is from the available list
+      if (!moodKeywords.includes(parsed.mood)) {
+        logger.warn(`[NAVER API] AI returned invalid mood: ${parsed.mood}, defaulting to 'Neutral'`);
+        parsed.mood = 'Neutral';
+      }
+
+      logger.info('[NAVER API] Successfully generated space summary', {
+        mood: parsed.mood,
+        adviceLength: parsed.advice.length
+      });
+
+      return {
+        advice: parsed.advice,
+        mood: parsed.mood
+      };
+
+    } catch (error) {
+      logger.error('[NAVER API] Failed to parse space summary response', {
+        error: error.message,
+        responseLength: response.length,
+        responsePreview: response.substring(0, 500)
+      });
+
+      // Fallback response
+      return {
+        advice: "Your space reflects your current journey. Take a moment to appreciate how far you've come, and remember that every step forward, no matter how small, is progress.",
+        mood: 'Neutral'
+      };
+    }
+  }
 }
 
 export default new NaverApiService();

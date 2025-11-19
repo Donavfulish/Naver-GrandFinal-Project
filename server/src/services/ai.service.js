@@ -1,6 +1,7 @@
-import {CLOCK_FONTS_STYLE, EMOTION_KEYWORDS, TAG_KEYWORDS, TEXT_FONTS} from '../constants/state.js';
+import {CLOCK_FONTS_STYLE, EMOTION_KEYWORDS, MOOD_KEYWORDS, TAG_KEYWORDS, TEXT_FONTS} from '../constants/state.js';
 import prisma from '../config/prisma.js';
 import naverApiService from './naver-api.service.js';
+import logger from '../config/logger.js';
 
 /**
  * Calculate matching score between two arrays
@@ -279,6 +280,7 @@ export async function saveGeneratedSpace(spaceData) {
       data: {
         space_id: space.id,
         prompt: prompt,
+        mood: 'Neutral', // Default mood
         content: JSON.stringify(spaceData) // Store full config for reference
       }
     });
@@ -385,7 +387,84 @@ export async function saveGeneratedSpace(spaceData) {
   });
 }
 
+/**
+ * Generate AI summary and mood analysis for a space
+ * @param {string} spaceId - Space ID
+ * @returns {Promise<Object>} AI generated summary with advice and mood
+ */
+export async function generateSpaceSummary(spaceId) {
+  // Fetch space with all necessary data
+  const space = await prisma.space.findFirst({
+    where: {
+      id: spaceId,
+      is_deleted: false
+    },
+    include: {
+      space_tags: {
+        include: {
+          tag: true
+        }
+      },
+      notes: {
+        where: {
+          is_delete: false
+        },
+        select: {
+          content: true
+        },
+        orderBy: {
+          note_order: 'asc'
+        }
+      },
+      AiGeneratedContent: {
+        select: {
+          prompt: true
+        }
+      }
+    }
+  });
+
+  if (!space) {
+    throw new Error('Space not found');
+  }
+
+  // Extract only necessary content (filter out empty/unused data)
+  const tagNames = space.space_tags
+    .map(st => st.tag.name)
+    .filter(name => name && name.trim().length > 0);
+
+  const noteContents = space.notes
+    .map(note => note.content)
+    .filter(content => content && content.trim().length > 0);
+
+  const originalPrompt = space.AiGeneratedContent?.[0]?.prompt || null;
+
+  // Build context for AI prompt (only necessary data, no IDs or timestamps)
+  const spaceContext = {
+    name: space.name || '',
+    description: space.description || '',
+    tags: tagNames,
+    notes: noteContents,
+    originalPrompt: originalPrompt
+  };
+
+  // Call Naver AI to generate summary
+  const aiResponse = await naverApiService.generateSpaceSummary(spaceContext, MOOD_KEYWORDS);
+
+  logger.info(`Generated summary for space ${spaceId}`, {
+    mood: aiResponse.mood,
+    adviceLength: aiResponse.advice.length
+  });
+
+  return {
+    advice: aiResponse.advice,
+    mood: aiResponse.mood,
+    spaceId: spaceId
+  };
+}
+
 export default {
   generateSpace,
-  saveGeneratedSpace
+  saveGeneratedSpace,
+  generateSpaceSummary
 };

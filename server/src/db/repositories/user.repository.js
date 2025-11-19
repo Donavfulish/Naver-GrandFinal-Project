@@ -96,6 +96,7 @@ const userRepository = {
         id: true,
         name: true,
         description: true,
+        duration: true,
         created_at: true,
         updated_at: true,
         background: {
@@ -116,12 +117,19 @@ const userRepository = {
             },
           },
         },
+        AiGeneratedContent: {
+          select: {
+            id: true,
+            content: true,
+            mood: true,
+          }
+        }
       },
       orderBy: {
         created_at: 'desc',
       },
     });
-  },
+  }
 };
 
 export default userRepository;
