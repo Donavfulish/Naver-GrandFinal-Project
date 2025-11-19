@@ -16,6 +16,14 @@ function calculateMatchScore(arr1, arr2) {
  * Find best matching background based on emotions and tags
  */
 async function findBestBackground(emotions, tags) {
+  // Validate inputs
+  if (!Array.isArray(emotions)) {
+    emotions = [];
+  }
+  if (!Array.isArray(tags)) {
+    tags = [];
+  }
+
   const backgrounds = await prisma.background.findMany({
     where: {
       is_deleted: false
@@ -23,7 +31,7 @@ async function findBestBackground(emotions, tags) {
   });
 
   if (backgrounds.length === 0) {
-    throw new Error('No backgrounds available');
+    throw new Error('No backgrounds available in database. Please ensure backgrounds are seeded.');
   }
 
   // Calculate match scores

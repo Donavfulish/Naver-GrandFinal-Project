@@ -1,4 +1,4 @@
-import { NAVER_CLOVA_STUDIO_API_KEY } from '../config/env.js';
+import { NAVER_CLOVA_STUDIO_API_KEY, NAVER_CLOVA_STUDIO_API_URL } from '../config/env.js';
 import logger from '../config/logger.js';
 import { ErrorCodes } from '../constants/errorCodes.js';
 
@@ -15,11 +15,16 @@ class NaverApiService {
       throw error;
     }
 
-    this.apiKey = NAVER_CLOVA_STUDIO_API_KEY;
-    this.baseUrl = 'https://clovastudio.stream.ntruss.com';
+    this.apiKey = NAVER_CLOVA_STUDIO_API_KEY.trim();
+    // Use v3 endpoint (confirmed working in Postman)
+    // Override with NAVER_CLOVA_STUDIO_API_URL if needed, but default to v3
+    this.apiUrl = NAVER_CLOVA_STUDIO_API_URL || 'https://clovastudio.stream.ntruss.com/v3/chat-completions/HCX-007';
     this.model = 'HCX-007'; // HyperCLOVA X model
     this.maxRetries = 3;
     this.retryDelay = 1000; // Initial delay in milliseconds
+    
+    // Log the URL being used for debugging
+    logger.info(`[NAVER API] Service initialized with URL: ${this.apiUrl}`);
   }
 
 
@@ -76,7 +81,7 @@ class NaverApiService {
    */
   async makeRequestWithRetry(url, options, attempt = 1) {
     const startTime = Date.now();
-    
+
     try {
       logger.info(`[NAVER API] Request attempt ${attempt}: ${options.method || 'GET'} ${url}`);
 
@@ -95,7 +100,7 @@ class NaverApiService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-        
+
         logger.error(`[NAVER API] Request failed: ${response.status} ${response.statusText}`, {
           url,
           statusCode: response.status,
@@ -107,8 +112,8 @@ class NaverApiService {
         // Check if we should retry
         if (this.isRetryable(response.status) && attempt < this.maxRetries) {
           const retryAfter = response.headers.get('Retry-After');
-          const delay = retryAfter 
-            ? parseInt(retryAfter) * 1000 
+          const delay = retryAfter
+            ? parseInt(retryAfter) * 1000
             : this.retryDelay * Math.pow(2, attempt - 1); // Exponential backoff
 
           logger.info(`[NAVER API] Retrying after ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`);
@@ -211,23 +216,27 @@ class NaverApiService {
       );
     }
 
-    const url = `${this.baseUrl}/v3/chat-completions/${this.model}`;
+    const url = this.apiUrl;
 
     // Build request body
     const requestBody = {
       messages: messages.map(msg => ({
         role: msg.role,
-        content: typeof msg.content === 'string' 
-          ? [{ type: 'text', text: msg.content }]
-          : msg.content,
+        content: msg.content,
       })),
       topP,
-      topK,
       temperature,
       repetitionPenalty,
-      stop,
       includeAiFilters,
     };
+
+    if (topK > 0) {
+      requestBody.topK = topK;
+    }
+
+    if (stop && stop.length > 0) {
+      requestBody.stop = stop;
+    }
 
     // Add thinking configuration if not 'none'
     if (thinkingEffort !== 'none') {
@@ -245,32 +254,50 @@ class NaverApiService {
     const startTime = Date.now();
 
     try {
+      const requestBodyJson = JSON.stringify(requestBody);
       logger.info(`[NAVER API] Chat completion request`, {
+        url,
         model: this.model,
         thinkingEffort,
         messageCount: messages.length,
+        requestBodyJson, // Log the exact JSON string being sent
+        apiKeyPrefix: this.apiKey.substring(0, 10) + '...' // Log masked API key for verification
       });
 
       const response = await this.makeRequestWithRetry(url, {
         method: 'POST',
-        body: JSON.stringify(requestBody),
+        body: requestBodyJson,
       });
 
       const data = await response.json();
       const duration = Date.now() - startTime;
 
       // Extract generated content
-      // TODO: Add logic to instruct LLM to format responses in structured format (e.g., JSON)
-      // For now, return raw text response
-      const generatedContent = data.choices?.[0]?.message?.content || 
-                              data.choices?.[0]?.content || 
-                              data.content || 
-                              '';
+      // NAVER API v3 response structure: data.result.message.content
+      const generatedContent = data.result?.message?.content ||
+        data.result?.content ||
+        data.choices?.[0]?.message?.content ||
+        data.choices?.[0]?.content ||
+        data.content ||
+        '';
+
+      // Extract token usage (NAVER API v3: data.result.usage.totalTokens)
+      const tokensUsed = data.result?.usage?.totalTokens ||
+        data.usage?.totalTokens ||
+        'unknown';
 
       logger.info(`[NAVER API] Chat completion successful`, {
         model: this.model,
         duration,
-        tokensUsed: data.usage?.totalTokens || 'unknown',
+        tokensUsed,
+        responseStructure: {
+          hasResult: !!data.result,
+          hasResultMessage: !!data.result?.message,
+          hasChoices: !!data.choices,
+          hasContent: !!data.content,
+          generatedContentLength: generatedContent.length
+        },
+        generatedContentPreview: generatedContent.substring(0, 200) // Log first 200 chars
       });
 
       return generatedContent;
@@ -314,20 +341,31 @@ class NaverApiService {
     const messages = [
       {
         role: 'system',
-        content: `You are a space designer AI. Based on user's description, generate a space configuration.
-Available emotions: ${context.emotions.join(', ')}
-Available tags: ${context.tags.join(', ')}
-Available text fonts: ${context.textFonts.join(', ')}
-Available clock fonts: ${context.clockFonts.join(', ')}
+        content: `You are an expert Space Designer AI. Your goal is to generate a cohesive space configuration based on the user's prompt.
 
-Respond in JSON format:
+RULES:
+1. **Language**: All output (name, description) MUST be in English, even if the user prompt is in another language.
+2. **Tagging**: Analyze the user's sentiment and intent. Select the most appropriate items from the "Available emotions" and "Available tags" lists below.
+   - Select 2-4 emotions.
+   - Select 3-6 tags.
+   - You MUST ONLY use values from the provided lists. Do not invent new tags.
+3. **Fonts**: Select one "clockFont" and one "textFont" from the provided lists that best match the vibe.
+4. **Output**: Return ONLY a valid JSON object. Do not include markdown formatting (like \`\`\`json).
+
+AVAILABLE LISTS:
+- Emotions: ${context.emotions.join(', ')}
+- Tags: ${context.tags.join(', ')}
+- Text Fonts: ${context.textFonts.join(', ')}
+- Clock Fonts: ${context.clockFonts.join(', ')}
+
+JSON FORMAT:
 {
-  "name": "space name",
-  "description": "space description",
-  "clockFont": "selected clock font",
-  "textFont": "selected text font",
-  "emotions": ["emotion1", "emotion2"],
-  "tags": ["tag1", "tag2", "tag3"]
+  "name": "A creative and short English name for the space",
+  "description": "A short English description of the space's vibe (max 2 sentences)",
+  "clockFont": "Exact string from Available Clock Fonts",
+  "textFont": "Exact string from Available Text Fonts",
+  "emotions": ["Exact string from Available Emotions", ...],
+  "tags": ["Exact string from Available Tags", ...]
 }`
       },
       {
@@ -337,16 +375,65 @@ Respond in JSON format:
     ];
 
     const response = await this.chatCompletion(messages, {
-      temperature: 0.7,
-      maxTokens: 1000
+      temperature: 0.7
+      // Removed maxTokens to match working API format
     });
 
     // Parse JSON response
     try {
-      const parsed = JSON.parse(response);
+      // Remove markdown code blocks if present (e.g., ```json ... ```)
+      let cleanedResponse = response.trim();
+      
+      // Remove markdown code block markers
+      if (cleanedResponse.startsWith('```')) {
+        // Find the first newline after ```
+        const firstNewline = cleanedResponse.indexOf('\n');
+        if (firstNewline !== -1) {
+          cleanedResponse = cleanedResponse.substring(firstNewline + 1);
+        }
+        // Remove trailing ```
+        cleanedResponse = cleanedResponse.replace(/```\s*$/, '').trim();
+      }
+      
+      const parsed = JSON.parse(cleanedResponse);
+      
+      // Validate parsed response structure
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error('Parsed response is not an object');
+      }
+      
+      // Validate required fields
+      if (!parsed.name || !parsed.description) {
+        logger.warn('[NAVER API] Parsed response missing required fields', { parsed });
+      }
+      
+      // Validate emotions and tags are arrays
+      if (!Array.isArray(parsed.emotions)) {
+        logger.warn('[NAVER API] Parsed response emotions is not an array', { emotions: parsed.emotions });
+        parsed.emotions = [];
+      }
+      if (!Array.isArray(parsed.tags)) {
+        logger.warn('[NAVER API] Parsed response tags is not an array', { tags: parsed.tags });
+        parsed.tags = [];
+      }
+      
+      logger.info('[NAVER API] Successfully parsed AI response', { 
+        parsed: {
+          name: parsed.name,
+          description: parsed.description?.substring(0, 100),
+          emotionsCount: parsed.emotions?.length,
+          tagsCount: parsed.tags?.length,
+          clockFont: parsed.clockFont,
+          textFont: parsed.textFont
+        }
+      });
       return parsed;
     } catch (error) {
-      logger.error('[NAVER API] Failed to parse AI response', { error: error.message, response });
+      logger.error('[NAVER API] Failed to parse AI response', { 
+        error: error.message, 
+        responseLength: response.length,
+        responsePreview: response.substring(0, 500) // Log first 500 chars for debugging
+      });
       // Fallback to mock response
       return {
         name: `AI Generated Space`,
