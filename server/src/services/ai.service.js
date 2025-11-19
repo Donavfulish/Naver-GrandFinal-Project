@@ -170,7 +170,8 @@ export async function generateSpace(prompt) {
         order: index + 1
       }))
     },
-    prompt: prompt
+    prompt: prompt,
+    tags: aiResponse.tags
   };
 
   return generatedSpace;
@@ -189,13 +190,43 @@ export async function saveGeneratedSpace(userId, generatedSpace) {
       background_id: generatedSpace.background.id,
       clock_font_id: generatedSpace.clock_font.id,
       text_font_id: generatedSpace.text_font.id,
-      ai_genarated: generatedSpace.prompt,
       is_deleted: false
     }
   });
 
+  // Save AI generated content info
+  if (generatedSpace.prompt) {
+    await prisma.aiGeneratedContent.create({
+      data: {
+        space_id: space.id,
+        prompt: generatedSpace.prompt,
+        content: JSON.stringify(generatedSpace) // Store full config for reference
+      }
+    });
+  }
+
+  // Save tags
+  if (generatedSpace.tags && generatedSpace.tags.length > 0) {
+    for (const tagName of generatedSpace.tags) {
+      // Find or create tag
+      const tag = await prisma.tag.upsert({
+        where: { name: tagName },
+        update: {},
+        create: { name: tagName }
+      });
+
+      // Create SpaceTag
+      await prisma.spaceTag.create({
+        data: {
+          space_id: space.id,
+          tag_id: tag.id
+        }
+      });
+    }
+  }
+
   // Create playlist
-  if (generatedSpace.playlist.tracks.length > 0) {
+  if (generatedSpace.playlist && generatedSpace.playlist.tracks.length > 0) {
     const playlist = await prisma.playlist.create({
       data: {
         space_id: space.id,
@@ -222,6 +253,11 @@ export async function saveGeneratedSpace(userId, generatedSpace) {
       background: true,
       clock: true,
       text: true,
+      space_tags: {
+        include: {
+          tag: true
+        }
+      },
       playlists: {
         include: {
           playlist_tracks: {

@@ -1,4 +1,5 @@
 import bcryptjs from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import userRepository from '../db/repositories/user.repository.js';
 
 const userService = {
@@ -20,9 +21,16 @@ const userService = {
       password_hash,
     });
 
+    // Generate token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+
     // Trả về user không có password
     const { password_hash: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return { user: userWithoutPassword, accessToken: token };
   },
 
   // Đăng nhập
@@ -39,9 +47,16 @@ const userService = {
       throw new Error('Invalid email or password');
     }
 
+    // Generate token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+
     // Trả về user không có password
     const { password_hash: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return { user: userWithoutPassword, accessToken: token };
   },
 
   // Lấy thông tin user

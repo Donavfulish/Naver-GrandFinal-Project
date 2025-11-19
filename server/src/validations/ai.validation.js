@@ -31,6 +31,7 @@ export const confirmGenerateSchema = Joi.object({
       emotion: Joi.array().items(Joi.string()),
       tags: Joi.array().items(Joi.string())
     }).required(),
+    tags: Joi.array().items(Joi.string()),
     playlist: Joi.object({
       name: Joi.string().required(),
       tracks: Joi.array().items(
