@@ -30,6 +30,7 @@ model Space {
   background_id String?
   clock_font_id String?
   text_font_id  String?
+  duration      Int      @default(0) // Seconds
   is_deleted    Boolean  @default(false)
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
@@ -136,7 +137,7 @@ model Tag {
 
 model ClockFont {
   id         String   @id @default(uuid())
-  font_name  String
+  style      String
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
@@ -195,6 +196,7 @@ model AiGeneratedContent {
   id         String   @id @default(uuid())
   space_id   String
   prompt     String?
+  mood       String
   content    String
   created_at DateTime @default(now())
   updated_at DateTime @default(now())

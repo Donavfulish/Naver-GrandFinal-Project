@@ -319,12 +319,13 @@ class NaverApiService {
    * @param {Object} context - Context containing available options
    * @param {Array<string>} context.emotions - Available emotion keywords
    * @param {Array<string>} context.tags - Available tag keywords
-   * @param {Array<string>} context.textFonts - Available text fonts
-   * @param {Array<string>} context.clockFonts - Available clock fonts
+   * @param {Array<string>} context.textFonts - Available text font names
+   * @param {Array<string>} context.clockFonts - Available clock font styles
+   * @param {Array<string>} context.moods - Available mood keywords
    * @returns {Promise<Object>} AI generated space configuration
    * @returns {string} return.name - Generated space name
    * @returns {string} return.description - Generated space description
-   * @returns {string} return.clockFont - Selected clock font name
+   * @returns {string} return.clockFont - Selected clock font style
    * @returns {string} return.textFont - Selected text font name
    * @returns {Array<string>} return.emotions - Selected emotions (2-4 items)
    * @returns {Array<string>} return.tags - Selected tags (3-6 items)
@@ -349,21 +350,25 @@ RULES:
    - Select 2-4 emotions.
    - Select 3-6 tags.
    - You MUST ONLY use values from the provided lists. Do not invent new tags.
-3. **Fonts**: Select one "clockFont" and one "textFont" from the provided lists that best match the vibe.
+3. **Fonts**: 
+   - Select one "clockFont" (style name) from the Available Clock Font Styles list.
+   - Select one "textFont" (font name) from the Available Text Font Names list.
+   - Match fonts to the overall vibe and mood of the space.
 4. **Output**: Return ONLY a valid JSON object. Do not include markdown formatting (like \`\`\`json).
 
 AVAILABLE LISTS:
 - Emotions: ${context.emotions.join(', ')}
 - Tags: ${context.tags.join(', ')}
-- Text Fonts: ${context.textFonts.join(', ')}
-- Clock Fonts: ${context.clockFonts.join(', ')}
+- Moods: ${context.moods.join(', ')}
+- Text Font Names: ${context.textFonts.join(', ')}
+- Clock Font Styles: ${context.clockFonts.join(', ')}
 
 JSON FORMAT:
 {
   "name": "A creative and short English name for the space",
   "description": "A short English description of the space's vibe (max 2 sentences)",
-  "clockFont": "Exact string from Available Clock Fonts",
-  "textFont": "Exact string from Available Text Fonts",
+  "clockFont": "Exact style string from Available Clock Font Styles",
+  "textFont": "Exact font name from Available Text Font Names",
   "emotions": ["Exact string from Available Emotions", ...],
   "tags": ["Exact string from Available Tags", ...]
 }`
@@ -383,7 +388,7 @@ JSON FORMAT:
     try {
       // Remove markdown code blocks if present (e.g., ```json ... ```)
       let cleanedResponse = response.trim();
-      
+
       // Remove markdown code block markers
       if (cleanedResponse.startsWith('```')) {
         // Find the first newline after ```
@@ -394,19 +399,19 @@ JSON FORMAT:
         // Remove trailing ```
         cleanedResponse = cleanedResponse.replace(/```\s*$/, '').trim();
       }
-      
+
       const parsed = JSON.parse(cleanedResponse);
-      
+
       // Validate parsed response structure
       if (!parsed || typeof parsed !== 'object') {
         throw new Error('Parsed response is not an object');
       }
-      
+
       // Validate required fields
       if (!parsed.name || !parsed.description) {
         logger.warn('[NAVER API] Parsed response missing required fields', { parsed });
       }
-      
+
       // Validate emotions and tags are arrays
       if (!Array.isArray(parsed.emotions)) {
         logger.warn('[NAVER API] Parsed response emotions is not an array', { emotions: parsed.emotions });
@@ -416,8 +421,8 @@ JSON FORMAT:
         logger.warn('[NAVER API] Parsed response tags is not an array', { tags: parsed.tags });
         parsed.tags = [];
       }
-      
-      logger.info('[NAVER API] Successfully parsed AI response', { 
+
+      logger.info('[NAVER API] Successfully parsed AI response', {
         parsed: {
           name: parsed.name,
           description: parsed.description?.substring(0, 100),
@@ -429,8 +434,8 @@ JSON FORMAT:
       });
       return parsed;
     } catch (error) {
-      logger.error('[NAVER API] Failed to parse AI response', { 
-        error: error.message, 
+      logger.error('[NAVER API] Failed to parse AI response', {
+        error: error.message,
         responseLength: response.length,
         responsePreview: response.substring(0, 500) // Log first 500 chars for debugging
       });

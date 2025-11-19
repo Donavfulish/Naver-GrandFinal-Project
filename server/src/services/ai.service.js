@@ -1,4 +1,4 @@
-import { EMOTION_KEYWORDS, TAG_KEYWORDS, TEXT_FONTS, CLOCK_FONTS } from '../constants/state.js';
+import {CLOCK_FONTS_STYLE, EMOTION_KEYWORDS, MOOD_KEYWORDS, TAG_KEYWORDS, TEXT_FONTS} from '../constants/state.js';
 import prisma from '../config/prisma.js';
 import naverApiService from './naver-api.service.js';
 
@@ -112,8 +112,9 @@ export async function generateSpace(prompt) {
   const context = {
     emotions: EMOTION_KEYWORDS,
     tags: TAG_KEYWORDS,
-    textFonts: TEXT_FONTS,
-    clockFonts: CLOCK_FONTS
+    textFonts: TEXT_FONTS,      // Array of font names
+    clockFonts: CLOCK_FONTS_STYLE,  // Array of font styles
+    moods: MOOD_KEYWORDS             // Array of mood keywords (emotions)
   };
 
   // Call Naver AI to generate space configuration
@@ -125,14 +126,15 @@ export async function generateSpace(prompt) {
   // Find matching tracks
   const tracks = await findBestTracks(aiResponse.emotions, aiResponse.tags, 5);
 
-  // Get font IDs from database
+  // Get font IDs from database - ClockFont uses 'style' field
   const clockFont = await prisma.clockFont.findFirst({
     where: {
-      font_name: aiResponse.clockFont,
+      style: aiResponse.clockFont,
       is_deleted: false
     }
   });
 
+  // TextFont uses 'font_name' field
   const textFont = await prisma.textFont.findFirst({
     where: {
       font_name: aiResponse.textFont,
@@ -141,16 +143,16 @@ export async function generateSpace(prompt) {
   });
 
   // Prepare final response
-  const generatedSpace = {
+  return {
     name: aiResponse.name,
     description: aiResponse.description,
     clock_font: {
       id: clockFont?.id,
-      name: aiResponse.clockFont
+      style: aiResponse.clockFont
     },
     text_font: {
       id: textFont?.id,
-      name: aiResponse.textFont
+      font_name: aiResponse.textFont
     },
     background: {
       id: background.id,
@@ -173,8 +175,6 @@ export async function generateSpace(prompt) {
     prompt: prompt,
     tags: aiResponse.tags
   };
-
-  return generatedSpace;
 }
 
 /**
@@ -350,7 +350,7 @@ export async function saveGeneratedSpace(spaceData) {
       clock: {
         select: {
           id: true,
-          font_name: true
+          style: true
         }
       },
       text: {

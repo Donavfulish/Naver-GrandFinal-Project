@@ -158,26 +158,46 @@ export const TAG_KEYWORDS = [
 ];
 
 export const TEXT_FONTS = [
-    'Roboto',
-    'Momo signature',
-    'Permanent Marker',
-    'Indie Flower',
-    'Edu TAS Beginner',
-    'Andika',
-    'Hanalei Fill',
-    'Spectral',
-    'Special Elite'
+    "Roboto_Slab",
+    "Merriweather",
+    "Lato",
+    "Inter",
+    "Nunito",
+    "Poppins",
+    "Playfair_Display",
+    "Fredoka"
 ];
 
 
-export const CLOCK_FONTS = [
-    'Roboto',
-    'Momo signature',
-    'Permanent Marker',
-    'Indie Flower',
-    'Edu TAS Beginner',
-    'Andika',
-    'Hanalei Fill',
-    'Spectral',
-    'Special Elite'
+export const CLOCK_FONTS_STYLE = [
+    "minimal",
+    "modern",
+    "retro",
+    "futuristic",
+    "classic",
+    "digital"
 ];
+
+
+export const MOOD_KEYWORDS = [
+    "Exhausted",
+    "Frustrated",
+    "Anxious",
+    "Neutral",
+    "Content",
+    "Happy",
+    "Inspired",
+    "Joyful",
+]
+
+
+export const MOOD_SCORES = {
+    Exhausted: 1,
+    Frustrated: 2,
+    Anxious: 3,
+    Neutral: 4,
+    Content: 5,
+    Happy: 6,
+    Inspired: 7,
+    Joyful: 8
+};
