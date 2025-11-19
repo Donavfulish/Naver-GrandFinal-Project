@@ -72,7 +72,7 @@ async function importAllTracks() {
       const words = extractWords(file);
       const name = capitalizeWords(path.parse(file).name);
 
-      // 🔥 CHỈ ĐỌC METADATA – KHÔNG tìm ảnh rời
+      // CHỈ ĐỌC METADATA – KHÔNG tìm ảnh rời
       const thumbnail = await extractEmbeddedThumbnail(file);
 
       // Lấy emotion từ filename nếu có trong EMOTION_KEYWORDS
@@ -104,8 +104,8 @@ async function importAllTracks() {
       await prisma.track.create({
         data: {
           name,
-          thumbnail: thumbnail ? `track/${thumbnail}` : null,
-          track_url: `track/${file}`,
+          thumbnail: thumbnail ? `track/${thumbnail}` : "https://images.unsplash.com/photo-1507838153414-b4b713384a76",
+          track_url: path.join(TRACK_DIR, file),
           emotion,
           tags,
           source: 'SYSTEM',

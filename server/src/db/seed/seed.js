@@ -13,9 +13,6 @@ async function main() {
   await prisma.note.deleteMany();
   await prisma.playlist.deleteMany();
   await prisma.space.deleteMany();
-  await prisma.track.deleteMany();
-  await prisma.background.deleteMany();
-  await prisma.tag.deleteMany();
   await prisma.user.deleteMany();
 
   console.log('Cleared existing data');
@@ -37,12 +34,12 @@ async function main() {
   // Query existing fonts (đã được import từ system files)
   const clockFonts = await prisma.clockFont.findMany({
     where: { is_deleted: false },
-    take: 9, // Lấy tối đa 9 fonts
+    take: 10,
   });
 
   const textFonts = await prisma.textFont.findMany({
     where: { is_deleted: false },
-    take: 9, // Lấy tối đa 9 fonts
+    take: 10,
   });
 
   if (clockFonts.length === 0 || textFonts.length === 0) {
@@ -55,117 +52,35 @@ async function main() {
 
   console.log(`Found ${clockFonts.length} clock fonts and ${textFonts.length} text fonts`);
 
-  // Create backgrounds
-  const backgrounds = await Promise.all([
-    prisma.background.create({
-      data: {
-        background_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4',
-        emotion: ['calm', 'peaceful'],
-        tags: ['nature', 'mountain'],
-        source: 'SYSTEM',
-        is_deleted: false,
-      },
-    }),
-    prisma.background.create({
-      data: {
-        background_url: 'https://images.unsplash.com/photo-1511884642898-4c92249e20b6',
-        emotion: ['energetic', 'vibrant'],
-        tags: ['city', 'night'],
-        source: 'SYSTEM',
-        is_deleted: false,
-      },
-    }),
-    prisma.background.create({
-      data: {
-        background_url: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a',
-        emotion: ['relaxed', 'serene'],
-        tags: ['space', 'stars'],
-        source: 'SYSTEM',
-        is_deleted: false,
-      },
-    }),
-    prisma.background.create({
-      data: {
-        background_url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05',
-        emotion: ['calm', 'natural'],
-        tags: ['forest', 'nature'],
-        source: 'SYSTEM',
-        is_deleted: false,
-      },
-    }),
-    prisma.background.create({
-      data: {
-        background_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e',
-        emotion: ['peaceful', 'tropical'],
-        tags: ['beach', 'ocean'],
-        source: 'SYSTEM',
-        is_deleted: false,
-      },
-    }),
-  ]);
+  // Query existing backgrounds (đã được import từ system file)
+  const backgrounds = await prisma.background.findMany({
+    where: { is_deleted: false },
+    take: 5,
+  });
 
-  console.log('Created backgrounds');
+  if (backgrounds.length === 0) {
+    console.error('⚠️ Không tìm thấy backgrounds trong database!');
+    console.error('Hãy chạy system file trước:');
+    console.error('  node src/db/system/background.system.js');
+    throw new Error('Backgrounds not found in database');
+  }
 
-  // Create tracks
-  const tracks = await Promise.all([
-    prisma.track.create({
-      data: {
-        name: 'Lofi Hip Hop Beat',
-        thumbnail: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d',
-        track_url: 'https://example.com/tracks/lofi-beat.mp3',
-        emotion: ['calm', 'focused'],
-        tags: ['lofi', 'study'],
-        source: 'SYSTEM',
-        is_deleted: false,
-      },
-    }),
-    prisma.track.create({
-      data: {
-        name: 'Jazz Piano',
-        thumbnail: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0',
-        track_url: 'https://example.com/tracks/jazz-piano.mp3',
-        emotion: ['relaxed', 'sophisticated'],
-        tags: ['jazz', 'instrumental'],
-        source: 'SYSTEM',
-        is_deleted: false,
-      },
-    }),
-    prisma.track.create({
-      data: {
-        name: 'Ambient Soundscape',
-        thumbnail: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae',
-        track_url: 'https://example.com/tracks/ambient.mp3',
-        emotion: ['peaceful', 'meditative'],
-        tags: ['ambient', 'meditation'],
-        source: 'SYSTEM',
-        is_deleted: false,
-      },
-    }),
-    prisma.track.create({
-      data: {
-        name: 'Upbeat Electronic',
-        thumbnail: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d89',
-        track_url: 'https://example.com/tracks/electronic.mp3',
-        emotion: ['energetic', 'motivated'],
-        tags: ['electronic', 'workout'],
-        source: 'SYSTEM',
-        is_deleted: false,
-      },
-    }),
-    prisma.track.create({
-      data: {
-        name: 'Classical Symphony',
-        thumbnail: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76',
-        track_url: 'https://example.com/tracks/classical.mp3',
-        emotion: ['focused', 'inspired'],
-        tags: ['classical', 'orchestral'],
-        source: 'SYSTEM',
-        is_deleted: false,
-      },
-    }),
-  ]);
+  console.log(`Found ${backgrounds.length} backgrounds`);
 
-  console.log('Created tracks');
+  // Query existing tracks (đã được import từ system file)
+  const tracks = await prisma.track.findMany({
+    where: { is_deleted: false },
+    take: 5,
+  });
+
+  if (tracks.length === 0) {
+    console.error('⚠️ Không tìm thấy tracks trong database!');
+    console.error('Hãy chạy system file trước:');
+    console.error('  node src/db/system/track.system.js');
+    throw new Error('Tracks not found in database');
+  }
+
+  console.log(`Found ${tracks.length} tracks`);
 
   // Create tags
   const tags = await Promise.all([
@@ -203,9 +118,9 @@ async function main() {
       user_id: user.id,
       name: 'Professional Work Space',
       description: 'Organized workspace for maximum productivity',
-      background_id: backgrounds[1].id,
-      clock_font_id: clockFonts[1].id,
-      text_font_id: textFonts[1].id,
+      background_id: backgrounds[1] ? backgrounds[1].id : backgrounds[0].id,
+      clock_font_id: clockFonts[1] ? clockFonts[1].id : clockFonts[0].id,
+      text_font_id: textFonts[1] ? textFonts[1].id : textFonts[0].id,
       is_deleted: false,
     },
   });
@@ -217,9 +132,9 @@ async function main() {
       user_id: user.id,
       name: 'Chill & Relax',
       description: 'Peaceful space for meditation and relaxation',
-      background_id: backgrounds[2].id,
-      clock_font_id: clockFonts[2].id,
-      text_font_id: textFonts[2].id,
+      background_id: backgrounds[2] ? backgrounds[2].id : backgrounds[0].id,
+      clock_font_id: clockFonts[2] ? clockFonts[2].id : clockFonts[0].id,
+      text_font_id: textFonts[2] ? textFonts[2].id : textFonts[0].id,
       is_deleted: false,
     },
   });
@@ -231,9 +146,9 @@ async function main() {
       user_id: user.id,
       name: 'Creative Studio',
       description: 'Inspiring space for creative work and brainstorming',
-      background_id: backgrounds[3].id,
+      background_id: backgrounds[3] ? backgrounds[3].id : backgrounds[0].id,
       clock_font_id: clockFonts[3] ? clockFonts[3].id : clockFonts[0].id,
-      text_font_id: textFonts[3] ? textFonts[3].id : textFonts[2].id,
+      text_font_id: textFonts[3] ? textFonts[3].id : textFonts[0].id,
       is_deleted: false,
     },
   });
@@ -245,9 +160,9 @@ async function main() {
       user_id: user.id,
       name: 'Beach Vibes',
       description: 'Tropical paradise for a peaceful work environment',
-      background_id: backgrounds[4].id,
-      clock_font_id: clockFonts[4] ? clockFonts[4].id : clockFonts[1].id,
-      text_font_id: textFonts[4] ? textFonts[4].id : textFonts[1].id,
+      background_id: backgrounds[4] ? backgrounds[4].id : backgrounds[0].id,
+      clock_font_id: clockFonts[4] ? clockFonts[4].id : clockFonts[0].id,
+      text_font_id: textFonts[4] ? textFonts[4].id : textFonts[0].id,
       is_deleted: false,
     },
   });
@@ -315,28 +230,28 @@ async function main() {
 
   console.log('Created playlists');
 
-  // Add tracks to playlists
+  // Add tracks to playlists (sử dụng tracks đã có trong system)
   await prisma.playlistTrack.createMany({
     data: [
-      // Playlist 1 (Study)
+      // Playlist 1 (Study) - sử dụng track có sẵn
       { playlist_id: playlist1.id, track_id: tracks[0].id, track_order: 1, is_deleted: false },
-      { playlist_id: playlist1.id, track_id: tracks[4].id, track_order: 2, is_deleted: false },
+      { playlist_id: playlist1.id, track_id: tracks[1] ? tracks[1].id : tracks[0].id, track_order: 2, is_deleted: false },
 
       // Playlist 2 (Work)
-      { playlist_id: playlist2.id, track_id: tracks[1].id, track_order: 1, is_deleted: false },
-      { playlist_id: playlist2.id, track_id: tracks[3].id, track_order: 2, is_deleted: false },
+      { playlist_id: playlist2.id, track_id: tracks[2] ? tracks[2].id : tracks[0].id, track_order: 1, is_deleted: false },
+      { playlist_id: playlist2.id, track_id: tracks[3] ? tracks[3].id : tracks[0].id, track_order: 2, is_deleted: false },
 
       // Playlist 3 (Relaxation)
-      { playlist_id: playlist3.id, track_id: tracks[2].id, track_order: 1, is_deleted: false },
+      { playlist_id: playlist3.id, track_id: tracks[1] ? tracks[1].id : tracks[0].id, track_order: 1, is_deleted: false },
       { playlist_id: playlist3.id, track_id: tracks[0].id, track_order: 2, is_deleted: false },
 
       // Playlist 4 (Creative)
-      { playlist_id: playlist4.id, track_id: tracks[3].id, track_order: 1, is_deleted: false },
-      { playlist_id: playlist4.id, track_id: tracks[1].id, track_order: 2, is_deleted: false },
+      { playlist_id: playlist4.id, track_id: tracks[3] ? tracks[3].id : tracks[0].id, track_order: 1, is_deleted: false },
+      { playlist_id: playlist4.id, track_id: tracks[2] ? tracks[2].id : tracks[0].id, track_order: 2, is_deleted: false },
 
       // Playlist 5 (Beach)
-      { playlist_id: playlist5.id, track_id: tracks[2].id, track_order: 1, is_deleted: false },
-      { playlist_id: playlist5.id, track_id: tracks[0].id, track_order: 2, is_deleted: false },
+      { playlist_id: playlist5.id, track_id: tracks[4] ? tracks[4].id : tracks[0].id, track_order: 1, is_deleted: false },
+      { playlist_id: playlist5.id, track_id: tracks[1] ? tracks[1].id : tracks[0].id, track_order: 2, is_deleted: false },
     ],
   });
 
@@ -471,10 +386,10 @@ async function main() {
   spaces.forEach((space, index) => {
     console.log(`  ${index + 1}. ${space.name}`);
   });
-  console.log(`Backgrounds: ${backgrounds.length}`);
-  console.log(`Tracks: ${tracks.length}`);
+  console.log(`Using ${backgrounds.length} backgrounds from system`);
+  console.log(`Using ${tracks.length} tracks from system`);
   console.log(`Tags: ${tags.length}`);
-  console.log(`Fonts: ${clockFonts.length} clock fonts, ${textFonts.length} text fonts`);
+  console.log(`Fonts: ${clockFonts.length} clock fonts, ${textFonts.length} text fonts from system`);
   console.log(`Notes: 12 notes created across all spaces`);
 }
 
