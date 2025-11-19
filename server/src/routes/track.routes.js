@@ -1,7 +1,17 @@
 import express from 'express';
-import { getAllTracks, streamTrack } from '../controllers/track.controller.js';
+import { getAllTracks, streamTrack, searchTracks } from '../controllers/track.controller.js';
 
 const router = express.Router();
+
+/**
+ * GET /tracks/search
+ * Search tracks by name
+ * Query params:
+ * - name: track name to search (required)
+ * - limit: number of results (default: 50)
+ * - offset: pagination offset (default: 0)
+ */
+router.get("/search", searchTracks);
 
 /**
  * GET /tracks

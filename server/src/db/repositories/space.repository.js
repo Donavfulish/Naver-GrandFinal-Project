@@ -43,7 +43,14 @@ const spaceRepository = {
       return await tx.space.findUnique({
         where: { id: space.id },
         include: {
-          user: { select: { id: true, name: true, email: true } },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar_url: true
+            }
+          },
           background: {
             select: {
               id: true,
@@ -95,13 +102,20 @@ const spaceRepository = {
   },
 
   async findById(id) {
-    return await prisma.space.findUnique({
-      where: { 
+    return await prisma.space.findFirst({
+      where: {
         id,
         is_deleted: false,
       },
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar_url: true
+          }
+        },
         background: {
           select: {
             id: true,
@@ -158,7 +172,14 @@ const spaceRepository = {
         is_deleted: false,
       },
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar_url: true
+          }
+        },
         background: {
           select: {
             id: true,
@@ -265,7 +286,14 @@ const spaceRepository = {
       return await tx.space.findUnique({
         where: { id },
         include: {
-          user: { select: { id: true, name: true, email: true } },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar_url: true
+            }
+          },
           background: {
             select: {
               id: true,

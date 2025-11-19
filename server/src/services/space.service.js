@@ -402,6 +402,88 @@ const spaceService = {
   async getTextFonts() {
     return await textFontRepository.findAll();
   },
+
+  /**
+   * Update space summary (duration, AI content, mood)
+   * @param {string} id - Space ID
+   * @param {Object} summaryData - Summary data
+   * @param {number} summaryData.duration - Space duration in seconds
+   * @param {string} summaryData.content - AI generated content
+   * @param {string} summaryData.mood - Mood/emotion
+   * @returns {Promise<Object>} Updated space
+   */
+  async updateSpaceSummary(id, summaryData) {
+    const { duration, content, mood } = summaryData;
+
+    // Check if space exists
+    const space = await spaceRepository.findById(id);
+    if (!space || space.is_deleted) {
+      const error = new Error('Space not found');
+      error.code = ErrorCodes.SPACE_NOT_FOUND;
+      throw error;
+    }
+
+    // Validate inputs
+    if (duration !== undefined && (typeof duration !== 'number' || duration < 0)) {
+      const error = new Error('Duration must be a non-negative number');
+      error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
+      throw error;
+    }
+
+    if (mood && typeof mood !== 'string') {
+      const error = new Error('Mood must be a string');
+      error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
+      throw error;
+    }
+
+    if (content && typeof content !== 'string') {
+      const error = new Error('Content must be a string');
+      error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
+      throw error;
+    }
+
+    // Update space duration if provided
+    if (duration !== undefined) {
+      await prisma.space.update({
+        where: { id },
+        data: { duration },
+      });
+    }
+
+    // Update or create AiGeneratedContent if content or mood provided
+    if (content !== undefined || mood !== undefined) {
+      // Check if AI generated content already exists for this space
+      const existingAiContent = await prisma.aiGeneratedContent.findFirst({
+        where: { space_id: id },
+      });
+
+      if (existingAiContent) {
+        // Update existing record
+        const updateData = {};
+        if (content !== undefined) updateData.content = content;
+        if (mood !== undefined) updateData.mood = mood;
+        updateData.updated_at = new Date();
+
+        await prisma.aiGeneratedContent.update({
+          where: { id: existingAiContent.id },
+          data: updateData,
+        });
+      } else {
+        // Create new record if it doesn't exist
+        await prisma.aiGeneratedContent.create({
+          data: {
+            space_id: id,
+            prompt: null,
+            mood: mood || 'Neutral',
+            content: content || '',
+          },
+        });
+      }
+    }
+
+    // Return updated space with all relations
+    return await spaceRepository.findById(id);
+  },
 };
 
 export default spaceService;

@@ -118,3 +118,22 @@ export const searchSpacesSchema = Joi.object({
 }).min(1).messages({
   'object.min': 'At least one search parameter is required',
 });
+
+// POST /spaces/:id/summary - Update space summary schema
+export const updateSpaceSummarySchema = Joi.object({
+  duration: Joi.number().integer().min(0).optional().messages({
+    'number.base': 'Duration must be a number',
+    'number.integer': 'Duration must be an integer',
+    'number.min': 'Duration must be at least 0',
+  }),
+  content: Joi.string().max(5000).optional().messages({
+    'string.base': 'Content must be a string',
+    'string.max': 'Content must not exceed 5000 characters',
+  }),
+  mood: Joi.string().max(100).optional().messages({
+    'string.base': 'Mood must be a string',
+    'string.max': 'Mood must not exceed 100 characters',
+  }),
+}).min(1).messages({
+  'object.min': 'At least one field (duration, content, or mood) is required',
+});

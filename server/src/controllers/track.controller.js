@@ -255,3 +255,91 @@ export const streamTrack = async (req, res) => {
     }
   }
 };
+
+/**
+ * Search tracks by name
+ * GET /tracks/search
+ */
+export const searchTracks = async (req, res) => {
+  try {
+    const { name, limit = 50, offset = 0 } = req.query;
+
+    // Validate name parameter
+    if (!name || name.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search name is required',
+      });
+    }
+
+    // Build filter conditions with case-insensitive search
+    const whereConditions = {
+      is_deleted: false,
+      name: {
+        contains: name.trim(),
+        mode: 'insensitive',
+      },
+    };
+
+    // Query tracks from database
+    const [tracks, total] = await Promise.all([
+      prisma.track.findMany({
+        where: whereConditions,
+        select: {
+          id: true,
+          name: true,
+          thumbnail: true,
+          track_url: true,
+          emotion: true,
+          tags: true,
+          source: true,
+          created_at: true,
+          updated_at: true,
+        },
+        take: parseInt(limit),
+        skip: parseInt(offset),
+        orderBy: {
+          created_at: 'desc',
+        },
+      }),
+      prisma.track.count({
+        where: whereConditions,
+      }),
+    ]);
+
+    // Transform tracks to include preview/stream URL
+    const tracksWithPreview = tracks.map(track => ({
+      id: track.id,
+      name: track.name,
+      thumbnail: track.thumbnail,
+      emotion: track.emotion,
+      tags: track.tags,
+      source: track.source,
+      preview_url: `/tracks/${track.id}/stream`,
+      is_external: track.track_url.startsWith('http://') || track.track_url.startsWith('https://'),
+      created_at: track.created_at,
+      updated_at: track.updated_at,
+    }));
+
+    logger.info(`Search for "${name}" found ${tracks.length} tracks (total: ${total})`);
+
+    res.status(200).json({
+      success: true,
+      data: tracksWithPreview,
+      pagination: {
+        total,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        hasMore: parseInt(offset) + tracks.length < total,
+      },
+    });
+
+  } catch (error) {
+    logger.error(`Error in searchTracks: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to search tracks',
+      error: error.message,
+    });
+  }
+};
