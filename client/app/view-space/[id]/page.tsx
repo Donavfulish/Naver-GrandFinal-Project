@@ -1,4 +1,4 @@
-import ViewSpacePage from "@/components/view-space-page"
+import ViewSpacePage from "@/components/view-space/view-space-page"
 import * as React from 'react'
 
 export const metadata = {

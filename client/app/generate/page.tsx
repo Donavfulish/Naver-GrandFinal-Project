@@ -1,4 +1,4 @@
-import AISpaceGenerator from "@/components/ai-space-generator"
+import AISpaceGenerator from "@/components/generate/ai-space-generator"
 
 export const metadata = {
   title: "AI Space Generator - AuraSpace",

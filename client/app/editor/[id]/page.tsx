@@ -1,4 +1,4 @@
-import SpaceEditor from "@/components/space-editor"
+import SpaceEditor from "@/components/editor/space-editor"
 
 export const metadata = {
   title: "Space Editor - AuraSpace",

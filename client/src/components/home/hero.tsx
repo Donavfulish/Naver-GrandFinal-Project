@@ -60,17 +60,17 @@ export default function Hero() {
 
         <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
-            href="/dashboard"
+            href="/emotional-capsules"
             className="px-8 py-4 bg-[#C7A36B] text-[#1E1E1E] rounded-2xl font-semibold hover:bg-[#D4B896] transition flex items-center justify-center gap-2 group"
           >
-            Create Your Space
+            Start your journey
             <ArrowRight size={20} className="group-hover:translate-x-1 transition" />
           </Link>
           <Link
             href="/generate"
             className="px-8 py-4 border-2 border-[#C7A36B] text-[#C7A36B] rounded-2xl font-semibold hover:bg-[#C7A36B]/10 transition"
           >
-            Try AI Generator
+            View my capsules
           </Link>
         </motion.div>
       </motion.div>

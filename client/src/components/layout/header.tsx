@@ -13,8 +13,8 @@ export default function Header() {
 
   const navItems = [
     { href: "/", label: "Home" },
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/generate", label: "AI Generator" },
+    { href: "/emotional-capsules", label: "Emotional Capsules" },
+    { href: "/capsules", label: "Your Adventures" },
   ]
 
   return (
