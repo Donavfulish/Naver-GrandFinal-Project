@@ -39,7 +39,6 @@ model Space {
   text       TextFont?   @relation(fields: [text_font_id], references: [id])
   background Background? @relation(fields: [background_id], references: [id])
 
-  widget_positions   WidgetPosition[]
   playlists          Playlist[]
   space_tags         SpaceTag[]
   notes              Note[]
@@ -157,20 +156,6 @@ model TextFont {
   spaces Space[]
 
   @@map("text_fonts")
-}
-
-model WidgetPosition {
-  id         String   @id @default(uuid())
-  space_id   String
-  position   Json
-  is_deleted Boolean  @default(false)
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
-
-  space Space @relation(fields: [space_id], references: [id])
-
-  @@index([space_id])
-  @@map("widget_positions")
 }
 
 model PlaylistTrack {

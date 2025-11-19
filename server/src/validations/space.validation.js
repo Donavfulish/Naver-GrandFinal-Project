@@ -1,19 +1,5 @@
 import Joi from 'joi';
 
-// Widget position schema for validation
-const widgetPositionSchema = Joi.object({
-  widget_id: Joi.string().required().messages({
-    'any.required': 'Widget ID is required',
-  }),
-  x: Joi.number().required().messages({
-    'any.required': 'X coordinate is required',
-  }),
-  y: Joi.number().required().messages({
-    'any.required': 'Y coordinate is required',
-  }),
-  metadata: Joi.object().optional(),
-});
-
 // POST /space - Create space schema
 export const createSpaceSchema = Joi.object({
   user_id: Joi.string().uuid().required().messages({
@@ -25,10 +11,11 @@ export const createSpaceSchema = Joi.object({
     'string.max': 'Name must not exceed 200 characters',
     'any.required': 'Name is required',
   }),
-  tags: Joi.array().items(Joi.string().uuid()).min(1).required().messages({
+  tags: Joi.array().items(Joi.string().min(1).max(100)).min(1).required().messages({
     'array.min': 'At least one tag is required',
     'any.required': 'Tags are required',
-    'string.uuid': 'Invalid tag ID format',
+    'string.min': 'Tag name cannot be empty',
+    'string.max': 'Tag name must not exceed 100 characters',
   }),
   description: Joi.string().max(1000).allow(null, '').messages({
     'string.max': 'Description must not exceed 1000 characters',
@@ -39,13 +26,16 @@ export const createSpaceSchema = Joi.object({
   clock_font_id: Joi.string().uuid().allow(null).messages({
     'string.uuid': 'Invalid clock font ID format',
   }),
-  text_font_name: Joi.string().max(100).allow(null, '').messages({
-    'string.max': 'Font name must not exceed 100 characters',
+  text_font_id: Joi.string().uuid().allow(null).messages({
+    'string.uuid': 'Invalid text font ID format',
   }),
-  playlist_ids: Joi.array().items(Joi.string().uuid()).optional().messages({
-    'string.uuid': 'Invalid playlist ID format',
+  tracks: Joi.array().items(Joi.string().uuid()).optional().messages({
+    'string.uuid': 'Invalid track ID format',
+    'array.base': 'Tracks must be an array',
   }),
-  widget_positions: Joi.array().items(widgetPositionSchema).optional(),
+  prompt: Joi.string().max(1000).allow(null, '').optional().messages({
+    'string.max': 'Prompt must not exceed 1000 characters',
+  }),
 });
 
 // PATCH /space/:id - Update space schema
@@ -66,13 +56,14 @@ export const updateSpaceSchema = Joi.object({
     clock_font_id: Joi.string().uuid().allow(null).messages({
       'string.uuid': 'Invalid clock font ID format',
     }),
-    text_font_name: Joi.string().max(100).allow(null, '').messages({
-      'string.max': 'Font name must not exceed 100 characters',
+    text_font_id: Joi.string().uuid().allow(null).messages({
+      'string.uuid': 'Invalid text font ID format',
     }),
   }).optional(),
-  tags: Joi.array().items(Joi.string().uuid()).min(1).messages({
+  tags: Joi.array().items(Joi.string().min(1).max(100)).min(1).messages({
     'array.min': 'At least one tag is required',
-    'string.uuid': 'Invalid tag ID format',
+    'string.min': 'Tag name cannot be empty',
+    'string.max': 'Tag name must not exceed 100 characters',
   }),
   playlist_links: Joi.object({
     add: Joi.array().items(Joi.string().uuid()).messages({
@@ -82,7 +73,6 @@ export const updateSpaceSchema = Joi.object({
       'string.uuid': 'Invalid playlist ID format',
     }),
   }).optional(),
-  widgets: Joi.array().items(widgetPositionSchema).optional(),
 }).min(1).messages({
   'object.min': 'At least one update field is required',
 });

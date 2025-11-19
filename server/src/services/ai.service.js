@@ -179,35 +179,115 @@ export async function generateSpace(prompt) {
 
 /**
  * Save generated space to database
+ * @param {Object} spaceData - Space data object
+ * @param {string} spaceData.userId - User ID
+ * @param {string} spaceData.name - Space name
+ * @param {string} spaceData.description - Space description
+ * @param {string} spaceData.backgroundId - Background ID
+ * @param {string} spaceData.clockFontId - Clock font ID
+ * @param {string} spaceData.textFontId - Text font ID
+ * @param {Array<string>} spaceData.tracks - Array of track IDs (optional)
+ * @param {string} spaceData.prompt - AI prompt (optional)
+ * @param {Array<string>} spaceData.tags - Array of tag names
  */
-export async function saveGeneratedSpace(userId, generatedSpace) {
+export async function saveGeneratedSpace(spaceData) {
+  const {
+    userId,
+    name,
+    description,
+    backgroundId,
+    clockFontId,
+    textFontId,
+    tracks,
+    prompt,
+    tags
+  } = spaceData;
+
+  // Validate that user exists
+  const user = await prisma.user.findUnique({
+    where: { id: userId, is_deleted: false }
+  });
+
+  if (!user) {
+    throw new Error(`User with ID ${userId} not found`);
+  }
+
+  // Validate that background exists
+  if (backgroundId) {
+    const background = await prisma.background.findUnique({
+      where: { id: backgroundId, is_deleted: false }
+    });
+
+    if (!background) {
+      throw new Error(`Background with ID ${backgroundId} not found`);
+    }
+  }
+
+  // Validate that clock font exists
+  if (clockFontId) {
+    const clockFont = await prisma.clockFont.findUnique({
+      where: { id: clockFontId, is_deleted: false }
+    });
+
+    if (!clockFont) {
+      throw new Error(`Clock font with ID ${clockFontId} not found`);
+    }
+  }
+
+  // Validate that text font exists
+  if (textFontId) {
+    const textFont = await prisma.textFont.findUnique({
+      where: { id: textFontId, is_deleted: false }
+    });
+
+    if (!textFont) {
+      throw new Error(`Text font with ID ${textFontId} not found`);
+    }
+  }
+
+  // Validate tracks if provided
+  if (tracks && Array.isArray(tracks) && tracks.length > 0) {
+    const trackRecords = await prisma.track.findMany({
+      where: {
+        id: { in: tracks },
+        is_deleted: false
+      }
+    });
+
+    if (trackRecords.length !== tracks.length) {
+      const foundIds = trackRecords.map(t => t.id);
+      const missingIds = tracks.filter(id => !foundIds.includes(id));
+      throw new Error(`Tracks not found: ${missingIds.join(', ')}`);
+    }
+  }
+
   // Create space
   const space = await prisma.space.create({
     data: {
       user_id: userId,
-      name: generatedSpace.name,
-      description: generatedSpace.description,
-      background_id: generatedSpace.background.id,
-      clock_font_id: generatedSpace.clock_font.id,
-      text_font_id: generatedSpace.text_font.id,
+      name: name,
+      description: description || null,
+      background_id: backgroundId || null,
+      clock_font_id: clockFontId || null,
+      text_font_id: textFontId || null,
       is_deleted: false
     }
   });
 
-  // Save AI generated content info
-  if (generatedSpace.prompt) {
+  // Save AI generated content info if prompt exists
+  if (prompt) {
     await prisma.aiGeneratedContent.create({
       data: {
         space_id: space.id,
-        prompt: generatedSpace.prompt,
-        content: JSON.stringify(generatedSpace) // Store full config for reference
+        prompt: prompt,
+        content: JSON.stringify(spaceData) // Store full config for reference
       }
     });
   }
 
   // Save tags
-  if (generatedSpace.tags && generatedSpace.tags.length > 0) {
-    for (const tagName of generatedSpace.tags) {
+  if (tags && Array.isArray(tags) && tags.length > 0) {
+    for (const tagName of tags) {
       // Find or create tag
       const tag = await prisma.tag.upsert({
         where: { name: tagName },
@@ -225,22 +305,22 @@ export async function saveGeneratedSpace(userId, generatedSpace) {
     }
   }
 
-  // Create playlist
-  if (generatedSpace.playlist && generatedSpace.playlist.tracks.length > 0) {
+  // Create playlist with tracks if provided
+  if (tracks && Array.isArray(tracks) && tracks.length > 0) {
     const playlist = await prisma.playlist.create({
       data: {
         space_id: space.id,
-        name: generatedSpace.playlist.name,
+        name: `${name} - Playlist`,
         is_deleted: false
       }
     });
 
     // Add tracks to playlist
     await prisma.playlistTrack.createMany({
-      data: generatedSpace.playlist.tracks.map(track => ({
+      data: tracks.map((trackId, index) => ({
         playlist_id: playlist.id,
-        track_id: track.id,
-        track_order: track.order,
+        track_id: trackId,
+        track_order: index + 1,
         is_deleted: false
       }))
     });
@@ -250,17 +330,45 @@ export async function saveGeneratedSpace(userId, generatedSpace) {
   return await prisma.space.findUnique({
     where: { id: space.id },
     include: {
-      background: true,
-      clock: true,
-      text: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar_url: true
+        }
+      },
+      background: {
+        select: {
+          id: true,
+          background_url: true,
+          emotion: true,
+          tags: true,
+          source: true
+        }
+      },
+      clock: {
+        select: {
+          id: true,
+          font_name: true
+        }
+      },
+      text: {
+        select: {
+          id: true,
+          font_name: true
+        }
+      },
       space_tags: {
         include: {
           tag: true
         }
       },
       playlists: {
+        where: { is_deleted: false },
         include: {
           playlist_tracks: {
+            where: { is_deleted: false },
             include: {
               track: true
             },

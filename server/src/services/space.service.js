@@ -6,44 +6,42 @@ import clockFontRepository from '../db/repositories/clockFont.repository.js';
 import textFontRepository from '../db/repositories/textFont.repository.js';
 import {ErrorCodes} from '../constants/errorCodes.js';
 import logger from '../config/logger.js';
+import prisma from '../config/prisma.js';
 
 const spaceService = {
   async createSpace(data) {
     const {
       user_id,
       name,
-      tags,
+      tags, // Array of tag names (strings), not IDs
       description,
       background_url,
       clock_font_id,
-      text_font_name,
-      playlist_ids = [],
-      widget_positions = [],
+      text_font_id,
+      tracks = [], // Array of track IDs
+      prompt = null,
     } = data;
 
-    // Validate tags exist and are not deleted
+    // Validate tags exist and are not empty
     if (!tags || tags.length === 0) {
       const error = new Error('At least one tag is required');
       error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
       throw error;
     }
 
-    const tagValidations = await Promise.all(
-      tags.map(async (tagId) => {
-        const tag = await tagRepository.findById(tagId);
-        if (!tag || tag.is_deleted) {
-          return { valid: false, tagId };
-        }
-        return { valid: true, tagId };
-      })
-    );
-
-    const invalidTags = tagValidations.filter(t => !t.valid);
-    if (invalidTags.length > 0) {
-      const error = new Error(`Invalid or deleted tag IDs: ${invalidTags.map(t => t.tagId).join(', ')}`);
+    // Validate tags are strings
+    if (!Array.isArray(tags) || !tags.every(tag => typeof tag === 'string')) {
+      const error = new Error('Tags must be an array of strings (tag names)');
       error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
       error.statusCode = 422;
       throw error;
+    }
+
+    // Find or create tags and get their IDs
+    const tagIds = [];
+    for (const tagName of tags) {
+      const tag = await tagRepository.findOrCreate(tagName.trim());
+      tagIds.push(tag.id);
     }
 
     // Handle background URL
@@ -51,16 +49,30 @@ const spaceService = {
 
     if (background_url) {
       try {
-        // Create background record with the provided URL
-        const newBackground = await backgroundRepository.create({
-          background_url: background_url,
+        // Check if background with this URL already exists
+        const existingBackground = await prisma.background.findFirst({
+          where: {
+            background_url: background_url,
+            is_deleted: false
+          }
         });
 
-        validatedBackgroundId = newBackground.id;
-        logger.info(`Background created for space with URL: ${background_url}`);
+        if (existingBackground) {
+          // Use existing background
+          validatedBackgroundId = existingBackground.id;
+          logger.info(`Using existing background with URL: ${background_url}`);
+        } else {
+          // Create new background record with the provided URL
+          const newBackground = await backgroundRepository.create({
+            background_url: background_url,
+          });
+
+          validatedBackgroundId = newBackground.id;
+          logger.info(`Background created for space with URL: ${background_url}`);
+        }
       } catch (error) {
-        logger.error(`Failed to create background: ${error.message}`);
-        const err = new Error(`Failed to create background: ${error.message}`);
+        logger.error(`Failed to handle background: ${error.message}`);
+        const err = new Error(`Failed to handle background: ${error.message}`);
         err.code = ErrorCodes.SPACE_VALIDATION_FAILED;
         err.statusCode = 400;
         throw err;
@@ -91,11 +103,11 @@ const spaceService = {
     }
 
     // Validate and set text font (or use default)
-    let validatedTextFontName = text_font_name;
-    if (text_font_name) {
-      const textFont = await textFontRepository.findById(text_font_name);
+    let validatedTextFontId = text_font_id;
+    if (text_font_id) {
+      const textFont = await textFontRepository.findById(text_font_id);
       if (!textFont || textFont.is_deleted) {
-        const error = new Error('Invalid text font name');
+        const error = new Error('Invalid text font ID');
         error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
         error.statusCode = 422;
         throw error;
@@ -103,31 +115,29 @@ const spaceService = {
     } else {
       const defaultTextFont = await textFontRepository.getDefault();
       if (defaultTextFont) {
-        validatedTextFontName = defaultTextFont.id;
+        validatedTextFontId = defaultTextFont.id;
       }
     }
 
-    // Validate playlists (if provided)
-    if (playlist_ids.length > 0) {
-      const playlistValidations = await Promise.all(
-        playlist_ids.map(async (playlistId) => {
-          const playlist = await playlistRepository.findById(playlistId);
-          // Check if playlist exists, not deleted, and belongs to user or has no space
-          if (!playlist || playlist.is_deleted) {
-            return { valid: false, playlistId, reason: 'not found or deleted' };
+    // Validate tracks (if provided)
+    if (tracks.length > 0) {
+      // Validate that all tracks exist
+      const trackValidations = await Promise.all(
+        tracks.map(async (trackId) => {
+          const track = await prisma.track.findUnique({
+            where: { id: trackId, is_deleted: false }
+          });
+          if (!track) {
+            return { valid: false, trackId };
           }
-          // Playlist should either have no space_id or belong to the same user
-          if (playlist.space_id && playlist.space?.user_id !== user_id) {
-            return { valid: false, playlistId, reason: 'belongs to another user' };
-          }
-          return { valid: true, playlistId };
+          return { valid: true, trackId };
         })
       );
 
-      const invalidPlaylists = playlistValidations.filter(p => !p.valid);
-      if (invalidPlaylists.length > 0) {
+      const invalidTracks = trackValidations.filter(t => !t.valid);
+      if (invalidTracks.length > 0) {
         const error = new Error(
-          `Invalid playlist IDs: ${invalidPlaylists.map(p => `${p.playlistId} (${p.reason})`).join(', ')}`
+          `Invalid or deleted track IDs: ${invalidTracks.map(t => t.trackId).join(', ')}`
         );
         error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
         error.statusCode = 422;
@@ -142,16 +152,37 @@ const spaceService = {
       description: description || null,
       background_id: validatedBackgroundId,
       clock_font_id: validatedClockFontId,
-      text_font_name: validatedTextFontName,
+      text_font_id: validatedTextFontId,
     };
 
-    // Create space with all relations
-    return await spaceRepository.create(
+    // Create space with all relations (pass tracks instead of playlist_ids)
+    const createdSpace = await spaceRepository.create(
         spaceData,
-        tags,
-        playlist_ids,
-        widget_positions
+        tagIds,
+        tracks
     );
+
+    // Save AI generated content info if prompt exists and is not empty
+    if (prompt && prompt.trim().length > 0) {
+      await prisma.aiGeneratedContent.create({
+        data: {
+          space_id: createdSpace.id,
+          prompt: prompt,
+          content: JSON.stringify({
+            user_id,
+            name,
+            description,
+            background_id: validatedBackgroundId,
+            clock_font_id: validatedClockFontId,
+            text_font_id: validatedTextFontId,
+            tags, // Store original tag names
+            tracks,
+          })
+        }
+      });
+    }
+
+    return createdSpace;
   },
 
   async getSpaceById(id) {
@@ -180,16 +211,14 @@ const spaceService = {
     const {
       metadata,
       appearance,
-      tags,
+      tags, // Array of tag names (strings), not IDs
       playlist_links,
-      widgets,
     } = data;
 
     const spaceData = {};
     let tagIds = null;
     let playlistLinksAdd = [];
     let playlistLinksRemove = [];
-    let widgetPositions = null;
 
     // Process metadata updates
     if (metadata) {
@@ -239,17 +268,17 @@ const spaceService = {
         spaceData.clock_font_id = appearance.clock_font_id;
       }
 
-      if (appearance.text_font_name !== undefined) {
-        if (appearance.text_font_name) {
-          const textFont = await textFontRepository.findById(appearance.text_font_name);
+      if (appearance.text_font_id !== undefined) {
+        if (appearance.text_font_id) {
+          const textFont = await textFontRepository.findById(appearance.text_font_id);
           if (!textFont || textFont.is_deleted) {
-            const error = new Error('Invalid text font name');
+            const error = new Error('Invalid text font ID');
             error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
             error.statusCode = 422;
             throw error;
           }
         }
-        spaceData.text_font_name = appearance.text_font_name;
+        spaceData.text_font_id = appearance.text_font_id;
       }
     }
 
@@ -261,26 +290,20 @@ const spaceService = {
         throw error;
       }
 
-      // Validate all tags
-      const tagValidations = await Promise.all(
-        tags.map(async (tagId) => {
-          const tag = await tagRepository.findById(tagId);
-          if (!tag || tag.is_deleted) {
-            return { valid: false, tagId };
-          }
-          return { valid: true, tagId };
-        })
-      );
-
-      const invalidTags = tagValidations.filter(t => !t.valid);
-      if (invalidTags.length > 0) {
-        const error = new Error(`Invalid or deleted tag IDs: ${invalidTags.map(t => t.tagId).join(', ')}`);
+      // Validate tags are strings
+      if (!Array.isArray(tags) || !tags.every(tag => typeof tag === 'string')) {
+        const error = new Error('Tags must be an array of strings (tag names)');
         error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
         error.statusCode = 422;
         throw error;
       }
 
-      tagIds = tags;
+      // Find or create tags and get their IDs
+      tagIds = [];
+      for (const tagName of tags) {
+        const tag = await tagRepository.findOrCreate(tagName.trim());
+        tagIds.push(tag.id);
+      }
     }
 
     // Process playlist links
@@ -318,19 +341,13 @@ const spaceService = {
       }
     }
 
-    // Process widgets
-    if (widgets !== undefined) {
-      widgetPositions = widgets;
-    }
-
     // Perform update
     return await spaceRepository.update(
         id,
         spaceData,
         tagIds,
         playlistLinksAdd,
-        playlistLinksRemove,
-        widgetPositions
+        playlistLinksRemove
     );
   },
 

@@ -1,7 +1,7 @@
 import prisma from '../../config/prisma.js';
 
 const spaceRepository = {
-  async create(spaceData, tagIds = [], playlistIds = [], widgetPositions = []) {
+  async create(spaceData, tagIds = [], trackIds = []) {
     return await prisma.$transaction(async (tx) => {
       // Create the space
       const space = await tx.space.create({
@@ -18,29 +18,23 @@ const spaceRepository = {
         });
       }
 
-      // Link playlists to space
-      if (playlistIds.length > 0) {
-        await tx.playlist.updateMany({
-          where: {
-            id: { in: playlistIds },
-          },
+      // Create playlist with tracks if provided
+      if (trackIds.length > 0) {
+        const playlist = await tx.playlist.create({
           data: {
             space_id: space.id,
+            name: `${spaceData.name} - Playlist`,
+            is_deleted: false,
           },
         });
-      }
 
-      // Create widget positions
-      if (widgetPositions.length > 0) {
-        await tx.widgetPosition.createMany({
-          data: widgetPositions.map(widget => ({
-            space_id: space.id,
-            widget_id: widget.widget_id,
-            position: {
-              x: widget.x,
-              y: widget.y,
-              metadata: widget.metadata || {},
-            },
+        // Add tracks to playlist
+        await tx.playlistTrack.createMany({
+          data: trackIds.map((trackId, index) => ({
+            playlist_id: playlist.id,
+            track_id: trackId,
+            track_order: index + 1,
+            is_deleted: false,
           })),
         });
       }
@@ -71,9 +65,6 @@ const spaceRepository = {
               font_name: true,
             },
           },
-          widget_positions: {
-            where: { is_deleted: false },
-          },
           playlists: {
             where: { is_deleted: false },
             include: {
@@ -85,7 +76,6 @@ const spaceRepository = {
             },
           },
           space_tags: {
-            where: { is_deleted: false },
             include: { tag: true },
           },
           notes: {
@@ -132,9 +122,6 @@ const spaceRepository = {
             id: true,
             font_name: true,
           },
-        },
-        widget_positions: {
-          where: { is_deleted: false },
         },
         playlists: {
           where: { is_deleted: false },
@@ -221,7 +208,7 @@ const spaceRepository = {
     });
   },
 
-  async update(id, spaceData, tagIds = null, playlistLinksAdd = [], playlistLinksRemove = [], widgetPositions = null) {
+  async update(id, spaceData, tagIds = null, playlistLinksAdd = [], playlistLinksRemove = []) {
     return await prisma.$transaction(async (tx) => {
       // Update space metadata/appearance
       if (Object.keys(spaceData).length > 0) {
@@ -233,10 +220,9 @@ const spaceRepository = {
 
       // Update tags if provided
       if (tagIds !== null) {
-        // Soft delete existing tags
-        await tx.spaceTag.updateMany({
+        // Delete existing tags (hard delete since no soft delete field)
+        await tx.spaceTag.deleteMany({
           where: { space_id: id },
-          data: { is_deleted: true },
         });
 
         // Create new tag associations
@@ -275,30 +261,6 @@ const spaceRepository = {
         });
       }
 
-      // Update widget positions if provided
-      if (widgetPositions !== null) {
-        // Soft delete existing positions
-        await tx.widgetPosition.updateMany({
-          where: { space_id: id },
-          data: { is_deleted: true },
-        });
-
-        // Create new positions
-        if (widgetPositions.length > 0) {
-          await tx.widgetPosition.createMany({
-            data: widgetPositions.map(widget => ({
-              space_id: id,
-              widget_id: widget.widget_id,
-              position: {
-                x: widget.x,
-                y: widget.y,
-                metadata: widget.metadata || {},
-              },
-            })),
-          });
-        }
-      }
-
       // Fetch updated space with all relations
       return await tx.space.findUnique({
         where: { id },
@@ -325,9 +287,6 @@ const spaceRepository = {
               font_name: true,
             },
           },
-          widget_positions: {
-            where: { is_deleted: false },
-          },
           playlists: {
             where: { is_deleted: false },
             include: {
@@ -339,7 +298,6 @@ const spaceRepository = {
             },
           },
           space_tags: {
-            where: { is_deleted: false },
             include: { tag: true },
           },
           notes: {
@@ -366,16 +324,9 @@ const spaceRepository = {
         data: { is_deleted: true },
       });
 
-      // Soft delete space tags
-      await tx.spaceTag.updateMany({
+      // Delete space tags (hard delete since no soft delete field)
+      await tx.spaceTag.deleteMany({
         where: { space_id: id },
-        data: { is_deleted: true },
-      });
-
-      // Soft delete widget positions
-      await tx.widgetPosition.updateMany({
-        where: { space_id: id },
-        data: { is_deleted: true },
       });
 
       // Detach playlists (set space_id to null instead of deleting)
@@ -450,11 +401,8 @@ const spaceRepository = {
             where: { is_deleted: false },
           },
           space_tags: {
-            where: { is_deleted: false },
             include: {
-              tag: {
-                where: { is_deleted: false },
-              },
+              tag: true,
             },
           },
         },

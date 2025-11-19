@@ -26,23 +26,61 @@ export const generate = asyncHandler(async (req, res) => {
 /**
  * POST /api/ai/generate/confirm
  * Confirm and save generated space to user's account
+ * @body {string} userId - ID of the user
+ * @body {string} name - Name of the space
+ * @body {string} description - Description of the space (optional)
+ * @body {string} backgroundId - ID of the background
+ * @body {string} clockFontId - ID of the clock font
+ * @body {string} textFontId - ID of the text font
+ * @body {Array<string>} tracks - Array of track IDs (optional)
+ * @body {string} prompt - Original AI prompt (optional)
+ * @body {Array<string>} tags - Array of tag names (optional)
  */
 export const confirmGenerate = asyncHandler(async (req, res) => {
-  const userId = req.user.id; // Assuming auth middleware sets req.user
-  const { generatedSpace } = req.body;
+  const {
+    userId,
+    name,
+    description,
+    backgroundId,
+    clockFontId,
+    textFontId,
+    tracks,
+    prompt,
+    tags
+  } = req.body;
 
-  if (!generatedSpace) {
-    throw new ApiError(400, 'Generated space data is required');
+  // Validate required fields
+  if (!userId) {
+    throw new ApiError(400, 'userId is required');
+  }
+  if (!name || typeof name !== 'string' || name.trim().length === 0) {
+    throw new ApiError(400, 'name is required and must be a non-empty string');
+  }
+  if (!backgroundId) {
+    throw new ApiError(400, 'backgroundId is required');
+  }
+  if (!clockFontId) {
+    throw new ApiError(400, 'clockFontId is required');
+  }
+  if (!textFontId) {
+    throw new ApiError(400, 'textFontId is required');
   }
 
-  // Validate generated space structure
-  if (!generatedSpace.name || !generatedSpace.background?.id ||
-      !generatedSpace.clock_font?.id || !generatedSpace.text_font?.id) {
-    throw new ApiError(400, 'Invalid generated space data');
-  }
+  // Prepare space data
+  const spaceData = {
+    userId,
+    name,
+    description: description || null,
+    backgroundId,
+    clockFontId,
+    textFontId,
+    tracks: Array.isArray(tracks) ? tracks : [],
+    prompt: prompt || null,
+    tags: Array.isArray(tags) ? tags : []
+  };
 
   // Save to database
-  const savedSpace = await aiService.saveGeneratedSpace(userId, generatedSpace);
+  const savedSpace = await aiService.saveGeneratedSpace(spaceData);
 
   res.status(201).json({
     success: true,
@@ -55,4 +93,3 @@ export default {
   generate,
   confirmGenerate
 };
-
