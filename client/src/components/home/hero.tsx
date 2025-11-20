@@ -21,7 +21,7 @@ export default function Hero() {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.8, ease: "easeOut" },
+      transition: { duration: 0.8 },
     },
   }
 
@@ -60,39 +60,18 @@ export default function Hero() {
 
         <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
-            href="/dashboard"
+            href="/emotional-capsules"
             className="px-8 py-4 bg-[#C7A36B] text-[#1E1E1E] rounded-2xl font-semibold hover:bg-[#D4B896] transition flex items-center justify-center gap-2 group"
           >
-            Create Your Space
+            Start your journey
             <ArrowRight size={20} className="group-hover:translate-x-1 transition" />
           </Link>
           <Link
             href="/generate"
             className="px-8 py-4 border-2 border-[#C7A36B] text-[#C7A36B] rounded-2xl font-semibold hover:bg-[#C7A36B]/10 transition"
           >
-            Try AI Generator
+            View my capsules
           </Link>
-        </motion.div>
-
-        {/* Preview section */}
-        <motion.div variants={itemVariants} className="mt-16 relative">
-          <div className="bg-gradient-to-b from-[#2A2A2A] to-transparent p-1 rounded-3xl">
-            <div className="bg-[#1E1E1E] rounded-3xl p-8 flex items-center justify-center min-h-80">
-              <div className="text-center">
-                <div className="text-sm text-[#B3B3B3] mb-4">Featured Spaces Preview</div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {["Focus", "Chill", "Calm", "Happy"].map((space) => (
-                    <div
-                      key={space}
-                      className="h-20 bg-[#2A2A2A] rounded-2xl border border-[#C7A36B]/20 hover:border-[#C7A36B]/50 transition flex items-center justify-center text-[#B3B3B3] text-sm"
-                    >
-                      {space}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
         </motion.div>
       </motion.div>
     </section>

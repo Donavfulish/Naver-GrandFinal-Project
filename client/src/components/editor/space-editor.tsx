@@ -47,7 +47,6 @@ export default function SpaceEditor({ spaceId }: { spaceId: string }) {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-[#F5F5F5]">Space Editor</h1>
-            <p className="text-sm text-[#B3B3B3]">ID: {spaceId}</p>
           </div>
           <motion.button
             onClick={handleSave}

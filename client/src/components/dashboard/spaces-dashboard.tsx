@@ -13,13 +13,15 @@ const mockSpaces = [
     name: "Deep Focus",
     tags: ["Focus", "Productive"],
     background: "bg-blue-900/20",
-    accent: "#C7A36B",
+    img: "/img/calming-ambient-environment.png",
+    accent: "#C7A36B"
   },
   {
     id: 2,
     name: "Rainy Study",
     tags: ["Calm", "Cozy"],
     background: "bg-slate-900/20",
+    img: "/img/minimalist-focus-workspace.png",
     accent: "#7C9A92",
   },
   {
@@ -27,6 +29,7 @@ const mockSpaces = [
     name: "Creative Flow",
     tags: ["Creative", "Happy"],
     background: "bg-purple-900/20",
+    img: "/img/calming-ambient-environment.png",
     accent: "#C7A36B",
   },
   {
@@ -34,6 +37,7 @@ const mockSpaces = [
     name: "Midnight Code",
     tags: ["Focus", "Night"],
     background: "bg-gray-900/20",
+    img: "/img/peaceful-meditation-space.png",
     accent: "#7C9A92",
   },
   {
@@ -41,6 +45,7 @@ const mockSpaces = [
     name: "Zen Garden",
     tags: ["Calm", "Nature"],
     background: "bg-green-900/20",
+    img: "/img/peaceful-meditation-space.png",
     accent: "#C7A36B",
   },
   {
@@ -48,6 +53,7 @@ const mockSpaces = [
     name: "Sunset Vibes",
     tags: ["Relax", "Happy"],
     background: "bg-orange-900/20",
+    img: "/img/peaceful-meditation-space.png",
     accent: "#7C9A92",
   },
 ]
