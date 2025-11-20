@@ -49,7 +49,7 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
             // router.push("/capsules")
             // return
         }
-        
+
         // Timer cho session duration
         if (space.sessionStartTime) {
             const interval = setInterval(() => {
@@ -57,7 +57,7 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
             }, 1000)
             return () => clearInterval(interval)
         }
-        
+
     }, [space.sessionStartTime]) // Sử dụng space.sessionStartTime
 
     const formatTime = (seconds: number) => {
@@ -72,7 +72,7 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
         const browserFs = window.innerHeight === screen.height
         setIsFullscreen(domFs || browserFs)
     }
-    
+
     useEffect(() => {
         window.addEventListener("resize", detectFullscreen)
         document.addEventListener("fullscreenchange", detectFullscreen)
@@ -92,7 +92,7 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
 
     const handlePreviewChange = (p: Partial<SettingsPreview>) =>
         setPreview(prev => ({ ...prev, ...p }))
-        
+
     // Logic này cần được cập nhật để lưu cấu hình preview (thay đổi bởi người dùng) vào space object nếu cần.
     const handleSave = (p: SettingsPreview) => {
         // Cần lưu state này lên backend hoặc local state tùy theo thiết kế của bạn.
@@ -102,27 +102,27 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
         // });
         console.log("Settings saved:", p);
     }
-    
+
     // Lấy thông tin bài hát hiện tại
     const currentTrack = space.playlist?.tracks?.[0]
     const trackName = currentTrack?.name || "No Track Playing"
     // Giả định artist là tên playlist nếu không có trường artist riêng
-    const artistName = space.playlist?.name || space.name 
+    const artistName = space.playlist?.name || space.name
 
     return (
         <div className="relative w-full min-h-screen overflow-hidden">
             {/* Background */}
-            <Image 
-                src={preview.background} 
-                fill 
-                className="object-cover" 
-                alt="background" 
+            <Image
+                src={preview.background}
+                fill
+                className="object-cover"
+                alt="background"
                 priority // Tải sớm ảnh nền
             />
             <div className="absolute inset-0 bg-gradient-to-br from-[#1E1E1E]/60 via-transparent to-[#1E1E1E]/80" />
 
             {/* Top Bar */}
-            <div className="absolute top-0 left-0 w-full z-20 flex items-center justify-between px-6 py-4 text-white">
+            <div className="absolute top-0 left-0 w-full z-20 flex items-center justify-between px-6 py-4 text-black">
                 <div>Session: <span className="text-[#C7A36B]">{formatTime(sessionDuration)}</span></div>
                 {/* HIỂN THỊ TÊN SPACE */}
                 <h2 className="text-lg font-semibold capitalize">{space.name} ({space.mood})</h2>
@@ -133,12 +133,25 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
                 </button>
             </div>
 
+            <motion.div
+                className="absolute bottom-16 right-8 z-20 flex flex-col gap-4"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+            >
+                <button
+                    onClick={() => setShowSettings(true)}
+                    className="p-3 bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 text-white transition "
+                >
+                    <Settings size={20} />
+                </button>
+            </motion.div>
+
             {/* Sticky / Passive Mode */}
             <div className="absolute inset-0 z-10">
                 {activeMode ? <StickyNoteCanvas /> : (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center h-full text-center text-white/70">
                         {/* HIỂN THỊ CÁC THÔNG ĐIỆP GIỚI THIỆU TỪ API */}
-                        <p className="text-lg font-medium">{space.introPage1}</p> 
+                        <p className="text-lg font-medium">{space.introPage1}</p>
                         <p className="text-sm mt-2 max-w-md">{space.description}</p>
                     </motion.div>
                 )}
@@ -146,9 +159,9 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
 
             {/* CLOCK */}
             <motion.div drag dragElastic={0.2} dragMomentum={false} className={layoutStyle.clockClass}>
-                <RealClock 
-                    styleType={preview.clockStyle as any} 
-                    size={150} 
+                <RealClock
+                    styleType={preview.clockStyle as any}
+                    size={150}
                 />
                 <div className={`mt-4 text-center text-white/80`}>
                     <p className={`text-white text-5xl font-semibold ${preview.clockFont}`}>{new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</p>
@@ -169,12 +182,12 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
                     <button><SkipForward size={28} /></button>
                 </div>
             </motion.div>
-            
+
             {/* Checkout Modal */}
             {showCheckout && (
                 <CheckoutModal onClose={() => setShowCheckout(false)} duration={sessionDuration} />
             )}
-            
+
             {/* SETTINGS PANEL */}
             <SettingsPanel
                 open={showSettings}
@@ -183,7 +196,7 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
                 onPreviewChange={handlePreviewChange}
                 onSave={handleSave}
                 // Giả định space.id cần được bổ sung trong component cha (nếu API không cung cấp)
-                spaceId={space.id || "temp-id"} 
+                spaceId={space.id || "temp-id"}
             />
         </div>
     )

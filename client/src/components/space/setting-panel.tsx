@@ -198,12 +198,6 @@ export default function SettingsPanel({
                 >
                     Apply & Save
                 </button>
-                <Link
-                    href={`/editor/${spaceId}`}
-                    className="w-full mt-3 px-4 py-3 bg-[#C7A36B]/20 text-[#C7A36B] rounded-lg font-semibold hover:bg-[#C7A36B]/30 transition block text-center"
-                >
-                    Full Editor
-                </Link>
             </div>
         </div>
     )
