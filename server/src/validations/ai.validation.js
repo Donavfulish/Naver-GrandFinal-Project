@@ -75,6 +75,12 @@ export const confirmGenerateSchema = Joi.object({
     .messages({
       'string.max': 'Prompt không được vượt quá 1000 ký tự'
     }),
+  mood: Joi.string()
+    .required()
+    .messages({
+      'string.empty': 'mood không được để trống',
+      'any.required': 'mood là bắt buộc'
+    }),
   tags: Joi.array()
     .items(Joi.string())
     .default([])

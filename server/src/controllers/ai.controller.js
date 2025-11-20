@@ -9,6 +9,7 @@ import prisma from '../config/prisma.js';
  */
 export const generate = asyncHandler(async (req, res) => {
   const { prompt } = req.body;
+  console.log('Received generate request with prompt:', prompt);
 
   if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
     throw new ApiError(400, 'Prompt is required and must be a non-empty string');
