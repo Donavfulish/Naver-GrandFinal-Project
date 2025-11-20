@@ -83,7 +83,25 @@ export const confirmGenerateSchema = Joi.object({
     })
 });
 
+export const checkoutSchema = Joi.object({
+  spaceId: Joi.string()
+    .uuid()
+    .required()
+    .messages({
+      'string.empty': 'spaceId không được để trống',
+      'string.uuid': 'spaceId phải là UUID hợp lệ',
+      'any.required': 'spaceId là bắt buộc'
+    }),
+  initialMood: Joi.string()
+    .allow('', null)
+    .optional(),
+  duration: Joi.number()
+    .min(0)
+    .optional()
+});
+
 export default {
   generateSchema,
-  confirmGenerateSchema
+  confirmGenerateSchema,
+  checkoutSchema
 };

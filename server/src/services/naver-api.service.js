@@ -1,6 +1,7 @@
 import { NAVER_CLOVA_STUDIO_API_KEY, NAVER_CLOVA_STUDIO_API_URL } from '../config/env.js';
 import logger from '../config/logger.js';
 import { ErrorCodes } from '../constants/errorCodes.js';
+import { REFLECTION_TEMPLATES } from '../constants/reflectionTemplates.js';
 
 /**
  * NAVER API Service
@@ -226,10 +227,13 @@ class NaverApiService {
       })),
       topP,
       temperature,
-      repetitionPenalty,
+      repeatPenalty: repetitionPenalty, // Changed from repetitionPenalty to repeatPenalty
       includeAiFilters,
     };
 
+    // NOTE: topK is not always supported in v3 for some models/versions. 
+    // If topK is 0, we should generally omit it unless we are sure the model supports it.
+    // For stability, let's conditionally add it.
     if (topK > 0) {
       requestBody.topK = topK;
     }
@@ -446,6 +450,123 @@ JSON FORMAT:
         textFont: context.textFonts[0],
         emotions: ['calm', 'peaceful'],
         tags: ['ambient', 'relax', 'focus']
+      };
+    }
+  }
+
+  /**
+   * Generate context-aware reflection for checkout
+   * @param {Object} context - Session context
+   * @param {string} context.initialMood - Initial mood of the session
+   * @param {number} context.duration - Duration in seconds
+   * @param {string} context.notesContent - Combined notes content
+   * @returns {Promise<Object>} Reflection data
+   */
+  async generateReflection(context) {
+    const { initialMood, duration, notesContent } = context;
+
+    const systemPrompt = `You are an empathetic mental health AI assistant.
+TASK: Analyze the user's session and select the best "Reflection Question" using "Slot Filling" technique.
+
+DATASET TEMPLATES (You MUST select one from this list):
+${JSON.stringify(REFLECTION_TEMPLATES, null, 2)}
+
+PROCESS:
+1. Analyze "User Notes" to determine Sentiment (NEGATIVE / POSITIVE / NEUTRAL).
+2. Extract "The Anchor": A short phrase (under 5 words) representing the main issue or joy.
+   - E.g., "unfinished project", "quiet morning", "argument with friend".
+   - If no specific topic is found, use "this session".
+3. Select ONE Template ID from the dataset based on the Sentiment.
+4. Inject "The Anchor" into the {anchor} placeholder in the template.
+5. Suggest 3 relevant hashtags.
+
+OUTPUT FORMAT (JSON Only):
+{
+  "sentiment": "NEGATIVE", 
+  "anchor_extracted": "...",
+  "selected_template_id": "...", 
+  "reflection_question": "Question with anchor filled in...",
+  "tags": ["#Tag1", "#Tag2", "#Tag3"]
+}`;
+
+    const userPrompt = `INPUT DATA:
+- Initial Mood: ${initialMood}
+- Duration: ${duration} seconds
+- User Notes Content: "${notesContent.substring(0, 2000)}"`;
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ];
+
+    const response = await this.chatCompletion(messages, {
+      temperature: 0.3, // Low temperature for deterministic matching
+      topP: 0.8
+      // Removed maxTokens to match working API format (same as generateSpaceFromPrompt)
+    });
+
+    try {
+      let cleanedResponse = response.trim();
+      
+      // Log raw response for debugging
+      logger.info('[NAVER API] Raw reflection response', {
+        responseLength: response.length,
+        responsePreview: response.substring(0, 500)
+      });
+      
+      // Remove markdown code blocks if present
+      if (cleanedResponse.startsWith('```')) {
+        const firstNewline = cleanedResponse.indexOf('\n');
+        if (firstNewline !== -1) {
+          cleanedResponse = cleanedResponse.substring(firstNewline + 1);
+        }
+        cleanedResponse = cleanedResponse.replace(/```\s*$/, '').trim();
+        // Also remove language identifier like ```json
+        cleanedResponse = cleanedResponse.replace(/^json\s*/i, '').trim();
+      }
+
+      // Try to extract JSON if there's extra text before/after
+      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        cleanedResponse = jsonMatch[0];
+      }
+
+      const parsed = JSON.parse(cleanedResponse);
+
+      // Basic validation
+      if (!parsed.reflection_question || !parsed.selected_template_id) {
+        logger.warn('[NAVER API] Reflection response missing required fields', {
+          parsed,
+          hasReflectionQuestion: !!parsed.reflection_question,
+          hasSelectedTemplateId: !!parsed.selected_template_id
+        });
+        throw new Error('Invalid reflection response structure');
+      }
+
+      logger.info('[NAVER API] Generated Reflection', {
+        sentiment: parsed.sentiment,
+        templateId: parsed.selected_template_id,
+        anchor: parsed.anchor_extracted
+      });
+
+      return parsed;
+
+    } catch (error) {
+      logger.error('[NAVER API] Failed to parse reflection response', {
+        error: error.message,
+        errorStack: error.stack,
+        responseLength: response.length,
+        responseFull: response,
+        responsePreview: response.substring(0, 1000)
+      });
+      
+      // Fallback
+      return {
+        sentiment: "NEUTRAL",
+        anchor_extracted: "this session",
+        selected_template_id: "NEU_02",
+        reflection_question: "In this silence, what feeling is most present for you?",
+        tags: ["#Mindfulness", "#Reflection", "#Pause"]
       };
     }
   }

@@ -388,6 +388,95 @@ export async function saveGeneratedSpace(spaceData) {
 }
 
 /**
+ * Generate checkout reflection for a space (Act 3)
+ * @param {string} spaceId - Space ID
+ * @param {Object} metadata - Session metadata (initialMood, duration)
+ */
+export async function checkout(spaceId, metadata) {
+  const { initialMood, duration } = metadata;
+
+  // Optimize: Fetch only necessary fields
+  // - Notes content for analysis
+  // - AiGeneratedContent to check original intent/mood if initialMood is missing
+  const space = await prisma.space.findUnique({
+    where: { id: spaceId, is_deleted: false },
+    select: {
+      duration: true,
+      notes: {
+        where: { is_delete: false },
+        orderBy: { note_order: 'asc' },
+        select: { content: true }
+      },
+      AiGeneratedContent: {
+        select: {
+          mood: true,
+          prompt: true
+        }
+      }
+    }
+  });
+
+  if (!space) {
+    throw new Error('Space not found');
+  }
+
+  // Determine effective mood (Client > AI Generated > Default)
+  const effectiveMood = initialMood || space.AiGeneratedContent?.mood || 'Neutral';
+
+  // Note: We do NOT update the DB duration here. 
+  // The duration sent by the client is the "current session duration", which might be partial.
+  // The client is responsible for calling a separate endpoint (e.g., PATCH /spaces/:id) 
+  // to persist the final duration when the session explicitly ends or auto-saves.
+  // This prevents corruption/race conditions if the user cancels the checkout flow.
+
+  // Edge case: Zero notes -> Smart Fallback
+  if (!space.notes || space.notes.length === 0) {
+    // If mood is negative (Stressed, Sad), use a gentle question
+    if (['Stressed', 'Sad', 'Anxious', 'Angry'].includes(effectiveMood)) {
+      return {
+        sentiment: "NEGATIVE",
+        anchor_extracted: "this moment",
+        selected_template_id: "NEG_01_FALLBACK",
+        reflection_question: "It seems like a heavy moment. What is one small thing you can do to be kind to yourself right now?",
+        tags: ["#SelfCare", "#Pause", "#Breath"]
+      };
+    }
+    
+    // If mood is positive (Happy, Excited), use a savoring question
+    if (['Happy', 'Excited', 'Proud', 'Grateful'].includes(effectiveMood)) {
+       return {
+        sentiment: "POSITIVE",
+        anchor_extracted: "this feeling",
+        selected_template_id: "POS_01_FALLBACK",
+        reflection_question: "You seem to be in a good flow. What specific thing are you most grateful for in this session?",
+        tags: ["#Gratitude", "#Flow", "#Joy"]
+      };
+    }
+
+    // Default/Neutral Fallback (Mindfulness)
+    return {
+      sentiment: "NEUTRAL",
+      anchor_extracted: "silence",
+      selected_template_id: "NEU_02",
+      reflection_question: "In the silence of this session, what feeling surfaced the most?",
+      tags: ["#Mindfulness", "#Silence", "#Presence"]
+    };
+  }
+
+  // Combine notes content
+  const notesContent = space.notes.map(n => n.content).join('\n');
+
+  // Call Naver API
+  const reflection = await naverApiService.generateReflection({
+    initialMood: effectiveMood,
+    duration: duration || space.duration || 0,
+    notesContent
+  });
+
+  return reflection;
+}
+
+/**
  * Generate AI summary and mood analysis for a space
  * @param {string} spaceId - Space ID
  * @returns {Promise<Object>} AI generated summary with advice and mood
@@ -466,5 +555,6 @@ export async function generateSpaceSummary(spaceId) {
 export default {
   generateSpace,
   saveGeneratedSpace,
-  generateSpaceSummary
+  generateSpaceSummary,
+  checkout
 };

@@ -110,8 +110,35 @@ export const getSpaceSummary = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * POST /api/ai/checkout
+ * Generate context-aware reflection for emotional checkout
+ * @body {string} spaceId - ID of the space
+ * @body {string} initialMood - Initial mood of the session
+ * @body {number} duration - Duration of the session in seconds
+ */
+export const checkout = asyncHandler(async (req, res) => {
+  const { spaceId, initialMood, duration } = req.body;
+
+  if (!spaceId) {
+    throw new ApiError(400, 'spaceId is required');
+  }
+
+  const reflection = await aiService.checkout(spaceId, {
+    initialMood,
+    duration
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Reflection generated successfully',
+    data: reflection
+  });
+});
+
 export default {
   generate,
   confirmGenerate,
-  getSpaceSummary
+  getSpaceSummary,
+  checkout
 };
