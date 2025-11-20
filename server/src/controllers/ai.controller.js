@@ -1,6 +1,7 @@
 import aiService from '../services/ai.service.js';
 import asyncHandler from '../middleware/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
+import prisma from '../config/prisma.js';
 
 /**
  * POST /api/ai/generate
@@ -96,44 +97,30 @@ export const confirmGenerate = asyncHandler(async (req, res) => {
 
 
 /**
- * GET /api/ai/spaces/:id/summary
- * Get AI-generated summary and mood analysis for a space
- */
-export const getSpaceSummary = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-
-  if (!id) {
-    throw new ApiError(400, 'Space ID is required');
-  }
-
-  // Generate AI summary and mood
-  const summary = await aiService.generateSpaceSummary(id);
-
-  res.status(200).json({
-    success: true,
-    message: 'Space summary generated successfully',
-    data: summary
-  });
-});
-
-/**
  * POST /api/ai/checkout
  * Generate context-aware reflection for emotional checkout
  * @body {string} spaceId - ID of the space
- * @body {string} initialMood - Initial mood of the session
  * @body {number} duration - Duration of the session in seconds
  */
 export const checkout = asyncHandler(async (req, res) => {
-  const { spaceId, initialMood, duration } = req.body;
+  const { spaceId, duration } = req.body;
 
   if (!spaceId) {
     throw new ApiError(400, 'spaceId is required');
   }
 
-  const reflection = await aiService.checkout(spaceId, {
-    initialMood,
-    duration
+  if (duration === undefined || duration === null) {
+    throw new ApiError(400, 'duration is required');
+  }
+
+  // Update duration to database first
+  await prisma.space.update({
+    where: { id: spaceId },
+    data: { duration }
   });
+
+  // Now call checkout service which will read mood from space
+  const reflection = await aiService.checkout(spaceId, { duration });
 
   res.status(200).json({
     success: true,
@@ -145,6 +132,5 @@ export const checkout = asyncHandler(async (req, res) => {
 export default {
   generate,
   confirmGenerate,
-  getSpaceSummary,
   checkout
 };

@@ -282,7 +282,6 @@ async function main() {
       {
         space_id: space1.id,
         prompt: 'I need a study space for focused learning',
-        mood: 'Content',
         content: JSON.stringify({
           tags: ['study', 'focus'],
           purpose: 'focused studying'
@@ -291,7 +290,6 @@ async function main() {
       {
         space_id: space2.id,
         prompt: 'Professional workspace for productivity',
-        mood: 'Inspired',
         content: JSON.stringify({
           tags: ['productivity', 'work'],
           purpose: 'professional work'
@@ -300,7 +298,6 @@ async function main() {
       {
         space_id: space3.id,
         prompt: 'Relaxing meditation space',
-        mood: 'Content',
         content: JSON.stringify({
           tags: ['relaxation', 'meditation'],
           purpose: 'meditation and relaxation'

@@ -92,12 +92,14 @@ export const checkoutSchema = Joi.object({
       'string.uuid': 'spaceId phải là UUID hợp lệ',
       'any.required': 'spaceId là bắt buộc'
     }),
-  initialMood: Joi.string()
-    .allow('', null)
-    .optional(),
   duration: Joi.number()
     .min(0)
-    .optional()
+    .required()
+    .messages({
+      'number.base': 'duration phải là số',
+      'number.min': 'duration phải lớn hơn hoặc bằng 0',
+      'any.required': 'duration là bắt buộc'
+    })
 });
 
 export default {
