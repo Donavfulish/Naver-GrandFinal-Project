@@ -97,14 +97,13 @@ const userRepository = {
         name: true,
         description: true,
         duration: true,
+        mood: true,
         created_at: true,
         updated_at: true,
         background: {
           select: {
             id: true,
             background_url: true,
-            emotion: true,
-            tags: true,
           },
         },
         space_tags: {
@@ -120,8 +119,7 @@ const userRepository = {
         AiGeneratedContent: {
           select: {
             id: true,
-            content: true,
-            mood: true,
+            content: true
           }
         }
       },
