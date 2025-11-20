@@ -51,6 +51,7 @@ export const confirmGenerate = asyncHandler(async (req, res) => {
     mood
   } = req.body;
 
+  console.log(req.body);
   // Validate required fields
   if (!userId) {
     throw new ApiError(400, 'userId is required');

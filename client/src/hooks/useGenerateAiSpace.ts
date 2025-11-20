@@ -121,7 +121,6 @@ export function useGenerateAISpace(): UseGenerateAISpace {
     // HÀM GỌI API XÁC NHẬN MỚI
     const confirmSpaceGeneration = async (data: SpaceData, userId: string): Promise<any> => {
         const trackIds = data.playlist.tracks.map(t => t.id);
-
         const confirmBody: ConfirmBody = {
             userId: userId,
             name: data.name,
@@ -134,7 +133,6 @@ export function useGenerateAISpace(): UseGenerateAISpace {
             tags: data.tags,
             mood: data.mood // Thêm mood vào body
         }
-        
         console.log("➡️ Calling Confirm API with body:", confirmBody)
 
         const response = await fetch(AI_CONFIRM_ENDPOINT, {

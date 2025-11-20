@@ -11,7 +11,7 @@ import RealClock from "../space/clock"
 import StickyNoteCanvas from "../space/sticky-note-canvas"
 import { useRouter } from "next/navigation"
 import CheckoutModal from "../space/checkout-modal"
-import { SpaceData } from "@/hooks/useGenerateAiSpace" // Đảm bảo import interface SpaceData
+import { SpaceData } from "@/hooks/useGenerateAiSpace"
 
 interface ViewSpacePageProps {
     space: SpaceData & { sessionStartTime?: number, id?: string } // Thêm sessionStartTime & id (vì API không trả về)
