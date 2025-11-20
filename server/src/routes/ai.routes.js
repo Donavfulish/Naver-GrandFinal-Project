@@ -14,7 +14,5 @@ router.post('/generate/confirm', validate(confirmGenerateSchema), aiController.c
 // POST /api/ai/checkout - Context-aware reflection for emotional checkout
 router.post('/checkout', validate(checkoutSchema), aiController.checkout);
 
-// GET /api/ai/spaces/:id/summary - Get AI-generated summary and mood for a space
-router.get('/spaces/:id/summary', aiController.getSpaceSummary);
 
 export default router;

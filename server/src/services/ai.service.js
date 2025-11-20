@@ -401,17 +401,16 @@ export async function saveGeneratedSpace(spaceData) {
 /**
  * Generate checkout reflection for a space (Act 3)
  * @param {string} spaceId - Space ID
- * @param {Object} metadata - Session metadata (initialMood, duration)
+ * @param {Object} metadata - Session metadata (duration)
  */
 export async function checkout(spaceId, metadata) {
-  const { initialMood, duration } = metadata;
+  const { duration } = metadata;
 
-  // Optimize: Fetch only necessary fields
-  // - Notes content for analysis
-  // - AiGeneratedContent to check original intent/mood if initialMood is missing
+  // Fetch space with mood and notes
   const space = await prisma.space.findUnique({
     where: { id: spaceId, is_deleted: false },
     select: {
+      mood: true,
       duration: true,
       notes: {
         where: { is_delete: false },
@@ -420,7 +419,6 @@ export async function checkout(spaceId, metadata) {
       },
       AiGeneratedContent: {
         select: {
-          mood: true,
           prompt: true
         }
       }
@@ -431,14 +429,8 @@ export async function checkout(spaceId, metadata) {
     throw new Error('Space not found');
   }
 
-  // Determine effective mood (Client > AI Generated > Default)
-  const effectiveMood = initialMood || space.AiGeneratedContent?.mood || 'Neutral';
-
-  // Note: We do NOT update the DB duration here. 
-  // The duration sent by the client is the "current session duration", which might be partial.
-  // The client is responsible for calling a separate endpoint (e.g., PATCH /spaces/:id) 
-  // to persist the final duration when the session explicitly ends or auto-saves.
-  // This prevents corruption/race conditions if the user cancels the checkout flow.
+  // Get mood from space (already updated in database by controller)
+  const effectiveMood = space.mood || 'Neutral';
 
   // Edge case: Zero notes -> Smart Fallback
   if (!space.notes || space.notes.length === 0) {
@@ -487,85 +479,9 @@ export async function checkout(spaceId, metadata) {
   return reflection;
 }
 
-/**
- * Generate AI summary and mood analysis for a space
- * @param {string} spaceId - Space ID
- * @returns {Promise<Object>} AI generated summary with advice and mood
- */
-export async function generateSpaceSummary(spaceId) {
-  // Fetch space with all necessary data
-  const space = await prisma.space.findFirst({
-    where: {
-      id: spaceId,
-      is_deleted: false
-    },
-    include: {
-      space_tags: {
-        include: {
-          tag: true
-        }
-      },
-      notes: {
-        where: {
-          is_delete: false
-        },
-        select: {
-          content: true
-        },
-        orderBy: {
-          note_order: 'asc'
-        }
-      },
-      AiGeneratedContent: {
-        select: {
-          prompt: true
-        }
-      }
-    }
-  });
-
-  if (!space) {
-    throw new Error('Space not found');
-  }
-
-  // Extract only necessary content (filter out empty/unused data)
-  const tagNames = space.space_tags
-    .map(st => st.tag.name)
-    .filter(name => name && name.trim().length > 0);
-
-  const noteContents = space.notes
-    .map(note => note.content)
-    .filter(content => content && content.trim().length > 0);
-
-  const originalPrompt = space.AiGeneratedContent?.[0]?.prompt || null;
-
-  // Build context for AI prompt (only necessary data, no IDs or timestamps)
-  const spaceContext = {
-    name: space.name || '',
-    description: space.description || '',
-    tags: tagNames,
-    notes: noteContents,
-    originalPrompt: originalPrompt
-  };
-
-  // Call Naver AI to generate summary
-  const aiResponse = await naverApiService.generateSpaceSummary(spaceContext, MOOD_KEYWORDS);
-
-  logger.info(`Generated summary for space ${spaceId}`, {
-    mood: aiResponse.mood,
-    adviceLength: aiResponse.advice.length
-  });
-
-  return {
-    advice: aiResponse.advice,
-    mood: aiResponse.mood,
-    spaceId: spaceId
-  };
-}
 
 export default {
   generateSpace,
   saveGeneratedSpace,
-  generateSpaceSummary,
   checkout
 };
