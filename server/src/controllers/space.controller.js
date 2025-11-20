@@ -3,22 +3,7 @@ import asyncHandler from '../middleware/asyncHandler.js';
 import { ErrorCodes } from '../constants/errorCodes.js';
 
 const spaceController = {
-  // GET /api/spaces - Get all spaces
-  getAll: asyncHandler(async (req, res) => {
-    const filters = {};
-    if (req.query.user_id) {
-      filters.user_id = req.query.user_id;
-    }
-
-    const spaces = await spaceService.getAllSpaces(filters);
-
-    res.status(200).json({
-      success: true,
-      data: spaces,
-    });
-  }),
-
-  // GET /api/spaces/:id - Get space by ID
+  // GET /api/space/:id - Get space by ID
   getById: asyncHandler(async (req, res) => {
     const { id } = req.params;
 
@@ -30,17 +15,27 @@ const spaceController = {
         data: space,
       });
     } catch (error) {
-      return res.status(404).json({
+      if (error.code === ErrorCodes.SPACE_NOT_FOUND) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+      }
+
+      return res.status(500).json({
         success: false,
         error: {
           code: ErrorCodes.SPACE_NOT_FOUND,
-          message: 'Space not found',
+          message: 'Failed to retrieve space',
         },
       });
     }
   }),
 
-  // POST /api/spaces - Create new space
+  // POST /api/space - Create new space
   create: asyncHandler(async (req, res) => {
     try {
       const space = await spaceService.createSpace(req.body);
@@ -50,250 +45,30 @@ const spaceController = {
         data: space,
       });
     } catch (error) {
+      // Handle specific validation errors
+      if (error.code === ErrorCodes.SPACE_VALIDATION_FAILED) {
+        return res.status(error.statusCode || 400).json({
+          success: false,
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+      }
+
+      // Handle general creation errors
       return res.status(500).json({
         success: false,
         error: {
           code: ErrorCodes.SPACE_CREATE_FAILED,
           message: 'Failed to create space',
+          details: error.message,
         },
       });
     }
   }),
 
-  // POST /api/spaces/text - Create space from text input
-  createFromText: asyncHandler(async (req, res) => {
-    const { user_id, text_input } = req.body;
-
-    try {
-      // TODO: Implement AI/NLP processing to parse text_input
-      // Extract: title, description, preferences, etc.
-      // For now, create a basic space with the text as description
-
-      const spaceData = {
-        user_id,
-        title: 'Space from Text',
-        description: text_input,
-      };
-
-      const space = await spaceService.createSpace(spaceData);
-
-      res.status(201).json({
-        success: true,
-        data: space,
-        message: 'Space created from text input',
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        error: {
-          code: ErrorCodes.SPACE_CREATE_FAILED,
-          message: 'Failed to create space from text',
-        },
-      });
-    }
-  }),
-
-  // POST /api/spaces/voice - Create space from voice input
-  createFromVoice: asyncHandler(async (req, res) => {
-    const { user_id, audio_url, audio_data } = req.body;
-
-    try {
-      // TODO: Implement voice-to-text conversion (e.g., using Google Speech-to-Text, AWS Transcribe)
-      // TODO: Then process the transcribed text like createFromText
-      // For now, return a placeholder response
-
-      const spaceData = {
-        user_id,
-        title: 'Space from Voice',
-        description: 'Created from voice input',
-      };
-
-      const space = await spaceService.createSpace(spaceData);
-
-      res.status(201).json({
-        success: true,
-        data: space,
-        message: 'Space created from voice input (prototype)',
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        error: {
-          code: ErrorCodes.SPACE_CREATE_FAILED,
-          message: 'Failed to create space from voice',
-        },
-      });
-    }
-  }),
-
-  // PUT /api/spaces/:id/description - Update space description
-  updateDescription: asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { description } = req.body;
-
-    try {
-      const space = await spaceService.updateSpace(id, { description });
-
-      res.status(200).json({
-        success: true,
-        data: space,
-      });
-    } catch (error) {
-      if (error.message === 'Space not found') {
-        return res.status(404).json({
-          success: false,
-          error: {
-            code: ErrorCodes.SPACE_NOT_FOUND,
-            message: 'Space not found',
-          },
-        });
-      }
-
-      return res.status(500).json({
-        success: false,
-        error: {
-          code: ErrorCodes.SPACE_UPDATE_FAILED,
-          message: 'Failed to update space description',
-        },
-      });
-    }
-  }),
-
-  // PUT /api/spaces/:id/font-text - Update text font
-  updateFontText: asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { text_font_name } = req.body;
-
-    try {
-      const space = await spaceService.updateSpace(id, { text_font_name });
-
-      res.status(200).json({
-        success: true,
-        data: space,
-      });
-    } catch (error) {
-      if (error.message === 'Space not found') {
-        return res.status(404).json({
-          success: false,
-          error: {
-            code: ErrorCodes.SPACE_NOT_FOUND,
-            message: 'Space not found',
-          },
-        });
-      }
-
-      return res.status(500).json({
-        success: false,
-        error: {
-          code: ErrorCodes.SPACE_UPDATE_FAILED,
-          message: 'Failed to update text font',
-        },
-      });
-    }
-  }),
-
-  // PUT /api/spaces/:id/font-clock - Update clock font
-  updateFontClock: asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { clock_font_id } = req.body;
-
-    try {
-      const space = await spaceService.updateSpace(id, { clock_font_id });
-
-      res.status(200).json({
-        success: true,
-        data: space,
-      });
-    } catch (error) {
-      if (error.message === 'Space not found') {
-        return res.status(404).json({
-          success: false,
-          error: {
-            code: ErrorCodes.SPACE_NOT_FOUND,
-            message: 'Space not found',
-          },
-        });
-      }
-
-      return res.status(500).json({
-        success: false,
-        error: {
-          code: ErrorCodes.SPACE_UPDATE_FAILED,
-          message: 'Failed to update clock font',
-        },
-      });
-    }
-  }),
-
-  // PUT /api/spaces/:id/background - Update background
-  updateBackground: asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { background_id } = req.body;
-
-    try {
-      // TODO: Implement background file upload logic if needed
-      const space = await spaceService.updateSpace(id, { background_id });
-
-      res.status(200).json({
-        success: true,
-        data: space,
-      });
-    } catch (error) {
-      if (error.message === 'Space not found') {
-        return res.status(404).json({
-          success: false,
-          error: {
-            code: ErrorCodes.SPACE_NOT_FOUND,
-            message: 'Space not found',
-          },
-        });
-      }
-
-      return res.status(500).json({
-        success: false,
-        error: {
-          code: ErrorCodes.SPACE_UPDATE_FAILED,
-          message: 'Failed to update background',
-        },
-      });
-    }
-  }),
-
-  // PUT /api/spaces/:id/position - Update widget positions
-  updatePosition: asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { positions } = req.body;
-
-    try {
-      // TODO: Implement position update logic (update widget_positions table)
-      // For now, just return success as prototype
-
-      res.status(200).json({
-        success: true,
-        data: { message: 'Positions updated successfully' },
-      });
-    } catch (error) {
-      if (error.message === 'Space not found') {
-        return res.status(404).json({
-          success: false,
-          error: {
-            code: ErrorCodes.SPACE_NOT_FOUND,
-            message: 'Space not found',
-          },
-        });
-      }
-
-      return res.status(500).json({
-        success: false,
-        error: {
-          code: ErrorCodes.SPACE_UPDATE_FAILED,
-          message: 'Failed to update positions',
-        },
-      });
-    }
-  }),
-
-  // DELETE /api/spaces/:id - Delete space
+  // DELETE /api/space/:id - Soft delete space
   delete: asyncHandler(async (req, res) => {
     const { id } = req.params;
 
@@ -305,12 +80,12 @@ const spaceController = {
         data: { message: 'Space deleted successfully' },
       });
     } catch (error) {
-      if (error.message === 'Space not found') {
+      if (error.code === ErrorCodes.SPACE_NOT_FOUND) {
         return res.status(404).json({
           success: false,
           error: {
-            code: ErrorCodes.SPACE_NOT_FOUND,
-            message: 'Space not found',
+            code: error.code,
+            message: error.message,
           },
         });
       }
@@ -320,30 +95,40 @@ const spaceController = {
         error: {
           code: ErrorCodes.SPACE_DELETE_FAILED,
           message: 'Failed to delete space',
+          details: error.message,
         },
       });
     }
   }),
 
-  // POST /api/spaces/:id/fork - Fork a space
-  fork: asyncHandler(async (req, res) => {
+  // PATCH /api/space/:id - Update space
+  update: asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { user_id } = req.body;
 
     try {
-      // TODO: Implement fork logic (duplicate space for new user)
+      const space = await spaceService.updateSpace(id, req.body);
 
-      res.status(201).json({
+      res.status(200).json({
         success: true,
-        data: { message: 'Space forked successfully' },
+        data: space,
       });
     } catch (error) {
-      if (error.message === 'Space not found') {
+      if (error.code === ErrorCodes.SPACE_NOT_FOUND) {
         return res.status(404).json({
           success: false,
           error: {
-            code: ErrorCodes.SPACE_NOT_FOUND,
-            message: 'Space not found',
+            code: error.code,
+            message: error.message,
+          },
+        });
+      }
+
+      if (error.code === ErrorCodes.SPACE_VALIDATION_FAILED) {
+        return res.status(error.statusCode || 400).json({
+          success: false,
+          error: {
+            code: error.code,
+            message: error.message,
           },
         });
       }
@@ -351,30 +136,99 @@ const spaceController = {
       return res.status(500).json({
         success: false,
         error: {
-          code: ErrorCodes.SPACE_FORK_FAILED,
-          message: 'Failed to fork space',
+          code: ErrorCodes.SPACE_UPDATE_FAILED,
+          message: 'Failed to update space',
+          details: error.message,
         },
       });
     }
   }),
 
-  // DELETE /api/spaces/:id/fork/:forkId - Delete forked space
-  deleteFork: asyncHandler(async (req, res) => {
-    const { id, forkId } = req.params;
-
+  // GET /api/space/fonts/clock - Get all clock fonts
+  getClockFonts: asyncHandler(async (req, res) => {
     try {
-      // TODO: Implement delete fork logic
+      const clockFonts = await spaceService.getClockFonts();
 
       res.status(200).json({
         success: true,
-        data: { message: 'Forked space deleted successfully' },
+        data: clockFonts,
       });
     } catch (error) {
       return res.status(500).json({
         success: false,
         error: {
-          code: ErrorCodes.SPACE_DELETE_FAILED,
-          message: 'Failed to delete forked space',
+          code: ErrorCodes.SERVER_ERROR,
+          message: 'Failed to retrieve clock fonts',
+          details: error.message,
+        },
+      });
+    }
+  }),
+
+  // GET /api/space/fonts/text - Get all text fonts
+  getTextFonts: asyncHandler(async (req, res) => {
+    try {
+      const textFonts = await spaceService.getTextFonts();
+
+      res.status(200).json({
+        success: true,
+        data: textFonts,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: ErrorCodes.SERVER_ERROR,
+          message: 'Failed to retrieve text fonts',
+          details: error.message,
+        },
+      });
+    }
+  }),
+
+  // POST /api/spaces/:id/summary - Update space summary (duration, AI content, mood)
+  getSpacesSummary: asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { duration, content, mood } = req.body;
+
+    try {
+      const updatedSpace = await spaceService.updateSpaceSummary(id, {
+        duration,
+        content,
+        mood,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: updatedSpace,
+      });
+    } catch (error) {
+      if (error.code === ErrorCodes.SPACE_NOT_FOUND) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+      }
+
+      if (error.code === ErrorCodes.SPACE_VALIDATION_FAILED) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: ErrorCodes.SERVER_ERROR,
+          message: 'Failed to update space summary',
+          details: error.message,
         },
       });
     }

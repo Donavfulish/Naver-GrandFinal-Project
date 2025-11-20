@@ -23,9 +23,11 @@ Create a `.env` file in the `server` directory:
 
 ```env
 DATABASE_URL="postgresql://username:password@localhost:5432/naver_spaces?schema=public"
+NAVER_CLOVA_STUDIO_API_KEY="your-naver-clova-studio-api-key"
 ```
 
 Replace `username` and `password` with your PostgreSQL credentials.
+Replace `your-naver-clova-studio-api-key` with your NAVER CLOVA Studio API key from NAVER Cloud Platform.
 
 ### 3. Install Dependencies
 

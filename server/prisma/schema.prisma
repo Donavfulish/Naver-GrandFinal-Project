@@ -17,80 +17,117 @@ model User {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  spaces    Space[]
-  ForkSpace ForkSpace[]
+  spaces Space[]
 
   @@map("users")
 }
 
 model Space {
-  id             String   @id @default(uuid())
-  user_id        String
-  description    String
-  background_id  String?
-  clock_font_id  String?
-  text_font_name String
-  is_deleted     Boolean  @default(false)
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  id            String   @id @default(uuid())
+  user_id       String
+  name          String
+  description   String?
+  mood          String
+  background_id String?
+  clock_font_id String?
+  text_font_id  String?
+  duration      Int      @default(0) // Seconds
+  is_deleted    Boolean  @default(false)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 
-  user             User             @relation(fields: [user_id], references: [id])
-  clock            ClockFont?       @relation(fields: [clock_font_id], references: [id])
-  text             TextFont?        @relation(fields: [text_font_name], references: [id])
-  background       Background?      @relation(fields: [background_id], references: [id])
-  widget_positions WidgetPosition[]
-  playlists        Playlist[]
-  space_tags       SpaceTag[]
-  ForkSpace        ForkSpace[]      @relation("OriginalSpace")
+  user       User        @relation(fields: [user_id], references: [id])
+  clock      ClockFont?  @relation(fields: [clock_font_id], references: [id])
+  text       TextFont?   @relation(fields: [text_font_id], references: [id])
+  background Background? @relation(fields: [background_id], references: [id])
+
+  playlists          Playlist[]
+  space_tags         SpaceTag[]
+  notes              Note[]
+  AiGeneratedContent AiGeneratedContent?
 
   @@index([user_id])
+  @@index([background_id])
+  @@index([clock_font_id])
+  @@index([text_font_id])
   @@map("spaces")
 }
 
-model Background {
-  id             String   @id @default(uuid())
-  background_url String
-  is_deleted     Boolean  @default(false)
-  created_at     DateTime @default(now())
-  updated_at     DateTime @default(now())
-
-  spaces Space[]
-
-  @@map("backgrounds")
+enum BackgroundSource {
+  USER
+  SYSTEM
 }
 
 model Playlist {
   id         String   @id @default(uuid())
-  space_id   String
+  space_id   String?
   name       String
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
-  updated_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  space           Space           @relation(fields: [space_id], references: [id])
+  space           Space?          @relation(fields: [space_id], references: [id])
   playlist_tracks PlaylistTrack[]
 
   @@index([space_id])
   @@map("playlists")
 }
 
+enum TrackSource {
+  SYSTEM
+  USER
+}
+
+model Background {
+  id             String           @id @default(uuid())
+  background_url String
+  emotion        String[]         @default([])
+  tags           String[]         @default([])
+  source         BackgroundSource @default(USER)
+  is_deleted     Boolean          @default(false)
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @updatedAt
+
+  spaces Space[]
+
+  @@map("backgrounds")
+}
+
 model Track {
-  id               String   @id @default(uuid())
-  spotify_track_id String   @unique
-  is_deleted       Boolean  @default(false)
-  created_at       DateTime @default(now())
-  updated_at       DateTime @default(now())
+  id         String      @id @default(uuid())
+  name       String
+  thumbnail  String?
+  track_url  String
+  emotion    String[]    @default([])
+  tags       String[]    @default([])
+  source     TrackSource @default(SYSTEM)
+  is_deleted Boolean     @default(false)
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
 
   playlist_tracks PlaylistTrack[]
 
-  @@index([spotify_track_id])
   @@map("tracks")
+}
+
+model Note {
+  id         String   @id @default(uuid())
+  space_id   String
+  content    String
+  note_order Int
+  is_delete  Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  space Space @relation(fields: [space_id], references: [id])
+
+  @@index([space_id])
+  @@map("notes")
 }
 
 model Tag {
   id         String   @id @default(uuid())
   name       String   @unique
-  is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 
@@ -101,14 +138,14 @@ model Tag {
 
 model ClockFont {
   id         String   @id @default(uuid())
-  font_name  String
+  style      String
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 
   spaces Space[]
 
-  @@map("clocks")
+  @@map("clock_fonts")
 }
 
 model TextFont {
@@ -120,29 +157,14 @@ model TextFont {
 
   spaces Space[]
 
-  @@map("fonts")
-}
-
-model WidgetPosition {
-  id         String   @id @default(uuid())
-  space_id   String
-  widget_id  String
-  position   Json
-  is_deleted Boolean  @default(false)
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
-
-  space Space @relation(fields: [space_id], references: [id])
-
-  @@index([space_id])
-  @@map("widget_positions")
+  @@map("text_fonts")
 }
 
 model PlaylistTrack {
   id          String   @id @default(uuid())
   playlist_id String
   track_id    String
-  track_order Int // Order of track in playlist (1-based)
+  track_order Int
   is_deleted  Boolean  @default(false)
   created_at  DateTime @default(now())
   updated_at  DateTime @default(now())
@@ -150,6 +172,7 @@ model PlaylistTrack {
   playlist Playlist @relation(fields: [playlist_id], references: [id])
   track    Track    @relation(fields: [track_id], references: [id])
 
+  @@unique([playlist_id, track_id])
   @@index([playlist_id, track_order])
   @@map("playlist_tracks")
 }
@@ -158,28 +181,28 @@ model SpaceTag {
   id         String   @id @default(uuid())
   space_id   String
   tag_id     String
-  is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 
   space Space @relation(fields: [space_id], references: [id])
   tag   Tag   @relation(fields: [tag_id], references: [id])
 
+  @@unique([space_id, tag_id])
   @@index([tag_id])
+  @@index([space_id])
   @@map("space_tags")
 }
 
-model ForkSpace {
-  id                String   @id @default(uuid())
-  user_id           String
-  original_space_id String
-  is_deleted        Boolean  @default(false)
-  created_at        DateTime @default(now())
-  updated_at        DateTime @default(now())
+model AiGeneratedContent {
+  id         String   @id @default(uuid())
+  space_id   String   @unique // 1-1: mỗi space chỉ có 1 AI content
+  prompt     String?
+  content    String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
 
-  user           User  @relation(fields: [user_id], references: [id])
-  original_space Space @relation("OriginalSpace", fields: [original_space_id], references: [id])
+  space Space @relation(fields: [space_id], references: [id])
 
-  @@index([original_space_id])
-  @@map("fork_spaces")
+  @@index([space_id])
+  @@map("ai_generated_contents")
 }

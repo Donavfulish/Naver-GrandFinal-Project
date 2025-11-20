@@ -20,40 +20,39 @@ router.get(
   userController.getSpacesByUserId
 );
 
-// PUT /api/users/:id/name - Update user name
-router.put(
+// PATCH /api/users/:id/name - Update user name
+router.patch(
   "/:id/name",
   validate(userIdSchema, 'params'),
   validate(updateUserNameSchema),
   userController.updateName
 );
 
-// PUT /api/users/:id/email - Update user email
-router.put(
+// PATCH /api/users/:id/email - Update user email
+router.patch(
   "/:id/email",
   validate(userIdSchema, 'params'),
   validate(updateUserEmailSchema),
   userController.updateEmail
 );
 
-// PUT /api/users/:id/avatar - Update user avatar
-router.put(
+// PATCH /api/users/:id/avatar - Update user avatar
+router.patch(
   "/:id/avatar",
   validate(userIdSchema, 'params'),
   validate(updateUserAvatarSchema),
   userController.updateAvatar
 );
 
-// PUT /api/users/:id/password - Update user password
-router.put(
+// PATCH /api/users/:id/password - Update user password
+router.patch(
   "/:id/password",
   validate(userIdSchema, 'params'),
   validate(updateUserAvatarSchema),
   userController.updatePassword
 );
 
-
-// DELETE /api/users/:id - Delete user
-router.delete("/:id", validate(userIdSchema, 'params'), userController.delete);
+// POST /api/users/:id - Delete user
+router.post("/:id", validate(userIdSchema, 'params'), userController.delete);
 
 export default router;
