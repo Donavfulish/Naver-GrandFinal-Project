@@ -15,6 +15,7 @@ const spaceService = {
       name,
       tags, // Array of tag names (strings), not IDs
       description,
+      mood,
       background_url,
       clock_font_id,
       text_font_id,
@@ -150,6 +151,7 @@ const spaceService = {
       user_id,
       name,
       description: description || null,
+      mood: mood || 'Neutral', // Add mood field with default value
       background_id: validatedBackgroundId,
       clock_font_id: validatedClockFontId,
       text_font_id: validatedTextFontId,
