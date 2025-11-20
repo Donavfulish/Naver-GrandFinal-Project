@@ -28,6 +28,11 @@ const ErrorCodes = {
     SPACE_FORK_FAILED: 'SPACE_1205',
     SPACE_VALIDATION_FAILED: 'SPACE_1206',
 
+    // Note Errors (1300-1399)
+    NOTE_NOT_FOUND: 'NOTE_1301',
+    NOTE_CREATE_FAILED: 'NOTE_1302',
+    NOTE_DELETE_FAILED: 'NOTE_1303',
+
     // Validation Errors (2000-2099)
     VALIDATION_FAILED: 'VALIDATION_2001',
     VALIDATION_EMAIL_INVALID: 'VALIDATION_2002',
@@ -85,6 +90,7 @@ const ErrorStatusCodes = {
     [ErrorCodes.AUTH_EMAIL_NOT_FOUND]: 404,
     [ErrorCodes.SPACE_NOT_FOUND]: 404,
     [ErrorCodes.USER_SPACES_FETCH_FAILED]: 404,
+    [ErrorCodes.NOTE_NOT_FOUND]: 404,
 
     // 409 Conflict
     [ErrorCodes.AUTH_EMAIL_ALREADY_EXISTS]: 409,
@@ -101,6 +107,8 @@ const ErrorStatusCodes = {
     [ErrorCodes.SPACE_UPDATE_FAILED]: 500,
     [ErrorCodes.SPACE_DELETE_FAILED]: 500,
     [ErrorCodes.SPACE_FORK_FAILED]: 500,
+    [ErrorCodes.NOTE_CREATE_FAILED]: 500,
+    [ErrorCodes.NOTE_DELETE_FAILED]: 500,
     [ErrorCodes.NAVER_API_ERROR]: 500,
     [ErrorCodes.NAVER_API_TIMEOUT]: 500,
 

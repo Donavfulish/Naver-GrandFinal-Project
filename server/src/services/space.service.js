@@ -486,6 +486,131 @@ const spaceService = {
     // Return updated space with all relations
     return await spaceRepository.findById(id);
   },
+
+  /**
+   * Add a note to a space
+   * @param {string} spaceId - Space ID
+   * @param {Object} data - Note data
+   * @param {string} data.content - Note content
+   * @param {number} [data.note_order] - Optional note order
+   * @returns {Promise<Object>} Created note
+   */
+  async addNote(spaceId, data) {
+    const { content, note_order } = data;
+
+    // Check if space exists and is not deleted
+    const space = await spaceRepository.findById(spaceId);
+    if (!space || space.is_deleted) {
+      const error = new Error('Space not found');
+      error.code = ErrorCodes.SPACE_NOT_FOUND;
+      throw error;
+    }
+
+    try {
+      // If note_order is not provided, get the next order number
+      let orderNumber = note_order;
+
+      if (orderNumber === undefined || orderNumber === null) {
+        // Find the highest note_order for this space
+        const lastNote = await prisma.note.findFirst({
+          where: {
+            space_id: spaceId,
+            is_delete: false,
+          },
+          orderBy: {
+            note_order: 'desc',
+          },
+        });
+
+        orderNumber = lastNote ? lastNote.note_order + 1 : 0;
+      }
+
+      // Create the note
+      const note = await prisma.note.create({
+        data: {
+          space_id: spaceId,
+          content,
+          note_order: orderNumber,
+          is_delete: false,
+        },
+      });
+
+      logger.info(`Note created for space ${spaceId}`, {
+        noteId: note.id,
+        noteOrder: note.note_order,
+      });
+
+      return note;
+    } catch (error) {
+      logger.error(`Failed to create note for space ${spaceId}`, {
+        error: error.message,
+      });
+
+      const err = new Error('Failed to create note');
+      err.code = ErrorCodes.NOTE_CREATE_FAILED;
+      throw err;
+    }
+  },
+
+  /**
+   * Soft delete a note from a space
+   * @param {string} spaceId - Space ID
+   * @param {string} noteId - Note ID
+   * @returns {Promise<void>}
+   */
+  async removeNote(spaceId, noteId) {
+    // Check if space exists and is not deleted
+    const space = await spaceRepository.findById(spaceId);
+    if (!space || space.is_deleted) {
+      const error = new Error('Space not found');
+      error.code = ErrorCodes.SPACE_NOT_FOUND;
+      throw error;
+    }
+
+    // Check if note exists, belongs to the space, and is not already deleted
+    const note = await prisma.note.findFirst({
+      where: {
+        id: noteId,
+        space_id: spaceId,
+      },
+    });
+
+    if (!note) {
+      const error = new Error('Note not found in this space');
+      error.code = ErrorCodes.NOTE_NOT_FOUND;
+      throw error;
+    }
+
+    if (note.is_delete) {
+      const error = new Error('Note is already deleted');
+      error.code = ErrorCodes.NOTE_NOT_FOUND;
+      throw error;
+    }
+
+    try {
+      // Soft delete the note
+      await prisma.note.update({
+        where: { id: noteId },
+        data: {
+          is_delete: true,
+          updated_at: new Date(),
+        },
+      });
+
+      logger.info(`Note soft deleted`, {
+        noteId,
+        spaceId,
+      });
+    } catch (error) {
+      logger.error(`Failed to delete note ${noteId} from space ${spaceId}`, {
+        error: error.message,
+      });
+
+      const err = new Error('Failed to delete note');
+      err.code = ErrorCodes.NOTE_DELETE_FAILED;
+      throw err;
+    }
+  },
 };
 
 export default spaceService;

@@ -233,6 +233,93 @@ const spaceController = {
       });
     }
   }),
+
+  // POST /api/spaces/:id/note - Add note to space
+  addNote: asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { content, note_order } = req.body;
+
+    try {
+      const note = await spaceService.addNote(id, { content, note_order });
+
+      res.status(201).json({
+        success: true,
+        data: note,
+      });
+    } catch (error) {
+      if (error.code === ErrorCodes.SPACE_NOT_FOUND) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+      }
+
+      if (error.code === ErrorCodes.SPACE_VALIDATION_FAILED) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: ErrorCodes.SERVER_ERROR,
+          message: 'Failed to add note',
+          details: error.message,
+        },
+      });
+    }
+  }),
+
+  // DELETE /api/spaces/:id/note/:noteId - Soft delete note from space
+  removeNote: asyncHandler(async (req, res) => {
+    const { id, noteId } = req.params;
+
+    try {
+      await spaceService.removeNote(id, noteId);
+
+      res.status(200).json({
+        success: true,
+        data: { message: 'Note deleted successfully' },
+      });
+    } catch (error) {
+      if (error.code === ErrorCodes.SPACE_NOT_FOUND) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+      }
+
+      if (error.code === ErrorCodes.NOTE_NOT_FOUND) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: ErrorCodes.SERVER_ERROR,
+          message: 'Failed to delete note',
+          details: error.message,
+        },
+      });
+    }
+  }),
 };
 
 export default spaceController;
