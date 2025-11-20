@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Manrope, Inter, Orbitron, VT323 } from "next/font/go
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import FullscreenWrapper from "./FullScreenWrapper"
+import { appFonts } from "@/utils/fonts"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -35,9 +36,11 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+    const fontClasses = appFonts.map(font => font.variable).join(' ')
+
     return (
         <html lang="en" className={manrope.className}>
-            <body className="font-sans antialiased">
+            <body className={fontClasses}>
                 <FullscreenWrapper>
                     {children}
                 </FullscreenWrapper>
