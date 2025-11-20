@@ -120,8 +120,8 @@ export const checkout = asyncHandler(async (req, res) => {
     data: { duration }
   });
 
-  // Now call checkout service which will read mood from space
-  const reflection = await aiService.checkout(spaceId, { duration });
+  // Now call checkout service which will read mood and duration from space
+  const reflection = await aiService.checkout(spaceId);
 
   res.status(200).json({
     success: true,

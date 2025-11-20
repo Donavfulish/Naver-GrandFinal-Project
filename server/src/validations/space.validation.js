@@ -137,3 +137,30 @@ export const updateSpaceSummarySchema = Joi.object({
 }).min(1).messages({
   'object.min': 'At least one field (duration, content, or mood) is required',
 });
+
+// POST /spaces/:id/note - Add note to space schema
+export const addNoteSchema = Joi.object({
+  content: Joi.string().min(1).max(5000).required().messages({
+    'string.base': 'Content must be a string',
+    'string.min': 'Content cannot be empty',
+    'string.max': 'Content must not exceed 5000 characters',
+    'any.required': 'Content is required',
+  }),
+  note_order: Joi.number().integer().min(0).optional().messages({
+    'number.base': 'Note order must be a number',
+    'number.integer': 'Note order must be an integer',
+    'number.min': 'Note order must be at least 0',
+  }),
+});
+
+// DELETE /spaces/:id/note/:noteId - Remove note from space (params validation)
+export const noteIdSchema = Joi.object({
+  id: Joi.string().uuid().required().messages({
+    'string.uuid': 'Invalid space ID format',
+    'any.required': 'Space ID is required',
+  }),
+  noteId: Joi.string().uuid().required().messages({
+    'string.uuid': 'Invalid note ID format',
+    'any.required': 'Note ID is required',
+  }),
+});
