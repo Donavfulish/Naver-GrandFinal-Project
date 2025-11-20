@@ -12,6 +12,7 @@ import StickyNoteCanvas from "../space/sticky-note-canvas"
 import { useRouter } from "next/navigation"
 import CheckoutModal from "../space/checkout-modal"
 import { SpaceData } from "@/hooks/useGenerateAiSpace"
+import { getFontFamily } from '@/utils/fonts'
 
 interface ViewSpacePageProps {
     space: SpaceData & { sessionStartTime?: number, id?: string } // Thêm sessionStartTime & id (vì API không trả về)
@@ -41,6 +42,8 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
         background: initialBackgroundUrl,
         layout: "centered-blur",
     })
+
+    const clockFontFamily = getFontFamily(preview.clockFont);
 
     useEffect(() => {
         // Kiểm tra sessionStartTime
@@ -164,8 +167,16 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
                     size={150}
                 />
                 <div className={`mt-4 text-center text-white/80`}>
-                    <p className={`text-white text-5xl font-semibold ${preview.clockFont}`}>{new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</p>
-                    <p>{new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
+                    <p
+                        className={`text-white text-5xl font-semibold`}
+                        // Áp dụng font-family CSS value đã tối ưu
+                        style={{ fontFamily: clockFontFamily }}
+                    >
+                        {new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                    <p style={{ fontFamily: clockFontFamily }}>
+                        {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                    </p>
                 </div>
             </motion.div>
 

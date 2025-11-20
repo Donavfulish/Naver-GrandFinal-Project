@@ -5,13 +5,14 @@ import Image from "next/image"
 import { Sliders, X, Loader } from "lucide-react"
 import { useSpaceFonts } from "@/hooks/useSpaceFonts" // Import hook mới
 import { SpaceData } from "@/hooks/useGenerateAiSpace" // Import SpaceData
+import { getFontFamily } from '@/utils/fonts'
 
 type LayoutKey = "centered-blur" | "corner"
 
 export type SettingsPreview = {
     clockStyle: string
-    clockFont: string 
-    background: string 
+    clockFont: string
+    background: string
     layout: LayoutKey
 }
 
@@ -54,7 +55,7 @@ export default function SettingsPanel({
     useEffect(() => {
         onPreviewChange({
             clockStyle: currentClockStyleName,
-            clockFont: currentTextFontName, 
+            clockFont: currentTextFontName,
             background: backgroundUrl,
             layout
         })
@@ -173,7 +174,14 @@ export default function SettingsPanel({
                                     ))}
                                 </select>
                             </div>
-                            <p className="text-white/60 text-xs mt-1">Current Font: <span className="font-medium text-[#C7A36B]">{currentTextFontName}</span></p>
+                            <p className="text-white/60 text-xs mt-1">Current Font:
+                                <span
+                                    className="font-medium text-[#C7A36B]"
+                                    style={{ fontFamily: getFontFamily(currentTextFontName) }}
+                                >
+                                    {currentTextFontName}
+                                </span>
+                            </p>
                         </section>
                     </>
                 )}
