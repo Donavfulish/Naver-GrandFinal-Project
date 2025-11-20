@@ -2,21 +2,18 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Send, Mic, MicOff } from 'lucide-react'
-import { useSessionStore } from "@/lib/store"
-import { generateVibeConfig } from "@/lib/ai-logic"
+import { Send } from "lucide-react"
+//import { generateVibeConfig } from "@/lib/ai-logic"
 import { mockSpaces } from "@/lib/mock-spaces"
 
-interface OnboardingChatProps {
+interface OnboardingChatProps { 
     onComplete: (space: any) => void
 }
 
 export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
     const [input, setInput] = useState("")
-    const [isListening, setIsListening] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
-    const { setUserFeeling, setVibeConfig, setSessionStartTime } = useSessionStore()
 
     useEffect(() => { inputRef.current?.focus() }, [])
 
@@ -24,27 +21,22 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
         if (!text.trim()) return
         setIsLoading(true)
         await new Promise(r => setTimeout(r, 1000))
-        const vibe = generateVibeConfig(text)
+        // const vibe = generateVibeConfig(text)
 
-        let baseSpace = mockSpaces[0]
-        if (vibe.mood === "Creative") baseSpace = mockSpaces[2]
-        else if (vibe.mood === "Energetic") baseSpace = mockSpaces[1]
+        // let baseSpace = mockSpaces[0]
+        // if (vibe.mood === "Creative") baseSpace = mockSpaces[2]
+        // else if (vibe.mood === "Energetic") baseSpace = mockSpaces[1]
 
-        const fullSpace = {
-            ...baseSpace,
-            vibeConfig: vibe,
-            notes: [],
-            sessionStartTime: Date.now(),
-            settingPanel: { theme: vibe.theme, font: vibe.font, music: vibe.music, colors: vibe.colors },
-        }
+        // const fullSpace = {
+        //     ...baseSpace,
+        //     vibeConfig: vibe,
+        //     notes: [],
+        //     sessionStartTime: Date.now(),
+        //     settingPanel: { theme: vibe.theme, font: vibe.font, music: vibe.music, colors: vibe.colors },
+        // }
 
-        onComplete(fullSpace)
+        // onComplete(fullSpace)
         setIsLoading(false)
-    }
-
-    const handleVoiceInput = () => {
-        setIsListening(!isListening)
-        if (isListening) setInput("I'm feeling overwhelmed with work")
     }
 
     return (
@@ -73,9 +65,6 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
                                 disabled={isLoading}
                                 className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-white/40 focus:outline-none focus:border-[#C7A36B]/50 focus:bg-white/10 transition"
                             />
-                            <button onClick={() => handleVoiceInput()} disabled={isLoading} className="bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl p-4 text-white transition disabled:opacity-50">
-                                {isListening ? <MicOff size={24} /> : <Mic size={24} />}
-                            </button>
                             <button onClick={() => { handleSubmit(input); setInput("") }} disabled={isLoading || !input.trim()} className="bg-gradient-to-r from-[#C7A36B] to-[#7C9A92] hover:shadow-lg hover:shadow-[#C7A36B]/50 rounded-2xl p-4 text-white font-medium transition disabled:opacity-50">
                                 {isLoading ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}><Send size={24} /></motion.div> : <Send size={24} />}
                             </button>

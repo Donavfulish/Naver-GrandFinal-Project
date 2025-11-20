@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useRouter } from 'next/navigation'
 import { useSessionStore } from "@/lib/store"
-import { generateInsight, getReflectionQuestion, getSuggestedTags } from "@/lib/ai-logic"
+// import { generateInsight, getReflectionQuestion, getSuggestedTags } from "@/lib/ai-logic"
 
 interface CheckoutModalProps {
   onClose: () => void
@@ -28,9 +28,9 @@ const CheckoutModal = ({ onClose, duration }: CheckoutModalProps) => {
   const [selectedTags, setSelectedTagsLocal] = useState<string[]>([])
   const [isAnimating, setIsAnimating] = useState(false)
 
-  const insight = generateInsight(notes.length, notes.length > 0, userFeeling)
-  const reflectionQuestion = getReflectionQuestion(vibeConfig.mood)
-  const suggestedTags = getSuggestedTags(vibeConfig.mood)
+//   const insight = generateInsight(notes.length, notes.length > 0, userFeeling)
+//   const reflectionQuestion = getReflectionQuestion(vibeConfig.mood)
+//   const suggestedTags = getSuggestedTags(vibeConfig.mood)
 
   const handlePackageCapsule = () => {
     setIsAnimating(true)
@@ -47,10 +47,10 @@ const CheckoutModal = ({ onClose, duration }: CheckoutModalProps) => {
         reflection_answer: reflectionText,
         tags: selectedTags,
         vibe_config: vibeConfig,
-        session_summary: insight,
+        //session_summary: insight,
       }
 
-      saveCapsule(capsule)
+      //saveCapsule(capsule)
       resetSession()
 
       router.push("/capsules")
@@ -96,7 +96,7 @@ const CheckoutModal = ({ onClose, duration }: CheckoutModalProps) => {
             </div>
 
             <div className="bg-white/5 rounded-lg p-4">
-              <p className="text-white/80">{insight}</p>
+              {/* <p className="text-white/80">{insight}</p> */}
             </div>
 
             <button
@@ -118,7 +118,7 @@ const CheckoutModal = ({ onClose, duration }: CheckoutModalProps) => {
             <h2 className="text-3xl font-bold text-white">Reflect on Your Session</h2>
 
             <div className="space-y-3">
-              <p className="text-white font-medium">{reflectionQuestion}</p>
+              {/* //<p className="text-white font-medium">{reflectionQuestion}</p> */}
               <textarea
                 value={reflectionText}
                 onChange={(e) => setReflectionText(e.target.value)}
@@ -129,7 +129,7 @@ const CheckoutModal = ({ onClose, duration }: CheckoutModalProps) => {
 
             <div className="space-y-3">
               <p className="text-white font-medium">Add tags (optional)</p>
-              <div className="flex flex-wrap gap-2">
+              {/* <div className="flex flex-wrap gap-2">
                 {suggestedTags.map((tag) => (
                   <button
                     key={tag}
@@ -147,7 +147,7 @@ const CheckoutModal = ({ onClose, duration }: CheckoutModalProps) => {
                     {tag}
                   </button>
                 ))}
-              </div>
+              </div> */}
             </div>
 
             <div className="flex gap-3">
