@@ -401,15 +401,14 @@ export async function saveGeneratedSpace(spaceData) {
 /**
  * Generate checkout reflection for a space (Act 3)
  * @param {string} spaceId - Space ID
- * @param {Object} metadata - Session metadata (duration)
  */
-export async function checkout(spaceId, metadata) {
-  const { duration } = metadata;
-
-  // Fetch space with mood and notes
+export async function checkout(spaceId) {
+  // Fetch space with all necessary data
   const space = await prisma.space.findUnique({
     where: { id: spaceId, is_deleted: false },
     select: {
+      name: true,
+      description: true,
       mood: true,
       duration: true,
       notes: {
@@ -419,6 +418,7 @@ export async function checkout(spaceId, metadata) {
       },
       AiGeneratedContent: {
         select: {
+          id: true,
           prompt: true
         }
       }
@@ -429,53 +429,87 @@ export async function checkout(spaceId, metadata) {
     throw new Error('Space not found');
   }
 
-  // Get mood from space (already updated in database by controller)
+  // Get mood from space
   const effectiveMood = space.mood || 'Neutral';
 
   // Edge case: Zero notes -> Smart Fallback
   if (!space.notes || space.notes.length === 0) {
+    let fallbackContent = '';
+
     // If mood is negative (Stressed, Sad), use a gentle question
     if (['Stressed', 'Sad', 'Anxious', 'Angry'].includes(effectiveMood)) {
-      return {
-        sentiment: "NEGATIVE",
-        anchor_extracted: "this moment",
-        selected_template_id: "NEG_01_FALLBACK",
-        reflection_question: "It seems like a heavy moment. What is one small thing you can do to be kind to yourself right now?",
-        tags: ["#SelfCare", "#Pause", "#Breath"]
-      };
+      fallbackContent = "You've spent time with your thoughts during a challenging moment.\n\n\"The greatest glory in living lies not in never falling, but in rising every time we fall.\" - Nelson Mandela\n\nIt's okay to feel this way. Take small steps: breathe deeply, reach out to someone you trust, or engage in an activity that brings you comfort. Tomorrow is a new opportunity.";
     }
-    
     // If mood is positive (Happy, Excited), use a savoring question
-    if (['Happy', 'Excited', 'Proud', 'Grateful'].includes(effectiveMood)) {
-       return {
-        sentiment: "POSITIVE",
-        anchor_extracted: "this feeling",
-        selected_template_id: "POS_01_FALLBACK",
-        reflection_question: "You seem to be in a good flow. What specific thing are you most grateful for in this session?",
-        tags: ["#Gratitude", "#Flow", "#Joy"]
-      };
+    else if (['Happy', 'Excited', 'Proud', 'Grateful'].includes(effectiveMood)) {
+      fallbackContent = "You've had a productive and uplifting session.\n\n\"Happiness is not by chance, but by choice.\" - Jim Rohn\n\nCelebrate this moment! Take note of what made you feel this way and try to incorporate more of it into your routine. Share your positivity with others.";
+    }
+    // Default/Neutral Fallback (Mindfulness)
+    else {
+      fallbackContent = "You've taken time to focus and reflect.\n\n\"The present moment is the only time over which we have dominion.\" - Thích Nhất Hạnh\n\nContinue being present and mindful. Regular reflection helps you understand yourself better and make conscious choices moving forward.";
     }
 
-    // Default/Neutral Fallback (Mindfulness)
-    return {
-      sentiment: "NEUTRAL",
-      anchor_extracted: "silence",
-      selected_template_id: "NEU_02",
-      reflection_question: "In the silence of this session, what feeling surfaced the most?",
-      tags: ["#Mindfulness", "#Silence", "#Presence"]
-    };
+    // Save content to ai_generated_contents
+    if (space.AiGeneratedContent?.id) {
+      await prisma.aiGeneratedContent.update({
+        where: { id: space.AiGeneratedContent.id },
+        data: {
+          content: fallbackContent,
+          updated_at: new Date()
+        }
+      });
+    } else {
+      await prisma.aiGeneratedContent.create({
+        data: {
+          space_id: spaceId,
+          prompt: null,
+          content: fallbackContent
+        }
+      });
+    }
+
+    return { content: fallbackContent };
   }
 
   // Combine notes content
   const notesContent = space.notes.map(n => n.content).join('\n');
 
-  // Call Naver API
-  const reflection = await naverApiService.generateReflection({
-    initialMood: effectiveMood,
-    duration: duration || space.duration || 0,
-    notesContent
-  });
+  // Prepare data for AI
+  const checkoutData = {
+    name: space.name,
+    description: space.description,
+    mood: effectiveMood,
+    duration: space.duration,
+    notes: notesContent,
+    originalPrompt: space.AiGeneratedContent?.prompt || null // null if user created manually
+  };
 
+  // Call Naver API to generate reflection
+  const reflection = await naverApiService.generateCheckoutReflection(checkoutData);
+  // reflection = { content: "..." } from AI
+
+  // Save content string to ai_generated_contents table
+  if (space.AiGeneratedContent?.id) {
+    // Update existing record
+    await prisma.aiGeneratedContent.update({
+      where: { id: space.AiGeneratedContent.id },
+      data: {
+        content: reflection.content,
+        updated_at: new Date()
+      }
+    });
+  } else {
+    // Create new record
+    await prisma.aiGeneratedContent.create({
+      data: {
+        space_id: spaceId,
+        prompt: null, // User created manually, no original prompt
+        content: reflection.content
+      }
+    });
+  }
+
+  // Return same format as AI returned: { content: "..." }
   return reflection;
 }
 

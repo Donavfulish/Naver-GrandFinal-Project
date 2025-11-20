@@ -1,7 +1,6 @@
 import { NAVER_CLOVA_STUDIO_API_KEY, NAVER_CLOVA_STUDIO_API_URL } from '../config/env.js';
 import logger from '../config/logger.js';
 import { ErrorCodes } from '../constants/errorCodes.js';
-import { REFLECTION_TEMPLATES } from '../constants/reflectionTemplates.js';
 
 /**
  * NAVER API Service
@@ -479,44 +478,74 @@ JSON FORMAT:
   }
 
   /**
-   * Generate context-aware reflection for checkout
-   * @param {Object} context - Session context
-   * @param {string} context.initialMood - Initial mood of the session
-   * @param {number} context.duration - Duration in seconds
-   * @param {string} context.notesContent - Combined notes content
-   * @returns {Promise<Object>} Reflection data
+   * Generate checkout reflection for a space session
+   * @param {Object} checkoutData - Checkout data
+   * @param {string} checkoutData.name - Space name
+   * @param {string} checkoutData.description - Space description
+   * @param {string} checkoutData.mood - Current mood
+   * @param {number} checkoutData.duration - Duration in seconds
+   * @param {string} checkoutData.notes - Combined notes content
+   * @param {string|null} checkoutData.originalPrompt - Original AI prompt (null if user created manually)
+   * @returns {Promise<Object>} Reflection with content field
    */
-  async generateReflection(context) {
-    const { initialMood, duration, notesContent } = context;
+  async generateCheckoutReflection(checkoutData) {
+    const { name, description, mood, duration, notes, originalPrompt } = checkoutData;
 
-    const systemPrompt = `You are an empathetic mental health AI assistant.
-TASK: Analyze the user's session and select the best "Reflection Question" using "Slot Filling" technique.
+    // Convert duration to readable format
+    const hours = Math.floor(duration / 3600);
+    const minutes = Math.floor((duration % 3600) / 60);
+    const durationText = hours > 0
+      ? `${hours} hour${hours > 1 ? 's' : ''} ${minutes} minute${minutes !== 1 ? 's' : ''}`
+      : `${minutes} minute${minutes !== 1 ? 's' : ''}`;
 
-DATASET TEMPLATES (You MUST select one from this list):
-${JSON.stringify(REFLECTION_TEMPLATES, null, 2)}
+    // Detect language from originalPrompt or description
+    const languageSource = originalPrompt || description || '';
 
-PROCESS:
-1. Analyze "User Notes" to determine Sentiment (NEGATIVE / POSITIVE / NEUTRAL).
-2. Extract "The Anchor": A short phrase (under 5 words) representing the main issue or joy.
-   - E.g., "unfinished project", "quiet morning", "argument with friend".
-   - If no specific topic is found, use "this session".
-3. Select ONE Template ID from the dataset based on the Sentiment.
-4. Inject "The Anchor" into the {anchor} placeholder in the template.
-5. Suggest 3 relevant hashtags.
+    const systemPrompt = `You are an empathetic AI assistant specialized in providing thoughtful reflections and life advice.
+
+LANGUAGE REQUIREMENT:
+- Detect the user's language from their original prompt or description.
+- ALL output MUST be in the SAME LANGUAGE as the user's input (originalPrompt if available, otherwise description).
+- If the language is Vietnamese, respond in Vietnamese.
+- If the language is English, respond in English.
+- Match the language naturally and fluently.
+
+TASK: Analyze the user's space session and provide a meaningful reflection as a single cohesive text that includes:
+1. A brief overview of their session (1-2 sentences)
+2. A relevant quote from a famous person that relates to their experience
+3. Practical advice or encouragement (2-3 sentences)
+
+IMPORTANT:
+- Be empathetic and understanding
+- Match the tone to their mood and experience
+- Provide actionable and specific advice
+- Choose quotes that are genuinely relevant and inspiring
+- Write the reflection as flowing, natural text (not separate fields)
+- Format the quote naturally within the text with proper quotation marks
+- RESPOND IN THE SAME LANGUAGE AS THE USER'S INPUT
 
 OUTPUT FORMAT (JSON Only):
 {
-  "sentiment": "NEGATIVE", 
-  "anchor_extracted": "...",
-  "selected_template_id": "...", 
-  "reflection_question": "Question with anchor filled in...",
-  "tags": ["#Tag1", "#Tag2", "#Tag3"]
+  "content": "Your complete reflection text here, including overview, quote, and advice in a natural flowing format, IN THE USER'S LANGUAGE"
 }`;
 
-    const userPrompt = `INPUT DATA:
-- Initial Mood: ${initialMood}
-- Duration: ${duration} seconds
-- User Notes Content: "${notesContent.substring(0, 2000)}"`;
+    let userPrompt = `LANGUAGE DETECTION SOURCE: "${languageSource}"
+
+SPACE SESSION DATA:
+- Space Name: "${name}"
+- Description: "${description || 'No description provided'}"
+- Current Mood: ${mood}
+- Session Duration: ${durationText}
+- Notes Written: 
+${notes || 'No notes were written during this session'}`;
+
+    // Only include original prompt if it exists (space was created by AI, not manually)
+    if (originalPrompt) {
+      userPrompt += `\n- Original Intent: "${originalPrompt}"`;
+      userPrompt += `\n\nIMPORTANT: Respond in the SAME LANGUAGE as the "Original Intent" text above.`;
+    } else {
+      userPrompt += `\n\nIMPORTANT: This space was created manually. Respond in the SAME LANGUAGE as the "Description" text above.`;
+    }
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -524,20 +553,20 @@ OUTPUT FORMAT (JSON Only):
     ];
 
     const response = await this.chatCompletion(messages, {
-      temperature: 0.3, // Low temperature for deterministic matching
-      topP: 0.8
-      // Removed maxTokens to match working API format (same as generateSpaceFromPrompt)
+      temperature: 0.7, // Medium temperature for creative but relevant responses
+      topP: 0.9,
+      thinkingEffort: 'low'
     });
 
     try {
       let cleanedResponse = response.trim();
-      
+
       // Log raw response for debugging
-      logger.info('[NAVER API] Raw reflection response', {
+      logger.info('[NAVER API] Raw checkout reflection response', {
         responseLength: response.length,
         responsePreview: response.substring(0, 500)
       });
-      
+
       // Remove markdown code blocks if present
       if (cleanedResponse.startsWith('```')) {
         const firstNewline = cleanedResponse.indexOf('\n');
@@ -545,7 +574,6 @@ OUTPUT FORMAT (JSON Only):
           cleanedResponse = cleanedResponse.substring(firstNewline + 1);
         }
         cleanedResponse = cleanedResponse.replace(/```\s*$/, '').trim();
-        // Also remove language identifier like ```json
         cleanedResponse = cleanedResponse.replace(/^json\s*/i, '').trim();
       }
 
@@ -558,158 +586,39 @@ OUTPUT FORMAT (JSON Only):
       const parsed = JSON.parse(cleanedResponse);
 
       // Basic validation
-      if (!parsed.reflection_question || !parsed.selected_template_id) {
-        logger.warn('[NAVER API] Reflection response missing required fields', {
-          parsed,
-          hasReflectionQuestion: !!parsed.reflection_question,
-          hasSelectedTemplateId: !!parsed.selected_template_id
-        });
-        throw new Error('Invalid reflection response structure');
+      if (!parsed.content || typeof parsed.content !== 'string') {
+        logger.warn('[NAVER API] Checkout reflection response missing or invalid content field', { parsed });
+        throw new Error('Invalid checkout reflection response structure');
       }
 
-      logger.info('[NAVER API] Generated Reflection', {
-        sentiment: parsed.sentiment,
-        templateId: parsed.selected_template_id,
-        anchor: parsed.anchor_extracted
+      logger.info('[NAVER API] Generated Checkout Reflection', {
+        contentLength: parsed.content?.length
       });
 
-      return parsed;
+      return parsed; // { content: "..." }
 
     } catch (error) {
-      logger.error('[NAVER API] Failed to parse reflection response', {
+      logger.error('[NAVER API] Failed to parse checkout reflection response', {
         error: error.message,
         errorStack: error.stack,
         responseLength: response.length,
-        responseFull: response,
         responsePreview: response.substring(0, 1000)
       });
-      
-      // Fallback
-      return {
-        sentiment: "NEUTRAL",
-        anchor_extracted: "this session",
-        selected_template_id: "NEU_02",
-        reflection_question: "In this silence, what feeling is most present for you?",
-        tags: ["#Mindfulness", "#Reflection", "#Pause"]
-      };
-    }
-  }
 
-  /**
-   * Generate space summary and mood analysis using NAVER CLOVA Studio
-   * @param {Object} spaceContext - Space context data
-   * @param {string} spaceContext.name - Space name
-   * @param {string} spaceContext.description - Space description (optional)
-   * @param {Array<string>} spaceContext.tags - Space tags
-   * @param {Array<string>} spaceContext.notes - Note contents
-   * @param {string} spaceContext.originalPrompt - Original creation prompt (optional)
-   * @param {Array<string>} moodKeywords - Available mood keywords
-   * @returns {Promise<Object>} AI generated summary with advice and mood
-   * @returns {string} return.advice - Personalized advice (2-3 sentences)
-   * @returns {string} return.mood - Selected mood keyword
-   */
-  async generateSpaceSummary(spaceContext, moodKeywords) {
-    // Build AI prompt
-    const systemPrompt = `You are an empathetic AI assistant that analyzes user's workspace and provides personalized advice.
-
-AVAILABLE MOOD KEYWORDS (you MUST select exactly ONE from this list):
-${moodKeywords.join(', ')}
-
-TASK:
-Analyze the user's space based on the provided information and:
-1. Provide a personalized, encouraging advice or reflection (2-3 sentences in English)
-2. Select ONE mood keyword from the available list that best matches the overall vibe
-
-OUTPUT FORMAT (return ONLY valid JSON, no markdown):
-{
-  "advice": "Your personalized advice here (2-3 sentences)",
-  "mood": "Exact mood keyword from the list"
-}
-
-GUIDELINES:
-- Be warm, supportive, and understanding
-- Focus on the positive aspects while acknowledging challenges
-- Make the advice actionable and relevant to their space usage
-- Choose the mood that best reflects the overall emotional state suggested by the space content`;
-
-    const userPrompt = `Analyze this user's space:
-
-Space Name: ${spaceContext.name}
-${spaceContext.description ? `Description: ${spaceContext.description}` : ''}
-${spaceContext.originalPrompt ? `Original Intent: ${spaceContext.originalPrompt}` : ''}
-${spaceContext.tags.length > 0 ? `Tags: ${spaceContext.tags.join(', ')}` : ''}
-${spaceContext.notes.length > 0 ? `Notes:\n${spaceContext.notes.map((note, i) => `${i + 1}. ${note}`).join('\n')}` : 'No notes yet.'}
-
-Based on this information, provide your analysis.`;
-
-    const messages = [
-      {
-        role: 'system',
-        content: systemPrompt
-      },
-      {
-        role: 'user',
-        content: userPrompt
+      // Fallback based on mood
+      if (['Stressed', 'Sad', 'Anxious', 'Angry'].includes(mood)) {
+        return {
+          content: "You've spent time with your thoughts during a challenging moment.\n\n\"The greatest glory in living lies not in never falling, but in rising every time we fall.\" - Nelson Mandela\n\nIt's okay to feel this way. Take small steps: breathe deeply, reach out to someone you trust, or engage in an activity that brings you comfort. Tomorrow is a new opportunity."
+        };
+      } else if (['Happy', 'Excited', 'Proud', 'Grateful'].includes(mood)) {
+        return {
+          content: "You've had a productive and uplifting session.\n\n\"Happiness is not by chance, but by choice.\" - Jim Rohn\n\nCelebrate this moment! Take note of what made you feel this way and try to incorporate more of it into your routine. Share your positivity with others."
+        };
+      } else {
+        return {
+          content: "You've taken time to focus and reflect.\n\n\"The present moment is the only time over which we have dominion.\" - Thích Nhất Hạnh\n\nContinue being present and mindful. Regular reflection helps you understand yourself better and make conscious choices moving forward."
+        };
       }
-    ];
-
-    const response = await this.chatCompletion(messages, {
-      temperature: 0.7,
-      maxTokens: 512
-    });
-
-    // Parse JSON response
-    try {
-      let cleanedResponse = response.trim();
-
-      // Remove markdown code blocks if present
-      if (cleanedResponse.startsWith('```')) {
-        const firstNewline = cleanedResponse.indexOf('\n');
-        if (firstNewline !== -1) {
-          cleanedResponse = cleanedResponse.substring(firstNewline + 1);
-        }
-        cleanedResponse = cleanedResponse.replace(/```\s*$/, '').trim();
-      }
-
-      const parsed = JSON.parse(cleanedResponse);
-
-      // Validate response structure
-      if (!parsed.advice || typeof parsed.advice !== 'string') {
-        throw new Error('Invalid advice in AI response');
-      }
-
-      if (!parsed.mood || typeof parsed.mood !== 'string') {
-        throw new Error('Invalid mood in AI response');
-      }
-
-      // Validate mood is from the available list
-      if (!moodKeywords.includes(parsed.mood)) {
-        logger.warn(`[NAVER API] AI returned invalid mood: ${parsed.mood}, defaulting to 'Neutral'`);
-        parsed.mood = 'Neutral';
-      }
-
-      logger.info('[NAVER API] Successfully generated space summary', {
-        mood: parsed.mood,
-        adviceLength: parsed.advice.length
-      });
-
-      return {
-        advice: parsed.advice,
-        mood: parsed.mood
-      };
-
-    } catch (error) {
-      logger.error('[NAVER API] Failed to parse space summary response', {
-        error: error.message,
-        responseLength: response.length,
-        responsePreview: response.substring(0, 500)
-      });
-
-      // Fallback response
-      return {
-        advice: "Your space reflects your current journey. Take a moment to appreciate how far you've come, and remember that every step forward, no matter how small, is progress.",
-        mood: 'Neutral'
-      };
     }
   }
 }
