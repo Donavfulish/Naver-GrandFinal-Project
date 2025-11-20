@@ -122,7 +122,7 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
             <div className="absolute inset-0 bg-gradient-to-br from-[#1E1E1E]/60 via-transparent to-[#1E1E1E]/80" />
 
             {/* Top Bar */}
-            <div className="absolute top-0 left-0 w-full z-20 flex items-center justify-between px-6 py-4 text-black">
+            <div className="absolute top-0 left-0 w-full z-20 flex items-center justify-between px-6 py-4 text-white">
                 <div>Session: <span className="text-[#C7A36B]">{formatTime(sessionDuration)}</span></div>
                 {/* HIỂN THỊ TÊN SPACE */}
                 <h2 className="text-lg font-semibold capitalize">{space.name} ({space.mood})</h2>
@@ -196,6 +196,7 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
                 onPreviewChange={handlePreviewChange}
                 onSave={handleSave}
                 // Giả định space.id cần được bổ sung trong component cha (nếu API không cung cấp)
+                space={space}
                 spaceId={space.id || "temp-id"}
             />
         </div>
