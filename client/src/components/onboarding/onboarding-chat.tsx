@@ -1,42 +1,36 @@
+// OnboardingChat.tsx
 "use client"
 
 import { useState, useRef, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Send } from "lucide-react"
-//import { generateVibeConfig } from "@/lib/ai-logic"
-import { mockSpaces } from "@/lib/mock-spaces"
+
+// Import Hook và Interface mới
+import { useGenerateAISpace, SpaceData } from "@/hooks/useGenerateAiSpace" 
 
 interface OnboardingChatProps { 
-    onComplete: (space: any) => void
+    onComplete: (space: SpaceData) => void 
 }
 
 export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
     const [input, setInput] = useState("")
-    const [isLoading, setIsLoading] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
+    
+    // Sử dụng hook
+    const { generateSpace, isGenerating: isLoading } = useGenerateAISpace()
 
     useEffect(() => { inputRef.current?.focus() }, [])
 
     const handleSubmit = async (text: string) => {
-        if (!text.trim()) return
-        setIsLoading(true)
-        await new Promise(r => setTimeout(r, 1000))
-        // const vibe = generateVibeConfig(text)
-
-        // let baseSpace = mockSpaces[0]
-        // if (vibe.mood === "Creative") baseSpace = mockSpaces[2]
-        // else if (vibe.mood === "Energetic") baseSpace = mockSpaces[1]
-
-        // const fullSpace = {
-        //     ...baseSpace,
-        //     vibeConfig: vibe,
-        //     notes: [],
-        //     sessionStartTime: Date.now(),
-        //     settingPanel: { theme: vibe.theme, font: vibe.font, music: vibe.music, colors: vibe.colors },
-        // }
-
-        // onComplete(fullSpace)
-        setIsLoading(false)
+        if (!text.trim() || isLoading) return
+        
+        try {
+            const spaceData = await generateSpace(text)
+            onComplete(spaceData)
+        } catch (error) {
+            console.error("Error during space creation:", error)
+            alert("Could not create space. Please check the console for details.")
+        }
     }
 
     return (
@@ -60,12 +54,24 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
                                 type="text"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) => { if (e.key === "Enter" && !isLoading) { handleSubmit(input); setInput("") } }}
+                                onKeyDown={(e) => { 
+                                    if (e.key === "Enter" && !isLoading) { 
+                                        handleSubmit(input); 
+                                        setInput("") 
+                                    } 
+                                }}
                                 placeholder="Type how you feel..."
                                 disabled={isLoading}
                                 className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-white/40 focus:outline-none focus:border-[#C7A36B]/50 focus:bg-white/10 transition"
                             />
-                            <button onClick={() => { handleSubmit(input); setInput("") }} disabled={isLoading || !input.trim()} className="bg-gradient-to-r from-[#C7A36B] to-[#7C9A92] hover:shadow-lg hover:shadow-[#C7A36B]/50 rounded-2xl p-4 text-white font-medium transition disabled:opacity-50">
+                            <button 
+                                onClick={() => { 
+                                    handleSubmit(input); 
+                                    setInput("") 
+                                }} 
+                                disabled={isLoading || !input.trim()} 
+                                className="bg-gradient-to-r from-[#C7A36B] to-[#7C9A92] hover:shadow-lg hover:shadow-[#C7A36B]/50 rounded-2xl p-4 text-white font-medium transition disabled:opacity-50"
+                            >
                                 {isLoading ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}><Send size={24} /></motion.div> : <Send size={24} />}
                             </button>
                         </div>
@@ -73,7 +79,15 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
                             <p className="text-xs text-white/50 uppercase tracking-wide">Quick starts</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                 {["I'm feeling stressed","I'm creative today","I need to focus","I want to relax"].map((prompt) => (
-                                    <button key={prompt} onClick={() => { handleSubmit(prompt); setInput("") }} disabled={isLoading} className="text-left bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-sm text-white/70 hover:text-white transition disabled:opacity-50">
+                                    <button 
+                                        key={prompt} 
+                                        onClick={() => { 
+                                            handleSubmit(prompt); 
+                                            setInput("") 
+                                        }} 
+                                        disabled={isLoading} 
+                                        className="text-left bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-sm text-white/70 hover:text-white transition disabled:opacity-50"
+                                    >
                                         {prompt}
                                     </button>
                                 ))}
