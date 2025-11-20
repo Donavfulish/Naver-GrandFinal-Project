@@ -119,7 +119,7 @@ export default function SettingsPanel({
                     <X size={20} className="text-white" />
                 </button>
 
-                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 mt-10">
                     <Sliders size={20} className="text-[#C7A36B]" />
                     Customize Space
                 </h2>
@@ -225,33 +225,6 @@ export default function SettingsPanel({
                         onChange={handleFile}
                         className="hidden"
                     />
-                </section>
-
-                {/* ---------------- LAYOUT ---------------- */}
-                <section className="mb-6">
-                    <h3 className="font-semibold mb-2">Layout Presets</h3>
-
-                    <div className="flex flex-col gap-2">
-                        <button
-                            onClick={() => setLayout("centered-blur")}
-                            className={`w-full px-3 py-2 rounded border transition ${layout === "centered-blur"
-                                ? "bg-[#C7A36B]/20 border-[#C7A36B] text-white"
-                                : "bg-[#2A2A2A] border-[#2A2A2A] text-[#B3B3B3]"
-                                }`}
-                        >
-                            Centered + Blur
-                        </button>
-
-                        <button
-                            onClick={() => setLayout("corner")}
-                            className={`w-full px-3 py-2 rounded border transition ${layout === "corner"
-                                ? "bg-[#C7A36B]/20 border-[#C7A36B] text-white"
-                                : "bg-[#2A2A2A] border-[#2A2A2A] text-[#B3B3B3]"
-                                }`}
-                        >
-                            Corner (No blur)
-                        </button>
-                    </div>
                 </section>
 
                 <button
