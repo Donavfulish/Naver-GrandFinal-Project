@@ -1,4 +1,5 @@
-import {CLOCK_FONTS_STYLE, EMOTION_KEYWORDS, MOOD_KEYWORDS, TAG_KEYWORDS, TEXT_FONTS} from '../constants/state.js';
+import { CLOCK_FONTS_STYLE, EMOTION_KEYWORDS, MOOD_KEYWORDS, TAG_KEYWORDS, TEXT_FONTS } from '../constants/state.js';
+import { INTRO_PAGE3, INTRO_PAGE1, INTRO_PAGE2 } from '../constants/introPage.js';
 import prisma from '../config/prisma.js';
 import naverApiService from './naver-api.service.js';
 import logger from '../config/logger.js';
@@ -115,6 +116,10 @@ export async function generateSpace(prompt) {
     tags: TAG_KEYWORDS,
     textFonts: TEXT_FONTS,      // Array of font names
     clockFonts: CLOCK_FONTS_STYLE,  // Array of font styles
+    moods: MOOD_KEYWORDS,
+    introPage1: INTRO_PAGE1,
+    introPage2: INTRO_PAGE2,
+    introPage3: INTRO_PAGE3
   };
 
   // Call Naver AI to generate space configuration
@@ -146,6 +151,10 @@ export async function generateSpace(prompt) {
   return {
     name: aiResponse.name,
     description: aiResponse.description,
+    mood: aiResponse.mood || 'Neutral',
+    introPage1: aiResponse.introPage1 || '',
+    introPage2: aiResponse.introPage2 || '',
+    introPage3: aiResponse.introPage3 || '',
     clock_font: {
       id: clockFont?.id,
       style: aiResponse.clockFont
@@ -183,6 +192,7 @@ export async function generateSpace(prompt) {
  * @param {string} spaceData.userId - User ID
  * @param {string} spaceData.name - Space name
  * @param {string} spaceData.description - Space description
+ * @param {string} spaceData.mood - Mood of the space
  * @param {string} spaceData.backgroundId - Background ID
  * @param {string} spaceData.clockFontId - Clock font ID
  * @param {string} spaceData.textFontId - Text font ID
@@ -195,6 +205,7 @@ export async function saveGeneratedSpace(spaceData) {
     userId,
     name,
     description,
+    mood,
     backgroundId,
     clockFontId,
     textFontId,
@@ -267,6 +278,7 @@ export async function saveGeneratedSpace(spaceData) {
       user_id: userId,
       name: name,
       description: description || null,
+      mood: mood,
       background_id: backgroundId || null,
       clock_font_id: clockFontId || null,
       text_font_id: textFontId || null,
@@ -280,7 +292,6 @@ export async function saveGeneratedSpace(spaceData) {
       data: {
         space_id: space.id,
         prompt: prompt,
-        mood: 'Neutral', // Default mood
         content: JSON.stringify(spaceData) // Store full config for reference
       }
     });

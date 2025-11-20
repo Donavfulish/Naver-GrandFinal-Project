@@ -344,43 +344,67 @@ class NaverApiService {
 
     // Temporary implementation - will be replaced with actual AI logic
     const messages = [
-      {
-        role: 'system',
-        content: `You are an expert Space Designer AI. Your goal is to generate a cohesive space configuration based on the user's prompt.
+    {
+      role: 'system',
+      content: `You are an expert Space Designer AI. Your goal is to generate a cohesive space configuration based on the user's prompt.
 
 RULES:
-1. **Language**: All output (name, description) MUST be in English, even if the user prompt is in another language.
+1. **Language**: Detect the user's language from their prompt. All output (name, description, intros) MUST be in the same language as the user prompt.
 2. **Tagging**: Analyze the user's sentiment and intent. Select the most appropriate items from the "Available emotions" and "Available tags" lists below.
-   - Select 2-4 emotions.
-   - Select 3-6 tags.
+   - Select 2–4 emotions.
+   - Select 3–6 tags.
    - You MUST ONLY use values from the provided lists. Do not invent new tags.
-3. **Fonts**: 
+3. **Mood**: Select ONE mood keyword from the Available Moods list that best represents the overall emotional atmosphere of the space.
+4. **Fonts**: 
    - Select one "clockFont" (style name) from the Available Clock Font Styles list.
    - Select one "textFont" (font name) from the Available Text Font Names list.
    - Match fonts to the overall vibe and mood of the space.
-4. **Output**: Return ONLY a valid JSON object. Do not include markdown formatting (like \`\`\`json).
+5. **Intro Pages**:
+   - You will be given 3 lists of inspirational quotes (Intro Page 1, Intro Page 2, Intro Page 3).
+   - Select EXACTLY ONE quote from EACH list that best matches the user's emotional state and intent.
+   - IMPORTANT: Translate the selected quotes into the user's language (detected from their prompt).
+   - Keep the translation poetic, warm, and emotionally resonant.
+   - Return only the translated text, without the author name.
+   - If the user's language is already the same as the quotes, you may keep them as-is or slightly adapt for better flow.
+6. **Output**: Return ONLY a valid JSON object. Do not include markdown formatting.
 
 AVAILABLE LISTS:
 - Emotions: ${context.emotions.join(', ')}
 - Tags: ${context.tags.join(', ')}
+- Moods: ${context.moods.join(', ')}
 - Text Font Names: ${context.textFonts.join(', ')}
 - Clock Font Styles: ${context.clockFonts.join(', ')}
 
+INTRO PAGE OPTIONS (select one from each):
+
+Intro Page 1 (Emotional Opening - choose ONE):
+${context.introPage1.map((item, idx) => `${idx + 1}. "${item.text}"`).join('\n')}
+
+Intro Page 2 (Transition - choose ONE):
+${context.introPage2.map((item, idx) => `${idx + 1}. "${item.text}"`).join('\n')}
+
+Intro Page 3 (Invitation - choose ONE):
+${context.introPage3.map((item, idx) => `${idx + 1}. "${item.text}"`).join('\n')}
+
 JSON FORMAT:
 {
-  "name": "A creative and short English name for the space",
-  "description": "A short English description of the space's vibe (max 2 sentences)",
-  "clockFont": "Exact style string from Available Clock Font Styles",
-  "textFont": "Exact font name from Available Text Font Names",
-  "emotions": ["Exact string from Available Emotions", ...],
-  "tags": ["Exact string from Available Tags", ...]
+  "name": "Short name in user's language",
+  "description": "Short description (max 2 sentences) in user's language",
+  "mood": "Exact mood keyword from Moods list",
+  "clockFont": "Exact style from Clock Font Styles",
+  "textFont": "Exact font from Text Font Names",
+  "emotions": ["emotion1", "emotion2"],
+  "tags": ["tag1", "tag2", "tag3"],
+  "introPage1": "Selected quote from Intro Page 1 translated to user's language",
+  "introPage2": "Selected quote from Intro Page 2 translated to user's language",
+  "introPage3": "Selected quote from Intro Page 3 translated to user's language"
 }`
-      },
-      {
-        role: 'user',
-        content: prompt
-      }
-    ];
+  },
+  {
+    role: 'user',
+    content: prompt
+  }
+];
 
     const response = await this.chatCompletion(messages, {
       temperature: 0.7

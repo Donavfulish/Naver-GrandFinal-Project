@@ -46,7 +46,8 @@ export const confirmGenerate = asyncHandler(async (req, res) => {
     textFontId,
     tracks,
     prompt,
-    tags
+    tags,
+    mood
   } = req.body;
 
   // Validate required fields
@@ -65,6 +66,9 @@ export const confirmGenerate = asyncHandler(async (req, res) => {
   if (!textFontId) {
     throw new ApiError(400, 'textFontId is required');
   }
+  if (!mood || typeof mood !== 'string' || mood.trim().length === 0) {
+    throw new ApiError(400, 'mood is required and must be a non-empty string');
+  }
 
   // Prepare space data
   const spaceData = {
@@ -76,7 +80,8 @@ export const confirmGenerate = asyncHandler(async (req, res) => {
     textFontId,
     tracks: Array.isArray(tracks) ? tracks : [],
     prompt: prompt || null,
-    tags: Array.isArray(tags) ? tags : []
+    tags: Array.isArray(tags) ? tags : [],
+    mood
   };
 
   // Save to database
@@ -88,6 +93,7 @@ export const confirmGenerate = asyncHandler(async (req, res) => {
     data: savedSpace
   });
 });
+
 
 /**
  * GET /api/ai/spaces/:id/summary

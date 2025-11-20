@@ -27,6 +27,7 @@ model Space {
   user_id       String
   name          String
   description   String?
+  mood          String
   background_id String?
   clock_font_id String?
   text_font_id  String?
@@ -196,7 +197,6 @@ model AiGeneratedContent {
   id         String   @id @default(uuid())
   space_id   String   @unique // 1-1: mỗi space chỉ có 1 AI content
   prompt     String?
-  mood       String
   content    String
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
