@@ -15,7 +15,7 @@ interface BackgroundConfig {
     tags: string[];
 }
 
-interface Track {
+export interface Track {
     id: string;
     name: string;
     thumbnail: string;
@@ -25,7 +25,7 @@ interface Track {
     order: number;
 }
 
-interface PlaylistConfig {
+export interface PlaylistConfig {
     name: string;
     tracks: Track[];
 }

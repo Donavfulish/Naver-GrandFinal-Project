@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation"
 import CheckoutModal from "../space/checkout-modal"
 import { SpaceData } from "@/hooks/useGenerateAiSpace"
 import { getFontFamily } from '@/utils/fonts'
+import MusicPlayer from "../space/musicplayer"
 
 interface ViewSpacePageProps {
     space: SpaceData & { sessionStartTime?: number, id?: string } // Thêm sessionStartTime & id (vì API không trả về)
@@ -181,18 +182,11 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
             </motion.div>
 
             {/* MUSIC PLAYER */}
-            <motion.div drag dragElastic={0.2} dragMomentum={false} className={`${layoutStyle.playerClass} rounded-3xl p-5 border border-white/10 shadow-xl bg-black/30 backdrop-blur-2xl`}>
-                {/* HIỂN THỊ DỮ LIỆU BÀI HÁT TỪ API */}
-                <p className="text-white text-lg font-semibold">{trackName}</p>
-                <p className="text-white/60 text-sm">{artistName}</p>
-                <input type="range" min={0} max={100} value={40} onChange={() => { }} className="w-full accent-white mt-2" />
-                <div className="flex justify-between text-white/50 text-xs mt-1"><span>2:49</span><span>5:56</span></div>
-                <div className="flex items-center justify-center gap-10 mt-4 text-white">
-                    <button><SkipBack size={28} /></button>
-                    <button onClick={() => setIsPlaying(v => !v)}>{isPlaying ? <Pause size={40} /> : <Play size={40} />}</button>
-                    <button><SkipForward size={28} /></button>
-                </div>
-            </motion.div>
+            <MusicPlayer
+                playlist={space.playlist}
+                artistName={artistName}
+                playerClass={layoutStyle.playerClass}
+            />
 
             {/* Checkout Modal */}
             {showCheckout && (
