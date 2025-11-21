@@ -21,7 +21,7 @@ const spaceService = {
       clock_font_id,
       text_font_id,
       tracks = [], // Array of track IDs
-      prompt = null,
+      prompt = null,  // AI prompt (optional)
       notes = []  // Array of note content strings (optional)
     } = data;
 
@@ -189,7 +189,7 @@ const spaceService = {
       await prisma.aiGeneratedContent.create({
         data: {
           space_id: createdSpace.id,
-          prompt: prompt,
+          prompt: prompt.trim(),
           content: JSON.stringify({
             user_id,
             name,
@@ -198,6 +198,24 @@ const spaceService = {
             clock_font_id: validatedClockFontId,
             text_font_id: validatedTextFontId,
             tags, // Store original tag names
+            tracks,
+          })
+        }
+      });
+    } else {
+      // Create AI content record with null prompt for manual spaces
+      await prisma.aiGeneratedContent.create({
+        data: {
+          space_id: createdSpace.id,
+          prompt: null,
+          content: JSON.stringify({
+            user_id,
+            name,
+            description,
+            background_id: validatedBackgroundId,
+            clock_font_id: validatedClockFontId,
+            text_font_id: validatedTextFontId,
+            tags,
             tracks,
           })
         }
