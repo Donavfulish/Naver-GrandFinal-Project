@@ -62,10 +62,10 @@ export default function SettingsPanel({
     }, [currentClockStyleName, currentTextFontName, backgroundUrl, layout, onPreviewChange])
 
     const backgroundLibrary = [
-        "https://images.unsplash.com/photo-1518596645362-97063d91af3b?w=500",
-        "https://images.unsplash.com/photo-1542838132-7264879261c1?w=500",
-        "https://images.unsplash.com/photo-1517462033878-0e36b4af0a19?w=500",
-        "https://images.unsplash.com/photo-1506744038136-46c729c19b02?w=500",
+        "img/calming-ambient-environment.png",
+        "img/minimalist-focus-workspace.png",
+        "img/new-custom-space.png",
+        "img/peaceful-meditation-space.png",
     ]
 
     const fileInputRef = React.useRef<HTMLInputElement | null>(null)

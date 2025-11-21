@@ -97,14 +97,6 @@ export const checkoutSchema = Joi.object({
             'string.empty': 'spaceId không được để trống',
             'string.uuid': 'spaceId phải là UUID hợp lệ',
             'any.required': 'spaceId là bắt buộc'
-        }),
-    duration: Joi.number()
-        .min(0)
-        .required()
-        .messages({
-            'number.base': 'duration phải là số',
-            'number.min': 'duration phải lớn hơn hoặc bằng 0',
-            'any.required': 'duration là bắt buộc'
         })
 });
 

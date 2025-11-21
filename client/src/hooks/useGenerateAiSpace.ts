@@ -82,6 +82,7 @@ const CREATE_SPACE_ENDPOINT = `${SPACES_BASE_URL}/`
 interface UseGenerateAISpace {
     generateSpace: (prompt: string) => Promise<SpaceData>;
     confirmSpaceGeneration: (payload: CreateSpaceBody) => Promise<any>;
+    checkoutSpace: (spaceId: string) => Promise<any>;
     isGenerating: boolean;
 }
 
@@ -144,5 +145,23 @@ export function useGenerateAISpace(): UseGenerateAISpace {
         return response.json() 
     }
 
-    return { generateSpace, confirmSpaceGeneration, isGenerating }
+    const checkoutSpace = async (spaceId: string) : Promise<any> => {
+        console.log("checkout");
+
+        const response = await fetch(`${AI_BASE_URL}` + "/checkout", {
+            method: 'POST',
+                        headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(spaceId),
+        })
+         if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`checkout fall with ${errorText}`)
+        }
+        
+        return response.json() 
+    }
+
+    return { generateSpace, confirmSpaceGeneration, checkoutSpace, isGenerating }
 }

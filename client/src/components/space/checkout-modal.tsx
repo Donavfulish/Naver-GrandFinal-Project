@@ -16,7 +16,7 @@ interface CheckoutModalProps {
 }
 
 // KHẮC PHỤC LỖI FK: SỬ DỤNG USER_ID HỢP LỆ TRONG DB
-const REAL_USER_ID = "7bb235fe-67cc-4080-83ef-88251cdff3d3" // Cần đảm bảo ID này tồn tại trong DB
+const REAL_USER_ID = "c6d60308-40b9-4706-95c4-f1cdd06726e2" // Cần đảm bảo ID này tồn tại trong DB
 
 const CheckoutModal = ({ onClose, duration, spaceData }: CheckoutModalProps) => {
     const router = useRouter()
