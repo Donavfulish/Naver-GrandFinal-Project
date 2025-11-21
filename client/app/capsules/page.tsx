@@ -1,16 +1,14 @@
 // src/components/space/CapsulesPage.tsx (hoặc pages/capsules.tsx)
 "use client"
 
-import { useState, useEffect, useCallback } from 'react' // Import các hook cần thiết
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from "framer-motion"
 import { useRouter } from 'next/navigation'
 import { Loader, AlertTriangle } from 'lucide-react'
-// import { useSessionStore } from "@/lib/store" // Đã loại bỏ
+import { useSessionStore, Capsule as CapsuleType } from '@/lib/store' // Đã thêm CapsuleType
 import CapsuleOverview from "@/components/capsules/capsule-overview"
-import { useSessionStore } from '@/lib/store'
 
-// Định nghĩa cấu trúc dữ liệu cho Space (Capsule)
-// (Nên đặt trong một file riêng như src/types/space.ts)
+// Định nghĩa cấu trúc dữ liệu cơ bản từ API (đã được làm sạch)
 interface CapsuleData {
     id: string;
     name: string;
@@ -19,17 +17,17 @@ interface CapsuleData {
     description?: string;
     background: { background_url: string };
     space_tags: { tag: { name: string } }[];
+    created_at: string; // Thêm trường cần thiết
     AiGeneratedContent: { content: string } | null;
 }
 
 // Cấu hình API
 const USER_SPACES_API_URL = 'http://localhost:5000/users';
-// SỬ DỤNG ID HỢP LỆ (Giống như trong CheckoutModal)
 const REAL_USER_ID = "c6d60308-40b9-4706-95c4-f1cdd06726e2";
 
 // --- Custom Hook để Fetch Spaces ---
 const useUserSpaces = () => {
-    const [spaces, setSpaces] = useState<CapsuleData[]>([]);
+    const [spaces, setSpaces] = useState<CapsuleType[]>([]); // Sử dụng CapsuleType từ store
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +49,29 @@ const useUserSpaces = () => {
 
             const result = await response.json();
             if (result.success && Array.isArray(result.data)) {
-                setSpaces(result.data);
+                // MAPPING DỮ LIỆU ĐỂ KHỚP VỚI CẤU TRÚC LICH SỬ CỦA COMPONENT CON
+                const mappedSpaces = result.data.map((c: any): CapsuleType => ({
+                    ...c,
+                    // Giả định: nếu không có notes trong API, gán mảng rỗng để tránh lỗi .length
+                    notes: c.notes || [],
+                    // Giả định: Gán trường AiGeneratedContent.content làm session_summary
+                    session_summary: c.AiGeneratedContent?.content || c.description,
+                    // Giả định: Chuyển đổi space_tags sang tags string[] và vibe_config
+                    tags: c.space_tags.map((st: any) => st.tag.name),
+                    vibe_config: {
+                        theme: c.space_tags?.[0]?.tag?.name || 'default' // Lấy theme từ tag đầu tiên
+                    },
+                    // Đảm bảo các trường bắt buộc khác tồn tại:
+                    created_at: c.created_at || new Date().toISOString(),
+                    id: c.id,
+                    mood: c.mood,
+                    duration: c.duration,
+                    description: c.description || "",
+                    background: c.background || { background_url: '' },
+                    space_tags: c.space_tags || []
+                }));
+
+                setSpaces(mappedSpaces);
             } else {
                 throw new Error("Invalid response format from server.");
             }
@@ -78,8 +98,7 @@ export default function CapsulesPage() {
     // 1. Sử dụng hook mới để fetch dữ liệu
     const { spaces: capsules, loading, error, refetch } = useUserSpaces();
 
-    // 2. Thay thế resetSession bằng một hàm trống (nếu nó không được dùng trong trang này)
-    // Nếu bạn vẫn cần reset session store cũ (ví dụ: notes), bạn cần import nó:
+    // 2. Lấy resetSession từ store
     const { resetSession } = useSessionStore();
 
 
