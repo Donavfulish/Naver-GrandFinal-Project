@@ -3,7 +3,7 @@
 
 import { motion } from "framer-motion"
 import { Play } from 'lucide-react'
-import { Capsule } from "@/lib/store" // Đảm bảo Capsule là Type đầy đủ
+import { Capsule } from "@/lib/store"
 
 interface CapsuleCardProps {
     capsule: Capsule
@@ -11,7 +11,6 @@ interface CapsuleCardProps {
 }
 
 export default function CapsuleCard({ capsule, onContinue }: CapsuleCardProps) {
-    // SỬA LỖI: Kiểm tra an toàn cho created_at
     const date = new Date(capsule.created_at || Date.now())
     const formattedDate = date.toLocaleDateString("en-US", {
         month: "short",
@@ -34,10 +33,11 @@ export default function CapsuleCard({ capsule, onContinue }: CapsuleCardProps) {
         return "from-[#C7A36B] to-[#7C9A92]"
     }
 
-    // SỬA LỖI: Truy cập an toàn vào notes và tags (đã mapping trong CapsulesPage)
+    // SỬ DỤNG CÁC TRƯỜNG ĐÃ ĐƯỢC MAPPING
     const notesCount = capsule.notes?.length || 0;
     const tagList = capsule.tags || [];
     const summary = capsule.session_summary || capsule.description || "No specific reflection recorded.";
+
 
     return (
         <motion.div
@@ -77,6 +77,7 @@ export default function CapsuleCard({ capsule, onContinue }: CapsuleCardProps) {
                     <div className="text-sm font-bold text-white">{tagList.length}</div>
                     <div className="text-xs text-white/50">tags</div>
                 </div>
+
             </div>
 
             {/* Tags */}
