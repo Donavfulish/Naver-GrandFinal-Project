@@ -12,7 +12,6 @@ const tagRepository = {
       where: { id },
       include: {
         space_tags: {
-          where: { is_deleted: false },
           include: {
             space: {
               where: { is_deleted: false },

@@ -63,7 +63,7 @@ const spaceRepository = {
           clock: {
             select: {
               id: true,
-              font_name: true,
+              style: true,
             },
           },
           text: {
@@ -128,7 +128,7 @@ const spaceRepository = {
         clock: {
           select: {
             id: true,
-            font_name: true,
+            style: true,
           },
         },
         text: {
@@ -192,7 +192,7 @@ const spaceRepository = {
         clock: {
           select: {
             id: true,
-            font_name: true,
+            style: true,
           },
         },
         text: {
@@ -306,7 +306,7 @@ const spaceRepository = {
           clock: {
             select: {
               id: true,
-              font_name: true,
+              style: true,
             },
           },
           text: {
@@ -477,7 +477,7 @@ const spaceRepository = {
         clock: {
           select: {
             id: true,
-            font_name: true,
+            style: true,
           },
         },
         text: {

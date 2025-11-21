@@ -16,12 +16,6 @@ const trackRepository = {
     });
   },
 
-  async findBySpotifyId(spotifyTrackId) {
-    return await prisma.track.findUnique({
-      where: { spotify_track_id: spotifyTrackId },
-    });
-  },
-
   async findAll(filters = {}) {
     return await prisma.track.findMany({
       where: {

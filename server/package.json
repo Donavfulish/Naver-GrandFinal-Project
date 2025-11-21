@@ -10,6 +10,8 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "deploy": "cross-env NODE_ENV=production node server.js",
+    "build": "npx prisma generate",
+    "postinstall": "prisma generate",
     "db:migrate": "npx prisma migrate dev --name init",
     "db:deploy": "npx prisma migrate deploy",
     "db:reset": "npx prisma migrate reset --force",
@@ -32,6 +34,7 @@
     "music-metadata": "^11.10.1",
     "node-cache": "^5.1.2",
     "prisma": "^6.19.0",
+    "serverless-http": "^4.0.0",
     "winston": "^3.18.3"
   },
   "devDependencies": {
