@@ -1,7 +1,7 @@
 import express from "express";
 import aiController from "../controllers/ai.controller.js";
 import validate from "../middleware/validate.js";
-import { generateSchema, confirmGenerateSchema, checkoutSchema } from "../validations/ai.validation.js";
+import { generateSchema, checkoutSchema } from "../validations/ai.validation.js";
 
 const router = express.Router();
 

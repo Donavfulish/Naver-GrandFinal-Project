@@ -38,7 +38,6 @@ npm install
 ### 4. Run Migrations
 
 ```bash
-npm run db:migrate
 ```
 
 This will:

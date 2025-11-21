@@ -31,7 +31,7 @@ export interface PlaylistConfig {
 }
 
 // Định nghĩa cấu trúc chính (Space object)
-export interface SpaceData { 
+export interface SpaceData {
     name: string;
     description: string;
     mood: string;
@@ -64,14 +64,29 @@ interface ConfirmBody {
     prompt: string | null;
     tags: string[];
     // mood không có trong schema nhưng có trong body, nên thêm vào
-    mood: string; 
+    mood: string;
 }
 
-const AI_BASE_URL = "http://localhost:5000/ai"
-const AI_GENERATE_ENDPOINT = `${AI_BASE_URL}/generate`
-const AI_CONFIRM_ENDPOINT = `${AI_BASE_URL}/generate/confirm`
+interface CreateSpaceBody {
+    user_id: string; // Tên trường chính xác
+    name: string;
+    tags: string[];
+    description: string | null;
+    mood: string; // Thêm lại mood (vì bạn cần nó trong payload)
+    duration: number; // Mặc định là 0
+    background_url: string; // Sử dụng URL
+    clock_font_id: string | null; // ID
+    text_font_id: string | null; // ID
+    tracks: string[]; // Array of IDs
+    prompt: string | null;
+    notes: string[]; // Mặc định là []
+}
 
-const AI_ENDPOINT = "http://localhost:5000/ai/generate"
+// --- ĐỊNH NGHĨA BASE URL VÀ ENDPOINT ---
+const AI_BASE_URL = "http://localhost:5000/ai"
+const SPACES_BASE_URL = "http://localhost:5000/spaces"
+const AI_GENERATE_ENDPOINT = `${AI_BASE_URL}/generate`
+const CREATE_SPACE_ENDPOINT = `${SPACES_BASE_URL}/`
 
 interface UseGenerateAISpace {
     generateSpace: (prompt: string) => Promise<SpaceData>;
@@ -88,7 +103,7 @@ export function useGenerateAISpace(): UseGenerateAISpace {
         if (!prompt || isGenerating) {
             return Promise.reject(new Error("Invalid prompt or generation already in progress."))
         }
-        
+
         setIsGenerating(true)
         console.log(`📡 Calling AI API with prompt: "${prompt}"`)
 
@@ -100,13 +115,13 @@ export function useGenerateAISpace(): UseGenerateAISpace {
             })
 
             if (!response.ok) {
-                const errorText = await response.text() 
+                const errorText = await response.text()
                 throw new Error(`API call failed with status ${response.status}: ${errorText}`)
             }
 
             const jsonResponse: APIResponse = await response.json()
             const spaceData = jsonResponse.data
-            
+
             console.log("✅ AI Space Generated:", spaceData.name)
             return spaceData
 
@@ -120,35 +135,51 @@ export function useGenerateAISpace(): UseGenerateAISpace {
 
     // HÀM GỌI API XÁC NHẬN MỚI
     const confirmSpaceGeneration = async (data: SpaceData, userId: string): Promise<any> => {
-        const trackIds = data.playlist.tracks.map(t => t.id);
-        const confirmBody: ConfirmBody = {
-            userId: userId,
-            name: data.name,
-            description: data.description || null,
-            backgroundId: data.background.id,
-            clockFontId: data.clock_font.id,
-            textFontId: data.text_font.id,
-            tracks: trackIds,
-            prompt: data.prompt || null,
-            tags: data.tags,
-            mood: data.mood // Thêm mood vào body
-        }
-        console.log("➡️ Calling Confirm API with body:", confirmBody)
 
-        const response = await fetch(AI_CONFIRM_ENDPOINT, {
+        const trackIds = data.playlist.tracks.map(t => t.id);
+
+        // --- TẠO PAYLOAD CHUẨN XÁC DỰA TRÊN SCHEMA VÀ YÊU CẦU ---
+        const createBody: CreateSpaceBody = {
+            // Trường yêu cầu: user_id
+            user_id: userId,
+
+            // Trường yêu cầu: name, tags
+            name: data.name,
+            tags: data.tags,
+
+            // Trường tùy chọn: description, prompt
+            description: data.description || null,
+            prompt: data.prompt || null,
+
+            // Trường cấu hình: ID/URL
+            background_url: data.background.url,
+            clock_font_id: data.clock_font.id || null,
+            text_font_id: data.text_font.id || null,
+            tracks: trackIds,
+
+            // Trường bổ sung theo yêu cầu (mood, duration, notes)
+            mood: data.mood,
+            duration: 0, // Mặc định là 0
+            notes: [],   // Mặc định là mảng rỗng
+        };
+        // -----------------------------------------------------------
+
+        console.log("➡️ Calling CREATE SPACE API (POST /spaces) with body:", createBody)
+
+        const response = await fetch(CREATE_SPACE_ENDPOINT, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(confirmBody),
+            body: JSON.stringify(createBody),
         })
 
         if (!response.ok) {
             const errorText = await response.text()
-            throw new Error(`Confirm API call failed with status ${response.status}: ${errorText}`)
+            throw new Error(`CREATE SPACE API call failed with status ${response.status}: ${errorText}`)
         }
 
-        return response.json() // Trả về response từ server
+        return response.json()
     }
 
     return { generateSpace, confirmSpaceGeneration, isGenerating }
