@@ -11,7 +11,7 @@ import AILoadingModal from "../view-space/AILoadingModal"
 import SpacePreviewModal from "./SpacePreviewModal"
 
 // Giả định userId được lấy từ context/store
-const MOCK_USER_ID = "cca57402-8009-4dcb-b0ff-348268a00213" 
+const MOCK_USER_ID = "7bb235fe-67cc-4080-83ef-88251cdff3d3" 
 
 interface OnboardingChatProps { 
     onComplete: (space: SpaceData & { sessionStartTime: number }) => void 

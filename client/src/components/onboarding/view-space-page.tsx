@@ -1,10 +1,10 @@
 // ViewSpacePage.tsx
 "use client"
 import { useState, useEffect, useMemo } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import {
-    SkipBack, SkipForward, Play, Pause, Settings, Maximize, MessageCircle
+    Settings
 } from "lucide-react"
 import SettingsPanel, { SettingsPreview } from "../space/setting-panel"
 import RealClock from "../space/clock"
@@ -14,46 +14,47 @@ import CheckoutModal from "../space/checkout-modal"
 import { SpaceData } from "@/hooks/useGenerateAiSpace"
 import { getFontFamily } from '@/utils/fonts'
 import MusicPlayer from "../space/musicplayer"
+import IntroModal from "../space/intro-modal" // Import Intro Modal
+import { useSessionStore, StickyNote } from "@/lib/store" // Import store
 
 interface ViewSpacePageProps {
-    space: SpaceData & { sessionStartTime?: number, id?: string } // Thêm sessionStartTime & id (vì API không trả về)
+    // space.id sẽ không tồn tại nếu là session mới từ Onboarding
+    space: SpaceData & { sessionStartTime?: number, id?: string } 
     activeMode?: boolean
 }
-
-// Giả định: SettingsPanel/SettingsPreview vẫn sử dụng các trường này:
-// clockStyle (string), clockFont (string), background (string URL), layout (string)
 
 export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePageProps) {
     const router = useRouter()
     const [sessionDuration, setSessionDuration] = useState(0)
     const [showSettings, setShowSettings] = useState(false)
-    const [isPlaying, setIsPlaying] = useState(false)
-    const [isFullscreen, setIsFullscreen] = useState(false)
     const [showCheckout, setShowCheckout] = useState(false)
+    const [showIntro, setShowIntro] = useState(false) // State quản lý Intro Modal
+    
+    const { finalSettings, setFinalSettings } = useSessionStore();
 
-    // Lấy thông tin cần thiết từ SpaceData (cấu trúc API)
-    const initialBackgroundUrl = space.background?.url || "/images/default-bg.jpg" // Dùng url từ background
-    const initialClockFont = space.clock_font?.style || "Inter" // Dùng style từ clock_font
-    const initialClockStyle = "default" // Giả định kiểu đồng hồ mặc định nếu API không cung cấp
-
+    // 1. LẤY CẤU HÌNH BAN ĐẦU (Ưu tiên FinalSettings nếu tồn tại)
+    const initialBackgroundUrl = finalSettings?.background || space.background?.url || "/images/default-bg.jpg"
+    const initialTextFontName = finalSettings?.clockFont || space.text_font?.font_name || "Inter"
+    const initialClockStyle = finalSettings?.clockStyle || space.clock_font?.style || "minimal"
+    
+    // Khởi tạo state Preview
     const [preview, setPreview] = useState<SettingsPreview>({
-        // Khởi tạo từ cấu trúc API
         clockStyle: initialClockStyle,
-        clockFont: initialClockFont,
+        clockFont: initialTextFontName,
         background: initialBackgroundUrl,
         layout: "centered-blur",
     })
 
     const clockFontFamily = getFontFamily(preview.clockFont);
 
+    // 2. LOGIC QUẢN LÝ SESSION VÀ INTRO MODAL
     useEffect(() => {
-        // Kiểm tra sessionStartTime
-        if (!space.sessionStartTime) {
-            // Tạm thời comment out để tránh redirect trong môi trường dev nếu chưa có logic session
-            // router.push("/capsules")
-            // return
+        // Nếu đây là lần đầu tiên vào ViewSpacePage (sessionStartTime vừa được set)
+        // và finalSettings chưa được lưu (chưa hoàn thành Intro/Save Settings lần đầu)
+        if (space.sessionStartTime && !finalSettings) { 
+            setShowIntro(true);
         }
-
+        
         // Timer cho session duration
         if (space.sessionStartTime) {
             const interval = setInterval(() => {
@@ -61,8 +62,15 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
             }, 1000)
             return () => clearInterval(interval)
         }
-
-    }, [space.sessionStartTime]) // Sử dụng space.sessionStartTime
+    }, [space.sessionStartTime, finalSettings]) 
+    
+    const handleIntroComplete = () => {
+        setShowIntro(false);
+        // LƯU CẤU HÌNH GỐC LÀM FINAL SETTINGS LẦN ĐẦU
+        // (Đây là cấu hình AI nếu người dùng không mở SettingsPanel)
+        setFinalSettings(preview);
+    }
+    // ----------------------------------------------------
 
     const formatTime = (seconds: number) => {
         const h = Math.floor(seconds / 3600)
@@ -74,7 +82,7 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
     const detectFullscreen = () => {
         const domFs = Boolean(document.fullscreenElement)
         const browserFs = window.innerHeight === screen.height
-        setIsFullscreen(domFs || browserFs)
+        // Logic fullscreen giữ nguyên
     }
 
     useEffect(() => {
@@ -86,7 +94,7 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
             document.removeEventListener("fullscreenchange", detectFullscreen)
         }
     }, [])
-    const enterFullscreen = () => document.documentElement.requestFullscreen?.()
+    // const enterFullscreen = () => document.documentElement.requestFullscreen?.() // Không dùng
 
     const layoutStyle = useMemo(() => ({
         clockClass: "absolute top-[15%] left-1/2 -translate-x-1/2 z-30 flex flex-col items-center",
@@ -97,31 +105,34 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
     const handlePreviewChange = (p: Partial<SettingsPreview>) =>
         setPreview(prev => ({ ...prev, ...p }))
 
-    // Logic này cần được cập nhật để lưu cấu hình preview (thay đổi bởi người dùng) vào space object nếu cần.
+    // Logic này được gọi khi nút Apply & Save trong SettingsPanel được nhấn
     const handleSave = (p: SettingsPreview) => {
-        // Cần lưu state này lên backend hoặc local state tùy theo thiết kế của bạn.
-        // Ở đây, ta chỉ cập nhật object space local (chỉ là ví dụ, không phải state)
-        // Object.assign(space, { 
-        //     // ... cập nhật các trường tương ứng trong space object nếu có
-        // });
-        console.log("Settings saved:", p);
+        // SettingsPanel đã lưu FinalSettings vào store, ta chỉ cần cập nhật preview
+        setPreview(p); 
+        setShowSettings(false);
     }
 
-    // Lấy thông tin bài hát hiện tại
-    const currentTrack = space.playlist?.tracks?.[0]
-    const trackName = currentTrack?.name || "No Track Playing"
-    // Giả định artist là tên playlist nếu không có trường artist riêng
     const artistName = space.playlist?.name || space.name
 
     return (
         <div className="relative w-full min-h-screen overflow-hidden">
+            <AnimatePresence>
+                {/* HIỂN THỊ INTRO MODAL */}
+                {showIntro && (
+                    <IntroModal
+                        introPages={[space.introPage1, space.introPage2, space.introPage3]}
+                        onComplete={handleIntroComplete}
+                    />
+                )}
+            </AnimatePresence>
+            
             {/* Background */}
             <Image
                 src={preview.background}
                 fill
                 className="object-cover"
                 alt="background"
-                priority // Tải sớm ảnh nền
+                priority
             />
             <div className="absolute inset-0 bg-gradient-to-br from-[#1E1E1E]/60 via-transparent to-[#1E1E1E]/80" />
 
@@ -137,6 +148,7 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
                 </button>
             </div>
 
+            {/* Settings Button */}
             <motion.div
                 className="absolute bottom-16 right-8 z-20 flex flex-col gap-4"
                 initial={{ opacity: 0, x: 20 }}
@@ -163,14 +175,10 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
 
             {/* CLOCK */}
             <motion.div drag dragElastic={0.2} dragMomentum={false} className={layoutStyle.clockClass}>
-                <RealClock
-                    styleType={preview.clockStyle as any}
-                    size={150}
-                />
+                <RealClock styleType={preview.clockStyle as any} size={150} />
                 <div className={`mt-4 text-center text-white/80`}>
-                    <p
-                        className={`text-white text-5xl font-semibold`}
-                        // Áp dụng font-family CSS value đã tối ưu
+                    <p 
+                        className={`text-white text-5xl font-semibold`} 
                         style={{ fontFamily: clockFontFamily }}
                     >
                         {new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
@@ -190,7 +198,11 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
 
             {/* Checkout Modal */}
             {showCheckout && (
-                <CheckoutModal onClose={() => setShowCheckout(false)} duration={sessionDuration} />
+                <CheckoutModal 
+                    onClose={() => setShowCheckout(false)} 
+                    duration={sessionDuration} 
+                    spaceData={space} 
+                />
             )}
 
             {/* SETTINGS PANEL */}
@@ -200,7 +212,6 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
                 initial={preview}
                 onPreviewChange={handlePreviewChange}
                 onSave={handleSave}
-                // Giả định space.id cần được bổ sung trong component cha (nếu API không cung cấp)
                 space={space}
                 spaceId={space.id || "temp-id"}
             />
