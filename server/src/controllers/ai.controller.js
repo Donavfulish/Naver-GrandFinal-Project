@@ -103,21 +103,11 @@ export const confirmGenerate = asyncHandler(async (req, res) => {
  * @body {number} duration - Duration of the session in seconds
  */
 export const checkout = asyncHandler(async (req, res) => {
-  const { spaceId, duration } = req.body;
+  const { spaceId } = req.body;
 
   if (!spaceId) {
     throw new ApiError(400, 'spaceId is required');
   }
-
-  if (duration === undefined || duration === null) {
-    throw new ApiError(400, 'duration is required');
-  }
-
-  // Update duration to database first
-  await prisma.space.update({
-    where: { id: spaceId },
-    data: { duration }
-  });
 
   // Now call checkout service which will read mood and duration from space
   const reflection = await aiService.checkout(spaceId);

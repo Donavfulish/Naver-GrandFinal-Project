@@ -16,11 +16,13 @@ const spaceService = {
       tags, // Array of tag names (strings), not IDs
       description,
       mood,
+      duration,
       background_url,
       clock_font_id,
       text_font_id,
       tracks = [], // Array of track IDs
       prompt = null,
+      notes = []  // Array of note content strings (optional)
     } = data;
 
     // Validate tags exist and are not empty
@@ -152,6 +154,7 @@ const spaceService = {
       name,
       description: description || null,
       mood: mood || 'Neutral', // Add mood field with default value
+      duration: duration || 0, // Add duration field with default value
       background_id: validatedBackgroundId,
       clock_font_id: validatedClockFontId,
       text_font_id: validatedTextFontId,
@@ -163,6 +166,23 @@ const spaceService = {
         tagIds,
         tracks
     );
+
+    // Create notes if provided
+    if (notes && notes.length > 0) {
+      const notePromises = notes.map((content, index) => {
+        return prisma.note.create({
+          data: {
+            space_id: createdSpace.id,
+            content: content,
+            note_order: index,
+            is_delete: false,
+          },
+        });
+      });
+
+      await Promise.all(notePromises);
+      logger.info(`Created ${notes.length} notes for space ${createdSpace.id}`);
+    }
 
     // Save AI generated content info if prompt exists and is not empty
     if (prompt && prompt.trim().length > 0) {
@@ -406,85 +426,19 @@ const spaceService = {
   },
 
   /**
-   * Update space summary (duration, AI content, mood)
-   * @param {string} id - Space ID
-   * @param {Object} summaryData - Summary data
-   * @param {number} summaryData.duration - Space duration in seconds
-   * @param {string} summaryData.content - AI generated content
-   * @param {string} summaryData.mood - Mood/emotion
-   * @returns {Promise<Object>} Updated space
+   * Get all backgrounds
+   * @returns {Promise<Array>} List of backgrounds
    */
-  async updateSpaceSummary(id, summaryData) {
-    const { duration, content, mood } = summaryData;
+  async getBackgrounds() {
+    return await backgroundRepository.findAll();
+  },
 
-    // Check if space exists
-    const space = await spaceRepository.findById(id);
-    if (!space || space.is_deleted) {
-      const error = new Error('Space not found');
-      error.code = ErrorCodes.SPACE_NOT_FOUND;
-      throw error;
-    }
-
-    // Validate inputs
-    if (duration !== undefined && (typeof duration !== 'number' || duration < 0)) {
-      const error = new Error('Duration must be a non-negative number');
-      error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
-      throw error;
-    }
-
-    if (mood && typeof mood !== 'string') {
-      const error = new Error('Mood must be a string');
-      error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
-      throw error;
-    }
-
-    if (content && typeof content !== 'string') {
-      const error = new Error('Content must be a string');
-      error.code = ErrorCodes.SPACE_VALIDATION_FAILED;
-      throw error;
-    }
-
-    // Update space duration if provided
-    if (duration !== undefined) {
-      await prisma.space.update({
-        where: { id },
-        data: { duration },
-      });
-    }
-
-    // Update or create AiGeneratedContent if content or mood provided
-    if (content !== undefined || mood !== undefined) {
-      // Check if AI generated content already exists for this space
-      const existingAiContent = await prisma.aiGeneratedContent.findFirst({
-        where: { space_id: id },
-      });
-
-      if (existingAiContent) {
-        // Update existing record
-        const updateData = {};
-        if (content !== undefined) updateData.content = content;
-        if (mood !== undefined) updateData.mood = mood;
-        updateData.updated_at = new Date();
-
-        await prisma.aiGeneratedContent.update({
-          where: { id: existingAiContent.id },
-          data: updateData,
-        });
-      } else {
-        // Create new record if it doesn't exist
-        await prisma.aiGeneratedContent.create({
-          data: {
-            space_id: id,
-            prompt: null,
-            mood: mood || 'Neutral',
-            content: content || '',
-          },
-        });
-      }
-    }
-
-    // Return updated space with all relations
-    return await spaceRepository.findById(id);
+  /**
+   * Get top 9 spaces for dashboard
+   * @returns {Promise<Array>} List of top 9 spaces
+   */
+  async getDashboardSpaces() {
+    return await spaceRepository.findDashboard();
   },
 
   /**
