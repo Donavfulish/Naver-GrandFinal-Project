@@ -153,7 +153,7 @@ export function useGenerateAISpace(): UseGenerateAISpace {
                         headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(spaceId),
+            body: JSON.stringify({spaceId}),
         })
          if (!response.ok) {
             const errorText = await response.text()

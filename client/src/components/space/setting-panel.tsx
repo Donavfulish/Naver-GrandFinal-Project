@@ -62,12 +62,12 @@ export default function SettingsPanel({
     }, [currentClockStyleName, currentTextFontName, backgroundUrl, layout, onPreviewChange])
 
     const backgroundLibrary = [
-        "img/calming-ambient-environment.png",
-        "img/minimalist-focus-workspace.png",
-        "img/new-custom-space.png",
-        "img/peaceful-meditation-space.png",
+        "/img/calming-ambient-environment.png",
+        "/img/minimalist-focus-workspace.png",
+        "/img/new-custom-space.png",
+        "/img/peaceful-meditation-space.png",
     ]
-
+    
     const fileInputRef = React.useRef<HTMLInputElement | null>(null)
 
     const openFileDialog = () => { fileInputRef.current?.click() }
