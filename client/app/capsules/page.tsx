@@ -36,6 +36,7 @@ const useUserSpaces = () => {
             }
 
             const result = await response.json();
+            console.log("result", result)
             if (result.success && Array.isArray(result.data)) {
                 // THỰC HIỆN MAPPING DỮ LIỆU ĐỂ KHẮC PHỤC LỖI TRUY CẬP UNDEFINED
                 const mappedSpaces = result.data.map((c: any): CapsuleType => ({
@@ -52,7 +53,7 @@ const useUserSpaces = () => {
                     },
 
                     // 4. SESSION_SUMMARY: Lấy nội dung AI hoặc mô tả mặc định
-                    session_summary: c.AiGeneratedContent?.content || c.description || 'No summary available.',
+                    session_summary: c.AiGeneratedContent?.content || 'No summary available.',
 
                     // Đảm bảo các trường bắt buộc khác tồn tại:
                     description: c.description || "",
@@ -101,8 +102,6 @@ export default function CapsulesPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
                 >
-                    <h1 className="text-4xl font-bold text-white mb-8">Your Space Capsules</h1>
-
                     {/* --- Hiển thị trạng thái Loading --- */}
                     {loading && (
                         <div className="flex justify-center items-center h-64 text-white/70">
