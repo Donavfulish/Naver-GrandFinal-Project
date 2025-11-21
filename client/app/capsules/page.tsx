@@ -5,21 +5,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion } from "framer-motion"
 import { useRouter } from 'next/navigation'
 import { Loader, AlertTriangle } from 'lucide-react'
-import { useSessionStore, Capsule as CapsuleType } from '@/lib/store' // Đã thêm CapsuleType
+import { useSessionStore, Capsule as CapsuleType, StickyNote } from '@/lib/store' // Import CapsuleType, StickyNote
 import CapsuleOverview from "@/components/capsules/capsule-overview"
-
-// Định nghĩa cấu trúc dữ liệu cơ bản từ API (đã được làm sạch)
-interface CapsuleData {
-    id: string;
-    name: string;
-    duration: number;
-    mood: string;
-    description?: string;
-    background: { background_url: string };
-    space_tags: { tag: { name: string } }[];
-    created_at: string; // Thêm trường cần thiết
-    AiGeneratedContent: { content: string } | null;
-}
 
 // Cấu hình API
 const USER_SPACES_API_URL = 'http://localhost:5000/users';
@@ -27,7 +14,8 @@ const REAL_USER_ID = "c6d60308-40b9-4706-95c4-f1cdd06726e2";
 
 // --- Custom Hook để Fetch Spaces ---
 const useUserSpaces = () => {
-    const [spaces, setSpaces] = useState<CapsuleType[]>([]); // Sử dụng CapsuleType từ store
+    // Đã đổi type thành CapsuleType đầy đủ
+    const [spaces, setSpaces] = useState<CapsuleType[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -49,24 +37,26 @@ const useUserSpaces = () => {
 
             const result = await response.json();
             if (result.success && Array.isArray(result.data)) {
-                // MAPPING DỮ LIỆU ĐỂ KHỚP VỚI CẤU TRÚC LICH SỬ CỦA COMPONENT CON
+                // THỰC HIỆN MAPPING DỮ LIỆU ĐỂ KHẮC PHỤC LỖI TRUY CẬP UNDEFINED
                 const mappedSpaces = result.data.map((c: any): CapsuleType => ({
                     ...c,
-                    // Giả định: nếu không có notes trong API, gán mảng rỗng để tránh lỗi .length
+                    // 1. NOTES: Gán mảng rỗng để tránh lỗi .length trong CapsuleOverview
                     notes: c.notes || [],
-                    // Giả định: Gán trường AiGeneratedContent.content làm session_summary
-                    session_summary: c.AiGeneratedContent?.content || c.description,
-                    // Giả định: Chuyển đổi space_tags sang tags string[] và vibe_config
-                    tags: c.space_tags.map((st: any) => st.tag.name),
+
+                    // 2. TAGS: Chuyển đổi space_tags (Array of Objects) thành tags (Array of Strings)
+                    tags: c.space_tags?.map((st: { tag: { name: string } }) => st.tag.name) || [],
+
+                    // 3. VIBE_CONFIG: Giả định theme từ tag đầu tiên (cho CapsuleOverview)
                     vibe_config: {
-                        theme: c.space_tags?.[0]?.tag?.name || 'default' // Lấy theme từ tag đầu tiên
+                        theme: c.space_tags?.[0]?.tag?.name || 'default'
                     },
+
+                    // 4. SESSION_SUMMARY: Lấy nội dung AI hoặc mô tả mặc định
+                    session_summary: c.AiGeneratedContent?.content || c.description || 'No summary available.',
+
                     // Đảm bảo các trường bắt buộc khác tồn tại:
-                    created_at: c.created_at || new Date().toISOString(),
-                    id: c.id,
-                    mood: c.mood,
-                    duration: c.duration,
                     description: c.description || "",
+                    created_at: c.created_at || new Date().toISOString(),
                     background: c.background || { background_url: '' },
                     space_tags: c.space_tags || []
                 }));
