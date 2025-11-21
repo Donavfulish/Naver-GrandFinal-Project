@@ -1,28 +1,27 @@
+// components/SettingsPanel.tsx
 "use client"
 
 import React, { useState, useEffect, useMemo } from "react"
 import Image from "next/image"
 import { Sliders, X, Loader } from "lucide-react"
-import { useSpaceFonts } from "@/hooks/useSpaceFonts" // Import hook mới
-import { SpaceData } from "@/hooks/useGenerateAiSpace" // Import SpaceData
+import { useSpaceFonts } from "@/hooks/useSpaceFonts" 
+import { SpaceData } from "@/hooks/useGenerateAiSpace" 
 import { getFontFamily } from '@/utils/fonts'
+// Import store và type
+import { useSessionStore, SettingsPreview as SettingsPreviewType } from "@/lib/store" 
+
 
 type LayoutKey = "centered-blur" | "corner"
 
-export type SettingsPreview = {
-    clockStyle: string
-    clockFont: string
-    background: string
-    layout: LayoutKey
-}
+export type SettingsPreview = SettingsPreviewType; // Dùng lại type từ store
 
 interface SettingsPanelProps {
     open: boolean
     onClose: () => void
     initial: SettingsPreview
     onPreviewChange: (p: Partial<SettingsPreview>) => void
-    onSave: (p: SettingsPreview) => void
-    space: SpaceData // Thêm prop space
+    onSave: (p: SettingsPreview) => void // Hàm này dùng để cập nhật state cha và đóng panel
+    space: SpaceData
     spaceId: number | string
 }
 
@@ -35,12 +34,13 @@ export default function SettingsPanel({
     space,
     spaceId
 }: SettingsPanelProps) {
+    const { setFinalSettings } = useSessionStore() 
 
     const { clockStyles, textStyles, isLoading: isFontsLoading, error: fontsError } = useSpaceFonts()
     const [selectedClockStyleId, setSelectedClockStyleId] = useState(space.clock_font.id)
     const [selectedTextFontId, setSelectedTextFontId] = useState(space.text_font.id)
     const [backgroundUrl, setBackgroundUrl] = useState(space.background.url)
-    const [layout, setLayout] = useState<LayoutKey>("centered-blur") // Tạm giữ giá trị mặc định
+    const [layout, setLayout] = useState<LayoutKey>("centered-blur") 
 
     const initialTextFontName = space.text_font.font_name || "Inter"
 
@@ -62,10 +62,10 @@ export default function SettingsPanel({
     }, [currentClockStyleName, currentTextFontName, backgroundUrl, layout, onPreviewChange])
 
     const backgroundLibrary = [
-        "/img/calming-ambient-environment.png",
-        "/img/minimalist-focus-workspace.png",
-        "/img/new-custom-space.png",
-        "/img/peaceful-meditation-space.png",
+        "https://images.unsplash.com/photo-1518596645362-97063d91af3b?w=500",
+        "https://images.unsplash.com/photo-1542838132-7264879261c1?w=500",
+        "https://images.unsplash.com/photo-1517462033878-0e36b4af0a19?w=500",
+        "https://images.unsplash.com/photo-1506744038136-46c729c19b02?w=500",
     ]
 
     const fileInputRef = React.useRef<HTMLInputElement | null>(null)
@@ -80,24 +80,21 @@ export default function SettingsPanel({
         }
     }
 
-    const handleSave = () => {
-        // Log dữ liệu chuẩn bị lưu/cập nhật
-        console.log("Settings Saved:", {
-            clockStyleId: selectedClockStyleId,
-            textFontId: selectedTextFontId,
-            backgroundUrl: backgroundUrl,
-            layout: layout
-        })
 
-        // Cần gọi API cập nhật ở đây (không có trong yêu cầu hiện tại, nên ta chỉ gọi onSave để đóng panel)
-        // onSave cần nhận lại các giá trị đã được preview để áp dụng vĩnh viễn
-        onSave({
+    const handleSave = () => {
+        const finalPreview: SettingsPreview = {
             clockStyle: currentClockStyleName,
             clockFont: currentTextFontName,
             background: backgroundUrl,
-            layout
-        })
-        onClose()
+            layout: layout
+        };
+        
+        // 1. LƯU CẤU HÌNH CUỐI CÙNG VÀO ZUSTAND STORE
+        setFinalSettings(finalPreview);
+
+        // 2. Cập nhật state cha và đóng panel
+        onSave(finalPreview); 
+        onClose();
     }
 
     if (!open) return null
@@ -138,10 +135,9 @@ export default function SettingsPanel({
 
                 {!isFontsLoading && !fontsError && (
                     <>
-                        {/* ---------------- CLOCK STYLE (Lấy từ API clockStyles) ---------------- */}
+                        {/* ---------------- CLOCK STYLE ---------------- */}
                         <section className="mb-6">
                             <h3 className="font-semibold mb-2">Clock Style</h3>
-
                             <div className="relative">
                                 <select
                                     value={selectedClockStyleId}
@@ -157,10 +153,9 @@ export default function SettingsPanel({
                             </div>
                         </section>
 
-                        {/* ---------------- TEXT FONT (Lấy từ API textStyles) ---------------- */}
+                        {/* ---------------- TEXT FONT ---------------- */}
                         <section className="mb-6">
                             <h3 className="font-semibold mb-2">Text Font (for Clock)</h3>
-
                             <div className="relative">
                                 <select
                                     value={selectedTextFontId}
@@ -190,9 +185,7 @@ export default function SettingsPanel({
                 {/* ---------------- BACKGROUND ---------------- */}
                 <section className="mb-6">
                     <h3 className="font-semibold mb-3">Background</h3>
-
                     <p className="text-white/60 text-sm mb-2">Choose from library</p>
-
                     <div className="grid grid-cols-3 gap-2 mb-4">
                         {backgroundLibrary.map((src) => (
                             <button
@@ -207,10 +200,11 @@ export default function SettingsPanel({
                             </button>
                         ))}
                     </div>
+                    
+                    <p className="text-white/60 text-xs mb-2 truncate">Current URL: <span className="text-white font-medium">{backgroundUrl}</span></p>
 
                     <p className="text-white/60 text-sm mb-2">Upload from device</p>
 
-                    {/* custom upload button */}
                     <button
                         onClick={openFileDialog}
                         className="w-full px-4 py-2 bg-[#2A2A2A] border border-[#444] rounded-md text-white hover:border-[#C7A36B] transition"
@@ -225,6 +219,32 @@ export default function SettingsPanel({
                         onChange={handleFile}
                         className="hidden"
                     />
+                </section>
+
+                {/* ---------------- LAYOUT (Giữ nguyên) ---------------- */}
+                <section className="mb-6">
+                    <h3 className="font-semibold mb-2">Layout Presets</h3>
+                    <div className="flex flex-col gap-2">
+                        <button
+                            onClick={() => setLayout("centered-blur")}
+                            className={`w-full px-3 py-2 rounded border transition ${layout === "centered-blur"
+                                ? "bg-[#C7A36B]/20 border-[#C7A36B] text-white"
+                                : "bg-[#2A2A2A] border-[#2A2A2A] text-[#B3B3B3]"
+                                }`}
+                        >
+                            Centered + Blur
+                        </button>
+
+                        <button
+                            onClick={() => setLayout("corner")}
+                            className={`w-full px-3 py-2 rounded border transition ${layout === "corner"
+                                ? "bg-[#C7A36B]/20 border-[#C7A36B] text-white"
+                                : "bg-[#2A2A2A] border-[#2A2A2A] text-[#B3B3B3]"
+                                }`}
+                        >
+                            Corner (No blur)
+                        </button>
+                    </div>
                 </section>
 
                 <button
