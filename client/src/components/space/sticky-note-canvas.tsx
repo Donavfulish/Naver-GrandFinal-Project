@@ -46,10 +46,6 @@ export default function StickyNoteCanvas() {
           transition={{ delay: 0.5 }}
           className="absolute inset-0 flex items-center justify-center text-white/30 pointer-events-none"
         >
-          <div className="text-center space-y-2">
-            <div className="text-2xl font-medium ">Click anywhere to create a note</div>
-            <div className="text-sm">Externalize your thoughts</div>
-          </div>
         </motion.div>
       )}
 

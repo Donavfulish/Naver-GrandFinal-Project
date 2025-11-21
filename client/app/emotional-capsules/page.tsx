@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react"
 import OnboardingChat from "@/components/onboarding/onboarding-chat"
-import ViewSpacePage from "@/components/view-space/view-space-page"
+import ViewSpacePage from "@/components/onboarding/view-space-page"
 
 export default function DashboardPage() {
     const [space, setSpace] = useState<any>(null)

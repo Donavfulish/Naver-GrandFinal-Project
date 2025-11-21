@@ -1,16 +1,16 @@
 import Joi from 'joi';
 
 export const generateSchema = Joi.object({
-  prompt: Joi.string()
-    .min(10)
-    .max(1000)
-    .required()
-    .messages({
-      'string.empty': 'Prompt không được để trống',
-      'string.min': 'Prompt phải có ít nhất 10 ký tự',
-      'string.max': 'Prompt không được vượt quá 1000 ký tự',
-      'any.required': 'Prompt là bắt buộc'
-    })
+    prompt: Joi.string()
+        .min(10)
+        .max(1000)
+        .required()
+        .messages({
+            'string.empty': 'Prompt không được để trống',
+            'string.min': 'Prompt phải có ít nhất 10 ký tự',
+            'string.max': 'Prompt không được vượt quá 1000 ký tự',
+            'any.required': 'Prompt là bắt buộc'
+        })
 });
 
 export const confirmGenerateSchema = Joi.object({
@@ -90,26 +90,26 @@ export const confirmGenerateSchema = Joi.object({
 });
 
 export const checkoutSchema = Joi.object({
-  spaceId: Joi.string()
-    .uuid()
-    .required()
-    .messages({
-      'string.empty': 'spaceId không được để trống',
-      'string.uuid': 'spaceId phải là UUID hợp lệ',
-      'any.required': 'spaceId là bắt buộc'
-    }),
-  duration: Joi.number()
-    .min(0)
-    .required()
-    .messages({
-      'number.base': 'duration phải là số',
-      'number.min': 'duration phải lớn hơn hoặc bằng 0',
-      'any.required': 'duration là bắt buộc'
-    })
+    spaceId: Joi.string()
+        .uuid()
+        .required()
+        .messages({
+            'string.empty': 'spaceId không được để trống',
+            'string.uuid': 'spaceId phải là UUID hợp lệ',
+            'any.required': 'spaceId là bắt buộc'
+        }),
+    duration: Joi.number()
+        .min(0)
+        .required()
+        .messages({
+            'number.base': 'duration phải là số',
+            'number.min': 'duration phải lớn hơn hoặc bằng 0',
+            'any.required': 'duration là bắt buộc'
+        })
 });
 
 export default {
-  generateSchema,
-  confirmGenerateSchema,
-  checkoutSchema
+    generateSchema,
+    confirmGenerateSchema,
+    checkoutSchema
 };
