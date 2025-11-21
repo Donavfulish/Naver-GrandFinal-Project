@@ -186,48 +186,42 @@ const spaceController = {
     }
   }),
 
-  // POST /api/spaces/:id/summary - Update space summary (duration, AI content, mood)
-  getSpacesSummary: asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { duration, content, mood } = req.body;
-
+  // GET /api/spaces/backgrounds - Get all backgrounds
+  getBackgrounds: asyncHandler(async (req, res) => {
     try {
-      const updatedSpace = await spaceService.updateSpaceSummary(id, {
-        duration,
-        content,
-        mood,
-      });
+      const backgrounds = await spaceService.getBackgrounds();
 
       res.status(200).json({
         success: true,
-        data: updatedSpace,
+        data: backgrounds,
       });
     } catch (error) {
-      if (error.code === ErrorCodes.SPACE_NOT_FOUND) {
-        return res.status(404).json({
-          success: false,
-          error: {
-            code: error.code,
-            message: error.message,
-          },
-        });
-      }
-
-      if (error.code === ErrorCodes.SPACE_VALIDATION_FAILED) {
-        return res.status(400).json({
-          success: false,
-          error: {
-            code: error.code,
-            message: error.message,
-          },
-        });
-      }
-
       return res.status(500).json({
         success: false,
         error: {
           code: ErrorCodes.SERVER_ERROR,
-          message: 'Failed to update space summary',
+          message: 'Failed to retrieve backgrounds',
+          details: error.message,
+        },
+      });
+    }
+  }),
+
+  // GET /api/spaces/dashboard - Get top 9 spaces for dashboard
+  getDashboardSpaces: asyncHandler(async (req, res) => {
+    try {
+      const spaces = await spaceService.getDashboardSpaces();
+
+      res.status(200).json({
+        success: true,
+        data: spaces,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: ErrorCodes.SERVER_ERROR,
+          message: 'Failed to retrieve dashboard spaces',
           details: error.message,
         },
       });

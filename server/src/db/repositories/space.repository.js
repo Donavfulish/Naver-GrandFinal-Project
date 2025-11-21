@@ -450,6 +450,75 @@ const spaceRepository = {
       offset,
     };
   },
+
+  async findDashboard() {
+    return await prisma.space.findMany({
+      where: {
+        is_deleted: false,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar_url: true,
+          },
+        },
+        background: {
+          select: {
+            id: true,
+            background_url: true,
+            emotion: true,
+            tags: true,
+            source: true,
+          },
+        },
+        clock: {
+          select: {
+            id: true,
+            font_name: true,
+          },
+        },
+        text: {
+          select: {
+            id: true,
+            font_name: true,
+          },
+        },
+        space_tags: {
+          include: {
+            tag: true,
+          },
+        },
+        notes: {
+          where: { is_delete: false },
+          select: {
+            id: true,
+            content: true,
+            note_order: true,
+            created_at: true,
+            updated_at: true,
+          },
+          orderBy: { note_order: 'asc' },
+        },
+        playlists: {
+          where: { is_deleted: false },
+          include: {
+            playlist_tracks: {
+              where: { is_deleted: false },
+              include: { track: true },
+              orderBy: { track_order: 'asc' },
+            },
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+      take: 9,
+    });
+  },
 };
 
 export default spaceRepository;

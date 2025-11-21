@@ -1,7 +1,5 @@
 // Page 1 – Mở lòng, kết nối cảm xúc
 const INTRO_PAGE1 = [
-  { text: "Những vết nứt trong tâm hồn chính là nơi ánh sáng len lỏi vào.", author: "Rumi" },
-  { text: "Hãy nhẹ nhàng với chính mình trong khoảnh khắc này.", author: "Carl Jung" },
   { text: "Khi bạn biết điều gì tốt hơn, hãy làm điều tốt hơn.", author: "Maya Angelou" },
   { text: "Mọi người sẽ quên những gì bạn nói, nhưng sẽ nhớ cảm giác bạn mang lại.", author: "Maya Angelou" },
   { text: "Chấp nhận bản thân là hành trình dũng cảm nhất mà bạn sẽ trải qua.", author: "Brené Brown" },
