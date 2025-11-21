@@ -3,7 +3,7 @@
 
 import { motion } from "framer-motion"
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts"
-import { Capsule } from "@/lib/store" // Đảm bảo Capsule là Type đầy đủ
+import { Capsule } from "@/lib/store"
 import CapsuleCard from "./capsule-card"
 import { useRouter } from 'next/navigation'
 import { MOOD_SCORES } from '@/lib/constants' // Import MOOD_SCORES
@@ -12,10 +12,15 @@ interface CapsuleOverviewProps {
     capsules: Capsule[]
 }
 
+// HÀM MỚI: Chỉ sử dụng MOOD_SCORES
+function getMoodScore(mood: string): number {
+    return MOOD_SCORES[mood] || 5
+}
+
 export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
     const router = useRouter()
 
-    // 1. Xử lý trường hợp mảng rỗng (kiểm tra an toàn)
+    // --- 1. Xử lý trường hợp mảng rỗng ngay lập tức ---
     if (!capsules || capsules.length === 0) {
         return (
             <div className="text-center py-12 text-[#B3B3B3]">
@@ -23,6 +28,8 @@ export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
             </div>
         )
     }
+
+    const totalSessions = capsules.length
 
     // Generate mood trend data
     const moodTrendData = capsules
@@ -39,22 +46,17 @@ export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
         })
 
     // Calculate stats
-    const totalSessions = capsules.length
     const thisWeek = capsules.filter((c) => {
         const diff = Date.now() - new Date(c.created_at).getTime()
         return diff < 7 * 24 * 60 * 60 * 1000
     }).length
 
-    const avgDuration = totalSessions > 0
-        ? Math.round(capsules.reduce((acc, c) => acc + c.duration, 0) / totalSessions)
-        : 0 // Tránh chia cho 0
+    // Đã an toàn vì totalSessions > 0
+    const avgDuration = Math.round(capsules.reduce((acc, c) => acc + c.duration, 0) / totalSessions)
 
-    // SỬA LỖI: Thêm Optional Chaining cho c.notes
-    const activeSessions = capsules.filter((c) => c.notes?.length > 0).length
-    const passiveSessions = totalSessions - activeSessions
-    const activePct = totalSessions > 0
-        ? Math.round((activeSessions / totalSessions) * 100)
-        : 0 // Tránh chia cho 0
+    // An toàn với c.notes?.length (đã được mapping trong CapsulesPage)
+    const activeSessions = capsules.filter((c) => c.notes.length > 0).length
+    const activePct = Math.round((activeSessions / totalSessions) * 100)
 
     const moodCounts = Object.entries(
         capsules.reduce((acc: Record<string, number>, c) => {
@@ -65,10 +67,10 @@ export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
 
     const commonMood = moodCounts[0]?.[0] || "Unknown"
 
-    // SỬA LỖI: Thêm Optional Chaining cho c.vibe_config
+    // An toàn với c.vibe_config.theme (đã được mapping trong CapsulesPage)
     const commonTheme = capsules
         .reduce((acc: Record<string, number>, c) => {
-            // Sử dụng Optional Chaining an toàn
+            // Dùng Optional Chaining cho trường hợp mapping không thành công
             const theme = c.vibe_config?.theme;
             if (theme) {
                 acc[theme] = (acc[theme] || 0) + 1
@@ -170,8 +172,4 @@ export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
             </div>
         </div>
     )
-}
-
-function getMoodScore(mood: string): number {
-    return MOOD_SCORES[mood] || 5
 }
