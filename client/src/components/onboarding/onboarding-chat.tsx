@@ -78,7 +78,7 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
         // Đóng modal preview và quay lại giao diện nhập prompt
         setGeneratedSpace(null)
         setShowPreviewModal(false)
-        // inputRef.current?.focus()
+        inputRef.current?.focus()
     }
     
     // Hàm này được gọi từ input và quick starts
