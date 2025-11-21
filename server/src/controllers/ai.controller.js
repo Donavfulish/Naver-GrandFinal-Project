@@ -49,6 +49,5 @@ export const checkout = asyncHandler(async (req, res) => {
 
 export default {
   generate,
-  confirmGenerate,
   checkout
 };
