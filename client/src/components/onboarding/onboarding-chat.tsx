@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion" // Import AnimatePresence
+import { motion, AnimatePresence } from "framer-motion"
 import { Send } from "lucide-react"
 
 // Import Hook và Components mới
@@ -19,14 +19,14 @@ interface OnboardingChatProps {
 
 export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
     const [input, setInput] = useState("")
-    const [lastPrompt, setLastPrompt] = useState("") // Lưu prompt cuối cùng
+    const [lastPrompt, setLastPrompt] = useState("")
     const [generatedSpace, setGeneratedSpace] = useState<SpaceData | null>(null)
     const [showPreviewModal, setShowPreviewModal] = useState(false)
-    const [isConfirming, setIsConfirming] = useState(false) // Trạng thái gọi API Confirm
     
+    // Loại bỏ isConfirming
+    const { generateSpace, isGenerating: isLoading } = useGenerateAISpace() 
+
     const inputRef = useRef<HTMLInputElement>(null)
-    
-    const { generateSpace, confirmSpaceGeneration, isGenerating: isLoading } = useGenerateAISpace()
 
     useEffect(() => { inputRef.current?.focus() }, [])
 
@@ -38,10 +38,7 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
         setShowPreviewModal(false)
 
         try {
-            // 1. Gọi hook để gọi API và nhận SpaceData (Modal Loading sẽ hiện tự động qua state isLoading)
             const spaceData = await generateSpace(text)
-            
-            // 2. Lưu space data và hiện modal preview
             setGeneratedSpace(spaceData)
             setShowPreviewModal(true)
         } catch (error) {
@@ -50,65 +47,48 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
         }
     }
     
-    const handleConfirm = async () => {
-        if (!generatedSpace || isConfirming) return
-
-        setIsConfirming(true)
-
-        try {
-            // 1. Gọi API Confirm
-            const confirmResult = await confirmSpaceGeneration(generatedSpace, MOCK_USER_ID)
-            
-            // 2. Chuyển sang giao diện Space (onComplete)
-            const finalSpace = {
-                ...generatedSpace,
-                sessionStartTime: Date.now(), // Thêm trường sessionStartTime trước khi chuyển
-            }
-            onComplete(finalSpace)
-
-        } catch (error) {
-            console.error("Error confirming space:", error)
-            alert("Failed to confirm space. Please try again.")
-            setIsConfirming(false)
+    // --- CHỈNH SỬA: handleConfirm CHỈ GỌI onComplete (Chuyển thành handleIntroStart) ---
+    const handleIntroStart = () => {
+        if (!generatedSpace) return
+        
+        setShowPreviewModal(false)
+        
+        const finalSpace = {
+            ...generatedSpace,
+            sessionStartTime: Date.now(), 
         }
-        // Note: Không cần setIsConfirming(false) nếu onComplete chuyển trang thành công.
+        onComplete(finalSpace) // <-- CHUYỂN TRANG
     }
     
     const handleRegenerate = () => {
-        // Đóng modal preview và quay lại giao diện nhập prompt
         setGeneratedSpace(null)
         setShowPreviewModal(false)
         inputRef.current?.focus()
     }
     
-    // Hàm này được gọi từ input và quick starts
     const handleSubmit = (text: string) => {
         handleGenerate(text)
-        setInput("") // Reset input sau khi submit
+        setInput("")
     }
-
 
     return (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }} className="w-full max-w-2xl mx-auto">
-            
             <AnimatePresence>
-                {/* 1. MODAL LOADING */}
                 {isLoading && <AILoadingModal prompt={lastPrompt} />}
                 
                 {/* 2. MODAL PREVIEW */}
                 {showPreviewModal && generatedSpace && (
                     <SpacePreviewModal 
                         space={generatedSpace} 
-                        onConfirm={handleConfirm} 
+                        onConfirm={handleIntroStart} 
                         onRegenerate={handleRegenerate} 
-                        isConfirming={isConfirming}
+                        isConfirming={false} 
                     />
                 )}
             </AnimatePresence>
 
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
                 <div className="space-y-8">
-                    {/* ... (Phần tiêu đề và mô tả giữ nguyên) ... */}
                     <div className="text-center space-y-3">
                         <h1 className="text-4xl md:text-5xl font-bold text-white">
                             How are you{" "}
@@ -119,8 +99,6 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
                         </h1>
                         <p className="text-white/60 text-lg">Share what's on your mind. We'll create a space for you.</p>
                     </div>
-                    
-                    {/* Input và Quick Starts */}
                     <div className="space-y-4">
                         <div className="flex gap-3">
                             <input
