@@ -1,11 +1,14 @@
 // src/hooks/useGenerateAISpace.ts
+"use client"
 
 import { useState } from "react"
 
+// --- INTERFACES ---
+
 interface FontConfig {
     id: string;
-    style?: string; // clock_font
-    font_name?: string; // text_font
+    style?: string; // clock_font style name
+    font_name?: string; // text_font font name
 }
 
 interface BackgroundConfig {
@@ -30,8 +33,8 @@ export interface PlaylistConfig {
     tracks: Track[];
 }
 
-// Định nghĩa cấu trúc chính (Space object)
-export interface SpaceData {
+// Cấu trúc chính (Space object từ AI)
+export interface SpaceData { 
     name: string;
     description: string;
     mood: string;
@@ -46,51 +49,39 @@ export interface SpaceData {
     tags: string[];
 }
 
-// Cấu trúc response từ API
+// Cấu trúc response từ API Generate
 interface APIResponse {
     success: boolean;
     message: string;
     data: SpaceData;
 }
 
-interface ConfirmBody {
-    userId: string;
-    name: string;
-    description: string | null;
-    backgroundId: string;
-    clockFontId: string;
-    textFontId: string;
-    tracks: string[]; // Chỉ cần ID
-    prompt: string | null;
-    tags: string[];
-    // mood không có trong schema nhưng có trong body, nên thêm vào
-    mood: string;
-}
-
+// Cấu trúc Body gửi đến API POST /spaces (Dựa trên schema)
 interface CreateSpaceBody {
-    user_id: string; // Tên trường chính xác
+    user_id: string;
     name: string;
     tags: string[];
     description: string | null;
-    mood: string; // Thêm lại mood (vì bạn cần nó trong payload)
-    duration: number; // Mặc định là 0
-    background_url: string; // Sử dụng URL
-    clock_font_id: string | null; // ID
-    text_font_id: string | null; // ID
-    tracks: string[]; // Array of IDs
+    mood: string; 
+    duration: number; 
+    background_url: string;
+    clock_font_id: string | null; 
+    text_font_id: string | null; 
+    tracks: string[]; 
     prompt: string | null;
-    notes: string[]; // Mặc định là []
+    notes: string[]; // Chỉ gửi nội dung string
 }
 
-// --- ĐỊNH NGHĨA BASE URL VÀ ENDPOINT ---
+// --- ENDPOINTS ---
 const AI_BASE_URL = "http://localhost:5000/ai"
 const SPACES_BASE_URL = "http://localhost:5000/spaces"
 const AI_GENERATE_ENDPOINT = `${AI_BASE_URL}/generate`
-const CREATE_SPACE_ENDPOINT = `${SPACES_BASE_URL}/`
+const CREATE_SPACE_ENDPOINT = `${SPACES_BASE_URL}/` 
 
+// --- HOOK INTERFACE ---
 interface UseGenerateAISpace {
     generateSpace: (prompt: string) => Promise<SpaceData>;
-    confirmSpaceGeneration: (data: SpaceData, userId: string) => Promise<any>;
+    confirmSpaceGeneration: (payload: CreateSpaceBody) => Promise<any>;
     isGenerating: boolean;
 }
 
@@ -99,11 +90,10 @@ export function useGenerateAISpace(): UseGenerateAISpace {
 
     // Hàm gọi API tạo space (giữ nguyên)
     const generateSpace = async (prompt: string): Promise<SpaceData> => {
-        // ... (Logic gọi API generateSpace giữ nguyên) ...
         if (!prompt || isGenerating) {
             return Promise.reject(new Error("Invalid prompt or generation already in progress."))
         }
-
+        
         setIsGenerating(true)
         console.log(`📡 Calling AI API with prompt: "${prompt}"`)
 
@@ -115,13 +105,13 @@ export function useGenerateAISpace(): UseGenerateAISpace {
             })
 
             if (!response.ok) {
-                const errorText = await response.text()
+                const errorText = await response.text() 
                 throw new Error(`API call failed with status ${response.status}: ${errorText}`)
             }
 
             const jsonResponse: APIResponse = await response.json()
             const spaceData = jsonResponse.data
-
+            
             console.log("✅ AI Space Generated:", spaceData.name)
             return spaceData
 
@@ -133,53 +123,25 @@ export function useGenerateAISpace(): UseGenerateAISpace {
         }
     }
 
-    // HÀM GỌI API XÁC NHẬN MỚI
-    const confirmSpaceGeneration = async (data: SpaceData, userId: string): Promise<any> => {
-
-        const trackIds = data.playlist.tracks.map(t => t.id);
-
-        // --- TẠO PAYLOAD CHUẨN XÁC DỰA TRÊN SCHEMA VÀ YÊU CẦU ---
-        const createBody: CreateSpaceBody = {
-            // Trường yêu cầu: user_id
-            user_id: userId,
-
-            // Trường yêu cầu: name, tags
-            name: data.name,
-            tags: data.tags,
-
-            // Trường tùy chọn: description, prompt
-            description: data.description || null,
-            prompt: data.prompt || null,
-
-            // Trường cấu hình: ID/URL
-            background_url: data.background.url,
-            clock_font_id: data.clock_font.id || null,
-            text_font_id: data.text_font.id || null,
-            tracks: trackIds,
-
-            // Trường bổ sung theo yêu cầu (mood, duration, notes)
-            mood: data.mood,
-            duration: 0, // Mặc định là 0
-            notes: [],   // Mặc định là mảng rỗng
-        };
-        // -----------------------------------------------------------
-
-        console.log("➡️ Calling CREATE SPACE API (POST /spaces) with body:", createBody)
+    // HÀM TẠO SPACE CHÍNH THỨC (Dùng trong CheckoutModal)
+    const confirmSpaceGeneration = async (payload: CreateSpaceBody): Promise<any> => {
+        
+        console.log("➡️ Calling CREATE SPACE API (POST /spaces) with payload:", payload)
 
         const response = await fetch(CREATE_SPACE_ENDPOINT, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(createBody),
+            body: JSON.stringify(payload),
         })
 
         if (!response.ok) {
             const errorText = await response.text()
             throw new Error(`CREATE SPACE API call failed with status ${response.status}: ${errorText}`)
         }
-
-        return response.json()
+        
+        return response.json() 
     }
 
     return { generateSpace, confirmSpaceGeneration, isGenerating }
