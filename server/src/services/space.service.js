@@ -21,9 +21,9 @@ const spaceService = {
       clock_font_id,
       text_font_id,
       personalityEssence,
-      tracks = [], // Array of track IDs
-      prompt = null,  // AI prompt (optional)
-      notes = []  // Array of note content strings (optional)
+      tracks, // Array of track IDs
+      prompt,  // AI prompt (optional)
+      notes  // Array of note content strings (optional)
     } = data;
 
     // Validate tags exist and are not empty
@@ -224,7 +224,8 @@ const spaceService = {
       });
     }
 
-    return createdSpace;
+    // Return only space ID
+    return { id: createdSpace.id };
   },
 
   async getSpaceById(id) {

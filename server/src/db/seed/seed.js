@@ -55,6 +55,7 @@ async function main() {
       email: 'john.doe@example.com',
       password_hash: passwordHash,
       avatar_url: 'https://i.pravatar.cc/150?img=1',
+      mind: "Bạn là người mới hãy bắt đầu hành trình khám phá bản thân",
       is_deleted: false,
     },
   });

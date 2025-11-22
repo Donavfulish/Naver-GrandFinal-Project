@@ -36,6 +36,10 @@ export const createSpaceSchema = Joi.object({
   prompt: Joi.string().max(1000).allow(null, '').optional().messages({
     'string.max': 'Prompt must not exceed 1000 characters',
   }),
+  notes: Joi.array().items(Joi.string().max(1000)).optional().messages({
+    'array.base': 'Notes must be an array of strings',
+    'string.max': 'Note cannot exceed 1000 characters',
+  }),
 });
 
 // PATCH /space/:id - Update space schema
