@@ -14,11 +14,10 @@ import CheckoutModal from "../space/checkout-modal"
 import { SpaceData } from "@/types/space"
 import { getFontFamily } from '@/utils/fonts'
 import MusicPlayer from "../space/musicplayer"
-import IntroModal from "../space/intro-modal" // Import Intro Modal
-import { useSessionStore, StickyNote } from "@/lib/store" // Import store
+import IntroModal from "../space/intro-modal" 
+import { useSessionStore, StickyNote } from "@/lib/store" 
 
 interface ViewSpacePageProps {
-    // space.id sẽ không tồn tại nếu là session mới từ Onboarding
     space: SpaceData & { sessionStartTime?: number, id?: string } 
     activeMode?: boolean
 }
@@ -28,16 +27,14 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
     const [sessionDuration, setSessionDuration] = useState(0)
     const [showSettings, setShowSettings] = useState(false)
     const [showCheckout, setShowCheckout] = useState(false)
-    const [showIntro, setShowIntro] = useState(false) // State quản lý Intro Modal
+    const [showIntro, setShowIntro] = useState(false) 
     
     const { finalSettings, setFinalSettings } = useSessionStore();
 
-    // 1. LẤY CẤU HÌNH BAN ĐẦU (Ưu tiên FinalSettings nếu tồn tại)
     const initialBackgroundUrl = finalSettings?.background || space.background?.url || "/images/default-bg.jpg"
     const initialTextFontName = finalSettings?.clockFont || space.text_font?.font_name || "Inter"
     const initialClockStyle = finalSettings?.clockStyle || space.clock_font?.style || "minimal"
     
-    // Khởi tạo state Preview
     const [preview, setPreview] = useState<SettingsPreview>({
         clockStyle: initialClockStyle,
         clockFont: initialTextFontName,
@@ -47,15 +44,10 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
 
     const clockFontFamily = getFontFamily(preview.clockFont);
 
-    // 2. LOGIC QUẢN LÝ SESSION VÀ INTRO MODAL
     useEffect(() => {
-        // Nếu đây là lần đầu tiên vào ViewSpacePage (sessionStartTime vừa được set)
-        // và finalSettings chưa được lưu (chưa hoàn thành Intro/Save Settings lần đầu)
         if (space.sessionStartTime && !finalSettings) { 
             setShowIntro(true);
         }
-        
-        // Timer cho session duration
         if (space.sessionStartTime) {
             const interval = setInterval(() => {
                 setSessionDuration(Math.floor((Date.now() - space.sessionStartTime!) / 1000))
@@ -66,11 +58,8 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
     
     const handleIntroComplete = () => {
         setShowIntro(false);
-        // LƯU CẤU HÌNH GỐC LÀM FINAL SETTINGS LẦN ĐẦU
-        // (Đây là cấu hình AI nếu người dùng không mở SettingsPanel)
         setFinalSettings(preview);
     }
-    // ----------------------------------------------------
 
     const formatTime = (seconds: number) => {
         const h = Math.floor(seconds / 3600)
@@ -82,7 +71,6 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
     const detectFullscreen = () => {
         const domFs = Boolean(document.fullscreenElement)
         const browserFs = window.innerHeight === screen.height
-        // Logic fullscreen giữ nguyên
     }
 
     useEffect(() => {
@@ -94,7 +82,6 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
             document.removeEventListener("fullscreenchange", detectFullscreen)
         }
     }, [])
-    // const enterFullscreen = () => document.documentElement.requestFullscreen?.() // Không dùng
 
     const layoutStyle = useMemo(() => ({
         clockClass: "absolute top-[15%] left-1/2 -translate-x-1/2 z-30 flex flex-col items-center",
@@ -105,9 +92,7 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
     const handlePreviewChange = (p: Partial<SettingsPreview>) =>
         setPreview(prev => ({ ...prev, ...p }))
 
-    // Logic này được gọi khi nút Apply & Save trong SettingsPanel được nhấn
     const handleSave = (p: SettingsPreview) => {
-        // SettingsPanel đã lưu FinalSettings vào store, ta chỉ cần cập nhật preview
         setPreview(p); 
         setShowSettings(false);
     }

@@ -10,6 +10,7 @@ import { useGenerateAISpace } from '@/hooks/useGenerateAiSpace'
 import { useSpaceFonts } from "@/hooks/useSpaceFonts"
 import { SpaceData } from "@/types/space"
 import { Loader } from 'lucide-react'
+import { USER_ID } from "@/lib/constants"
 
 interface CheckoutModalProps {
     onClose: () => void
@@ -17,8 +18,6 @@ interface CheckoutModalProps {
     spaceData: SpaceData
 }
 
-// KHẮC PHỤC LỖI FK: SỬ DỤNG USER_ID HỢP LỆ TRONG DB
-const REAL_USER_ID = "c6d60308-40b9-4706-95c4-f1cdd06726e2" // Cần đảm bảo ID này tồn tại trong DB
 const REDIRECT_DELAY_MS = 5000;
 
 const CheckoutModal = ({ onClose, duration, spaceData }: CheckoutModalProps) => {
@@ -67,7 +66,7 @@ const CheckoutModal = ({ onClose, duration, spaceData }: CheckoutModalProps) => 
         const finalBackgroundUrl = finalSettingsUsed.background;
 
         const createBody = {
-            user_id: REAL_USER_ID,
+            user_id: USER_ID as string,
             name: spaceData.name,
             tags: spaceData.tags,
             description: spaceData.description || null,

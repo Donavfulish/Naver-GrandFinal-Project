@@ -7,13 +7,10 @@ import { useRouter } from 'next/navigation'
 import { Loader, AlertTriangle } from 'lucide-react'
 import { useSessionStore, Capsule as CapsuleType, StickyNote } from '@/lib/store' // Import CapsuleType, StickyNote
 import CapsuleOverview from "@/components/capsules/capsule-overview"
+import { USER_ID, BASE_URL } from '@/lib/constants'
 
-// Cấu hình API
-const USER_SPACES_API_URL = 'http://localhost:5000/users';
-const REAL_USER_ID = "c6d60308-40b9-4706-95c4-f1cdd06726e2";
-
-// --- Custom Hook để Fetch Spaces ---
 const useUserSpaces = () => {
+    console.log("kk", USER_ID, BASE_URL)
     // Đã đổi type thành CapsuleType đầy đủ
     const [spaces, setSpaces] = useState<CapsuleType[]>([]);
     const [loading, setLoading] = useState(true);
@@ -23,7 +20,7 @@ const useUserSpaces = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`${USER_SPACES_API_URL}/${REAL_USER_ID}/spaces`, {
+            const response = await fetch(`${BASE_URL}/users/${USER_ID as string}/spaces`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

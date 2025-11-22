@@ -4,15 +4,10 @@
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Send } from "lucide-react"
-
-// Import Hook và Components mới
 import { useGenerateAISpace } from "@/hooks/useGenerateAiSpace" 
 import { SpaceData } from "@/types/space"
 import AILoadingModal from "../view-space/AILoadingModal"
 import SpacePreviewModal from "./SpacePreviewModal"
-
-// Giả định userId được lấy từ context/store
-const MOCK_USER_ID = "c6d60308-40b9-4706-95c4-f1cdd06726e2" 
 
 interface OnboardingChatProps { 
     onComplete: (space: SpaceData & { sessionStartTime: number }) => void 
@@ -24,7 +19,6 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
     const [generatedSpace, setGeneratedSpace] = useState<SpaceData | null>(null)
     const [showPreviewModal, setShowPreviewModal] = useState(false)
     
-    // Loại bỏ isConfirming
     const { generateSpace, isGenerating: isLoading } = useGenerateAISpace() 
 
     const inputRef = useRef<HTMLInputElement>(null)
@@ -47,8 +41,7 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
             alert("Could not generate space. Please check the console for details.")
         }
     }
-    
-    // --- CHỈNH SỬA: handleConfirm CHỈ GỌI onComplete (Chuyển thành handleIntroStart) ---
+
     const handleIntroStart = () => {
         if (!generatedSpace) return
         
@@ -58,7 +51,7 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
             ...generatedSpace,
             sessionStartTime: Date.now(), 
         }
-        onComplete(finalSpace) // <-- CHUYỂN TRANG
+        onComplete(finalSpace)
     }
     
     const handleRegenerate = () => {

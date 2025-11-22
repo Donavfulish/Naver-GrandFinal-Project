@@ -11,3 +11,5 @@ export const MOOD_SCORES: Record<string, number> = {
 };
 
 export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+
+export const USER_ID = process.env.NEXT_PUBLIC_USER_ID;

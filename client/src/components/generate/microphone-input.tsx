@@ -14,7 +14,6 @@ export default function MicrophoneInput({ onVoiceInput }: MicrophoneInputProps) 
   const handleMicrophoneClick = () => {
     setIsListening(!isListening)
     if (!isListening) {
-      // Mock voice input after 2 seconds
       setTimeout(() => {
         setIsListening(false)
         onVoiceInput("Create a calm space for meditation")
