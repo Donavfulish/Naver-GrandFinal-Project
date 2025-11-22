@@ -1,4 +1,3 @@
-// src/hooks/useGenerateAISpace.ts
 "use client"
 
 import { useState } from "react"

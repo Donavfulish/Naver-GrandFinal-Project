@@ -1,5 +1,3 @@
-// src/hooks/useAudioStreamer.ts
-
 import { useState, useEffect, useRef } from 'react';
 import { BASE_URL } from '@/lib/constants';
 import { UseAudioStreamer } from '@/types/audio';

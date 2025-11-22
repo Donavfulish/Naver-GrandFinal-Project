@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { Background } from '../types/background'; 
 import { BASE_URL } from '@/lib/constants';
 
-const API_ENDPOINT = 'http://localhost:5000/spaces/backgrounds';
-
 let backgroundsCache: Background[] | null = null;
 let cacheError: string | null = null;
 

@@ -1,5 +1,3 @@
-// src/hooks/useSpaceFonts.ts
-
 import { useState, useEffect } from "react"
 import { FontItem, FontApiResponse, UseSpaceFonts } from "@/types/font"
 import { BASE_URL } from "@/lib/constants"
