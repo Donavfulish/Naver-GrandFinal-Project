@@ -70,7 +70,7 @@ export default function Hero() {
             href="/capsules"
             className="px-8 py-4 border-2 border-[#C7A36B] text-[#C7A36B] rounded-2xl font-semibold hover:bg-[#C7A36B]/10 transition"
           >
-            View my capsules
+            View my spaces
           </Link>
         </motion.div>
       </motion.div>
