@@ -1,7 +1,20 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { MOOD_KEYWORDS } from '../../constants/state.js';
 
 const prisma = new PrismaClient();
+
+// Helper to pick a mood from MOOD_KEYWORDS with case-insensitive matching
+function findMood(preferred) {
+  if (!Array.isArray(MOOD_KEYWORDS) || MOOD_KEYWORDS.length === 0) return preferred;
+  const target = String(preferred || '').toLowerCase();
+  const exact = MOOD_KEYWORDS.find(m => String(m).toLowerCase() === target);
+  if (exact) return exact;
+  const partial = MOOD_KEYWORDS.find(m =>
+    String(m).toLowerCase().includes(target) || target.includes(String(m).toLowerCase())
+  );
+  return partial ?? MOOD_KEYWORDS[0];
+}
 
 async function main() {
   console.log('Starting seed...');
@@ -98,7 +111,7 @@ async function main() {
       user_id: user.id,
       name: 'My Study Space',
       description: 'Perfect space for focused studying and concentration',
-      mood: 'Focused',
+      mood: findMood('Content'),
       background_id: backgrounds[0].id,
       clock_font_id: clockFonts[0].id,
       text_font_id: textFonts[0].id,
@@ -112,7 +125,7 @@ async function main() {
       user_id: user.id,
       name: 'Professional Work Space',
       description: 'Organized workspace for maximum productivity',
-      mood: 'Productive',
+      mood: findMood('Inspired'),
       background_id: backgrounds[1]?.id ?? backgrounds[0].id,
       clock_font_id: clockFonts[1]?.id ?? clockFonts[0].id,
       text_font_id: textFonts[1]?.id ?? textFonts[0].id,
@@ -126,7 +139,7 @@ async function main() {
       user_id: user.id,
       name: 'Chill & Relax',
       description: 'Peaceful space for meditation and relaxation',
-      mood: 'Peaceful',
+      mood: findMood('Content'),
       background_id: backgrounds[2]?.id ?? backgrounds[0].id,
       clock_font_id: clockFonts[2]?.id ?? clockFonts[0].id,
       text_font_id: textFonts[2]?.id ?? textFonts[0].id,
@@ -140,7 +153,7 @@ async function main() {
       user_id: user.id,
       name: 'Creative Studio',
       description: 'Inspiring space for creative work and brainstorming',
-      mood: 'Inspired',
+      mood: findMood('Happy'),
       background_id: backgrounds[3]?.id ?? backgrounds[0].id,
       clock_font_id: clockFonts[3]?.id ?? clockFonts[0].id,
       text_font_id: textFonts[3]?.id ?? textFonts[0].id,
@@ -154,7 +167,7 @@ async function main() {
       user_id: user.id,
       name: 'Beach Vibes',
       description: 'Tropical paradise for a peaceful work environment',
-      mood: 'Relaxed',
+      mood: findMood('Joyful'),
       background_id: backgrounds[4]?.id ?? backgrounds[0].id,
       clock_font_id: clockFonts[4]?.id ?? clockFonts[0].id,
       text_font_id: textFonts[4]?.id ?? textFonts[0].id,
