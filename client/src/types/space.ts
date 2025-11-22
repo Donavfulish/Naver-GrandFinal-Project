@@ -28,6 +28,11 @@ export interface PlaylistConfig {
     tracks: Track[];
 }
 
+export interface AiGeneratedContent {
+    id: string;
+    content: string;
+}
+
 // Space object returned from AI
 export interface SpaceData {
     name: string;
@@ -42,6 +47,7 @@ export interface SpaceData {
     playlist: PlaylistConfig;
     prompt: string;
     tags: string[];
+    AiGeneratedContent?: AiGeneratedContent | null;
 }
 
 // API Generate Response
@@ -54,7 +60,7 @@ export interface APIResponse {
 // Body gửi đến POST /spaces
 export interface CreateSpaceBody {
     user_id: string;
-    name: string;
+    name: string;   
     tags: string[];
     description: string | null;
     mood: string;

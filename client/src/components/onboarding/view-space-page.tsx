@@ -126,6 +126,7 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
 
 
     const artistName = space.playlist?.name || space.name
+    const isSessionEnded = !!space.AiGeneratedContent
 
     return (
         <div className="relative w-full min-h-screen overflow-hidden">
@@ -211,6 +212,7 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
                         playlist={space.playlist}
                         artistName={artistName}
                         playerClass={layoutStyle.playerClass}
+                        isSessionEnded={isSessionEnded}
                     />
 
                     {/* Checkout Modal */}

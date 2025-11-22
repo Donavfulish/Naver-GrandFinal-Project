@@ -10,6 +10,7 @@ interface MusicPlayerProps {
     playlist: PlaylistConfig
     artistName: string 
     playerClass?: string
+    isSessionEnded?: boolean
 }
 
 const formatTime = (time: number) => {
@@ -18,7 +19,7 @@ const formatTime = (time: number) => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-export default function MusicPlayer({ playlist, artistName, playerClass = "" }: MusicPlayerProps) {
+export default function MusicPlayer({ playlist, artistName, playerClass = "", isSessionEnded = false }: MusicPlayerProps) {
     // Thêm `seekTo` và `audioRef` vào destructuring
     const { 
         currentTrack, 
@@ -80,7 +81,7 @@ export default function MusicPlayer({ playlist, artistName, playerClass = "" }: 
                 max={100} 
                 value={seekValue} 
                 onChange={handleSeek} // KẾT NỐI VỚI HÀM THỰC TẾ
-                disabled={!currentTrack || isLoading || duration === 0}
+                disabled={!currentTrack || isLoading || duration === 0 || isSessionEnded}
                 className="w-full accent-white mt-2 appearance-none h-1 bg-white/20 rounded-lg" 
             />
             <div className="flex justify-between text-white/50 text-xs mt-1">
@@ -89,13 +90,20 @@ export default function MusicPlayer({ playlist, artistName, playerClass = "" }: 
                 <span>{formatTime(duration)}</span> 
             </div>
             
+             {/* Session Ended Message */}
+            {isSessionEnded && (
+                <p className="text-center text-white/60 text-xs mt-2 italic">
+                    Session ended - Music unavailable
+                </p>
+            )}
+
             {/* Controls */}
             <div className="flex items-center justify-center gap-10 mt-4 text-white">
-                <button onClick={prevTrack} disabled={isLoading || playlist.tracks.length < 2}>
+                <button onClick={prevTrack} disabled={isLoading || playlist.tracks.length < 2 || isSessionEnded} className="disabled:opacity-40">
                     <SkipBack size={28} />
                 </button>
                 
-                <button onClick={togglePlay} disabled={!currentTrack || isLoading}>
+                <button onClick={togglePlay} disabled={!currentTrack || isLoading || isSessionEnded} className="disabled:opacity-40">
                     {isLoading ? (
                         <Loader size={40} className="animate-spin text-[#C7A36B]" />
                     ) : (
@@ -103,7 +111,7 @@ export default function MusicPlayer({ playlist, artistName, playerClass = "" }: 
                     )}
                 </button>
                 
-                <button onClick={nextTrack} disabled={isLoading || playlist.tracks.length < 2}>
+                <button onClick={nextTrack} disabled={isLoading || playlist.tracks.length < 2 || isSessionEnded} className="disabled:opacity-40">
                     <SkipForward size={28} />
                 </button>
             </div>
