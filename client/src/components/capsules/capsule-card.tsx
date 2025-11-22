@@ -36,7 +36,7 @@ export default function CapsuleCard({ capsule, onContinue }: CapsuleCardProps) {
     // SỬ DỤNG CÁC TRƯỜNG ĐÃ ĐƯỢC MAPPING
     const notesCount = capsule.notes?.length || 0;
     const tagList = capsule.tags || [];
-    const summary = capsule.session_summary || capsule.description || "No specific reflection recorded.";
+    const summary = capsule.description || "No specific reflection recorded.";
 
 
     return (
@@ -50,12 +50,22 @@ export default function CapsuleCard({ capsule, onContinue }: CapsuleCardProps) {
                     <h3 className="text-lg font-bold text-white capitalize">{capsule.mood}</h3>
                     <p className="text-sm text-white/50">{formattedDate}</p>
                 </div>
-                <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    className={`bg-gradient-to-br ${getMoodColor(capsule.mood)} p-2 rounded-lg text-white opacity-0 group-hover:opacity-100 transition`}
-                >
-                    <Play size={16} fill="white" />
-                </motion.div>
+                {/* Tags */}
+                {tagList.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                        {tagList.slice(0, 2).map((tag) => (
+                            <span key={tag} className={`bg-gradient-to-br ${getMoodColor(capsule.mood)} px-2 py-1 rounded text-white text-[11px]`}>
+                                {tag}
+                            </span>
+                        ))}
+                        {tagList.length > 2 && (
+                            <span className="text-xs bg-white/10 text-white/70 px-2 py-1 rounded">
+                                +{tagList.length - 2}
+                            </span>
+                        )}
+                    </div>
+                )}
+
             </div>
 
             {/* Summary */}
@@ -64,44 +74,27 @@ export default function CapsuleCard({ capsule, onContinue }: CapsuleCardProps) {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
                 <div className="bg-white/5 rounded p-2 text-center">
-                    <div className="text-sm font-bold text-[#C7A36B]">{capsule.duration}m</div>
+                    <div className="text-sm font-bold text-[#C7A36B]">
+                        {(capsule.duration / 1000 > 0)
+                            ? `${capsule.duration / 1000} m`
+                            : `${capsule.duration} s`}
+                    </div>
                     <div className="text-xs text-white/50">duration</div>
                 </div>
                 <div className="bg-white/5 rounded p-2 text-center">
                     <div className="text-sm font-bold text-[#7C9A92]">{notesCount}</div>
                     <div className="text-xs text-white/50">notes</div>
                 </div>
-                <div className="bg-white/5 rounded p-2 text-center">
-                    <div className="text-sm font-bold text-white">{tagList.length}</div>
-                    <div className="text-xs text-white/50">tags</div>
-                </div>
-
             </div>
-
-            {/* Tags */}
-            {tagList.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                    {tagList.slice(0, 2).map((tag) => (
-                        <span key={tag} className="text-xs bg-white/10 text-white/70 px-2 py-1 rounded">
-                            {tag}
-                        </span>
-                    ))}
-                    {tagList.length > 2 && (
-                        <span className="text-xs bg-white/10 text-white/70 px-2 py-1 rounded">
-                            +{tagList.length - 2}
-                        </span>
-                    )}
-                </div>
-            )}
 
             {/* Button */}
             <button
                 onClick={onContinue}
-                className="w-full bg-gradient-to-r from-[#C7A36B] to-[#7C9A92] hover:shadow-lg hover:shadow-[#C7A36B]/30 text-white font-semibold py-2 rounded-lg transition"
+                className="w-[50%] bg-gradient-to-r from-[#534666] to-[#4A707A] hover:shadow-lg hover:shadow-[#C7A36B]/30 text-white font-semibold py-2 rounded-lg transition"
             >
-                Continue Session
+                View Space
             </button>
         </motion.div>
     )

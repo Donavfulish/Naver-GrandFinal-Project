@@ -52,7 +52,7 @@ export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
     }).length
 
     // Đã an toàn vì totalSessions > 0
-    const avgDuration = Math.round(capsules.reduce((acc, c) => acc + c.duration, 0) / totalSessions)
+    const avgDuration = Math.round(capsules.reduce((acc, c) => acc + c.duration, 0) / totalSessions) / 1000
 
     // An toàn với c.notes?.length (đã được mapping trong CapsulesPage)
     const activeSessions = capsules.filter((c) => c.notes.length > 0).length
