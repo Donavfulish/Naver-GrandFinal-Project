@@ -29,10 +29,6 @@ function pickRandom(arr, count = 1) {
   return shuffled.slice(0, count);
 }
 
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
 // Lấy thumbnail embedded trong metadata của MP3
 async function extractEmbeddedThumbnail(mp3File) {
   try {
@@ -40,7 +36,7 @@ async function extractEmbeddedThumbnail(mp3File) {
     const metadata = await mm.parseFile(fullPath);
 
     const picture = metadata.common.picture?.[0];
-    if (!picture) return null; // ❌ không có thumbnail trong MP3
+    if (!picture) return null;
 
     const ext = picture.format.includes('png') ? '.png' : '.jpg';
     const outputFilename = mp3File.replace(/\.mp3$/i, ext);
@@ -48,14 +44,13 @@ async function extractEmbeddedThumbnail(mp3File) {
 
     fs.writeFileSync(outputPath, picture.data);
 
-    return outputFilename; // trả về tên file thumbnail
+    return `track/${outputFilename}`; // relative path cho DB
   } catch (err) {
     console.error('Lỗi đọc metadata MP3:', err);
     return null;
   }
 }
 
-// Import track
 async function importAllTracks() {
   try {
     const files = fs.readdirSync(TRACK_DIR);
@@ -72,13 +67,9 @@ async function importAllTracks() {
       const words = extractWords(file);
       const name = capitalizeWords(path.parse(file).name);
 
-      // CHỈ ĐỌC METADATA – KHÔNG tìm ảnh rời
       const thumbnail = await extractEmbeddedThumbnail(file);
 
-      // Lấy emotion từ filename nếu có trong EMOTION_KEYWORDS
       const extractedEmotions = words.filter(w => EMOTION_KEYWORDS.includes(w));
-
-      // Nếu không đủ emotion từ filename, random thêm để đảm bảo có ít nhất 2-3 emotions
       const emotionCount = Math.max(2, extractedEmotions.length);
       const randomEmotions = pickRandom(
         EMOTION_KEYWORDS.filter(e => !extractedEmotions.includes(e)),
@@ -86,10 +77,7 @@ async function importAllTracks() {
       );
       const emotion = [...new Set([...extractedEmotions, ...randomEmotions])];
 
-      // Lấy tags từ filename nếu có trong TAG_KEYWORDS
       const extractedTags = words.filter(w => TAG_KEYWORDS.includes(w));
-
-      // Nếu không đủ tags từ filename, random thêm để đảm bảo có ít nhất 3-5 tags
       const tagCount = Math.max(3, extractedTags.length);
       const randomTags = pickRandom(
         TAG_KEYWORDS.filter(t => !extractedTags.includes(t)),
@@ -97,15 +85,16 @@ async function importAllTracks() {
       );
       const tags = [...new Set([...extractedTags, ...randomTags])];
 
-      console.log(`Import: ${file} → ${thumbnail ? `embedded thumbnail: ${thumbnail}` : 'no thumbnail in metadata'}`);
+      console.log(`Import: ${file} → ${thumbnail ?? 'no thumbnail in metadata'}`);
       console.log(`  Emotions: ${emotion.join(', ')}`);
       console.log(`  Tags: ${tags.join(', ')}\n`);
 
+      // Lưu vào DB
       await prisma.track.create({
         data: {
           name,
-          thumbnail: thumbnail ? `track/${thumbnail}` : "https://images.unsplash.com/photo-1507838153414-b4b713384a76",
-          track_url: path.join(TRACK_DIR, file),
+          thumbnail: thumbnail ?? "https://images.unsplash.com/photo-1507838153414-b4b713384a76",
+          track_url: `storage/track/${file}`, // relative path
           emotion,
           tags,
           source: 'SYSTEM',

@@ -41,198 +41,185 @@ const spaceRepository = {
                     });
                 }
 
-                // 4. Fetch full space with relations
-                return await tx.space.findUnique({
-                    where: { id: space.id },
-                    include: {
-                        user: {
-                            select: {
-                                id: true,
-                                name: true,
-                                email: true,
-                                avatar_url: true,
-                            }
-                        },
-                        background: {
-                            select: {
-                                id: true,
-                                background_url: true,
-                                emotion: true,
-                                tags: true,
-                                source: true,
-                            },
-                        },
-                        clock: {
-                            select: {
-                                id: true,
-                                style: true,
-                            },
-                        },
-                        text: {
-                            select: {
-                                id: true,
-                                font_name: true,
-                            },
-                        },
-                        playlists: {
-                            where: { is_deleted: false },
-                            include: {
-                                playlist_tracks: {
-                                    where: { is_deleted: false },
-                                    include: { track: true },
-                                    orderBy: { track_order: "asc" },
-                                },
-                            },
-                        },
-                        space_tags: {
-                            include: { tag: true },
-                        },
-                        notes: {
-                            where: { is_delete: false },
-                            select: {
-                                id: true,
-                                content: true,
-                                note_order: true,
-                                created_at: true,
-                                updated_at: true,
-                            },
-                            orderBy: { note_order: "asc" },
-                        },
-                    },
-                });
-            });
-        } catch (error) {
-            console.error("❌ Error creating space:", error);
-
-            // Optional: Prisma phân loại lỗi theo mã  
-            // Ví dụ: P2003 = constraint error foreign key
-            if (error.code === "P2003") {
-                throw new Error("Invalid ID: Related record not found (foreign key error).");
+      // Fetch the complete space with all relations
+      return await tx.space.findUnique({
+        where: { id: space.id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar_url: true
             }
-
-            // Propagate lên controller
-            throw error;
-        }
-    },
-
-
-    async findById(id) {
-        return await prisma.space.findFirst({
-            where: {
-                id,
-                is_deleted: false,
+          },
+          background: {
+            select: {
+              id: true,
+              background_url: true,
+              emotion: true,
+              tags: true,
+              source: true,
             },
+          },
+          clock: {
+            select: {
+              id: true,
+              style: true,
+            },
+          },
+          text: {
+            select: {
+              id: true,
+              font_name: true,
+            },
+          },
+          playlists: {
+            where: { is_deleted: false },
             include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        avatar_url: true
-                    }
-                },
-                background: {
-                    select: {
-                        id: true,
-                        background_url: true,
-                        emotion: true,
-                        tags: true,
-                        source: true,
-                    },
-                },
-                clock: {
-                    select: {
-                        id: true,
-                        font_name: true,
-                    },
-                },
-                text: {
-                    select: {
-                        id: true,
-                        font_name: true,
-                    },
-                },
-                playlists: {
-                    where: { is_deleted: false },
-                    include: {
-                        playlist_tracks: {
-                            where: { is_deleted: false },
-                            include: { track: true },
-                            orderBy: { track_order: 'asc' },
-                        },
-                    },
-                },
-                space_tags: {
-                    include: { tag: true },
-                },
-                notes: {
-                    where: { is_delete: false },
-                    select: {
-                        id: true,
-                        content: true,
-                        note_order: true,
-                        created_at: true,
-                        updated_at: true,
-                    },
-                    orderBy: { note_order: 'asc' },
-                },
+              playlist_tracks: {
+                where: { is_deleted: false },
+                include: { track: true },
+                orderBy: { track_order: 'asc' },
+              },
             },
-        });
-    },
+          },
+          space_tags: {
+            include: { tag: true },
+          },
+          notes: {
+            where: { is_delete: false },
+            select: {
+              id: true,
+              content: true,
+              note_order: true,
+              created_at: true,
+              updated_at: true,
+            },
+            orderBy: { note_order: 'asc' },
+          },
+        },
+      });
+    });
+  },
 
-    async findAll(filters = {}) {
-        return await prisma.space.findMany({
-            where: {
-                ...filters,
-                is_deleted: false,
+  async findById(id) {
+    return await prisma.space.findFirst({
+      where: {
+        id,
+        is_deleted: false,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar_url: true
+          }
+        },
+        background: {
+          select: {
+            id: true,
+            background_url: true,
+            emotion: true,
+            tags: true,
+            source: true,
+          },
+        },
+        clock: {
+          select: {
+            id: true,
+            style: true,
+          },
+        },
+        text: {
+          select: {
+            id: true,
+            font_name: true,
+          },
+        },
+        playlists: {
+          where: { is_deleted: false },
+          include: {
+            playlist_tracks: {
+              where: { is_deleted: false },
+              include: { track: true },
+              orderBy: { track_order: 'asc' },
             },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        avatar_url: true
-                    }
-                },
-                background: {
-                    select: {
-                        id: true,
-                        background_url: true,
-                        emotion: true,
-                        tags: true,
-                        source: true,
-                    },
-                },
-                clock: {
-                    select: {
-                        id: true,
-                        font_name: true,
-                    },
-                },
-                text: {
-                    select: {
-                        id: true,
-                        font_name: true,
-                    },
-                },
-                space_tags: {
-                    include: { tag: true },
-                },
-                notes: {
-                    where: { is_delete: false },
-                    select: {
-                        id: true,
-                        content: true,
-                        note_order: true,
-                        created_at: true,
-                        updated_at: true,
-                    },
-                    orderBy: { note_order: 'asc' },
-                },
-            },
-        });
-    },
+          },
+        },
+        space_tags: {
+          include: { tag: true },
+        },
+        notes: {
+          where: { is_delete: false },
+          select: {
+            id: true,
+            content: true,
+            note_order: true,
+            created_at: true,
+            updated_at: true,
+          },
+          orderBy: { note_order: 'asc' },
+        },
+      },
+    });
+  },
+
+  async findAll(filters = {}) {
+    return await prisma.space.findMany({
+      where: {
+        ...filters,
+        is_deleted: false,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar_url: true
+          }
+        },
+        background: {
+          select: {
+            id: true,
+            background_url: true,
+            emotion: true,
+            tags: true,
+            source: true,
+          },
+        },
+        clock: {
+          select: {
+            id: true,
+            style: true,
+          },
+        },
+        text: {
+          select: {
+            id: true,
+            font_name: true,
+          },
+        },
+        space_tags: {
+          include: { tag: true },
+        },
+        notes: {
+          where: { is_delete: false },
+          select: {
+            id: true,
+            content: true,
+            note_order: true,
+            created_at: true,
+            updated_at: true,
+          },
+          orderBy: { note_order: 'asc' },
+        },
+      },
+    });
+  },
 
     async findByUserId(userId) {
         return await prisma.space.findMany({
@@ -297,67 +284,67 @@ const spaceRepository = {
                 });
             }
 
-            // Fetch updated space with all relations
-            return await tx.space.findUnique({
-                where: { id },
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            name: true,
-                            email: true,
-                            avatar_url: true
-                        }
-                    },
-                    background: {
-                        select: {
-                            id: true,
-                            background_url: true,
-                            emotion: true,
-                            tags: true,
-                            source: true,
-                        },
-                    },
-                    clock: {
-                        select: {
-                            id: true,
-                            font_name: true,
-                        },
-                    },
-                    text: {
-                        select: {
-                            id: true,
-                            font_name: true,
-                        },
-                    },
-                    playlists: {
-                        where: { is_deleted: false },
-                        include: {
-                            playlist_tracks: {
-                                where: { is_deleted: false },
-                                include: { track: true },
-                                orderBy: { track_order: 'asc' },
-                            },
-                        },
-                    },
-                    space_tags: {
-                        include: { tag: true },
-                    },
-                    notes: {
-                        where: { is_delete: false },
-                        select: {
-                            id: true,
-                            content: true,
-                            note_order: true,
-                            created_at: true,
-                            updated_at: true,
-                        },
-                        orderBy: { note_order: 'asc' },
-                    },
-                },
-            });
-        });
-    },
+      // Fetch updated space with all relations
+      return await tx.space.findUnique({
+        where: { id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar_url: true
+            }
+          },
+          background: {
+            select: {
+              id: true,
+              background_url: true,
+              emotion: true,
+              tags: true,
+              source: true,
+            },
+          },
+          clock: {
+            select: {
+              id: true,
+              style: true,
+            },
+          },
+          text: {
+            select: {
+              id: true,
+              font_name: true,
+            },
+          },
+          playlists: {
+            where: { is_deleted: false },
+            include: {
+              playlist_tracks: {
+                where: { is_deleted: false },
+                include: { track: true },
+                orderBy: { track_order: 'asc' },
+              },
+            },
+          },
+          space_tags: {
+            include: { tag: true },
+          },
+          notes: {
+            where: { is_delete: false },
+            select: {
+              id: true,
+              content: true,
+              note_order: true,
+              created_at: true,
+              updated_at: true,
+            },
+            orderBy: { note_order: 'asc' },
+          },
+        },
+      });
+    });
+  },
 
     async delete(id) {
         return await prisma.$transaction(async (tx) => {
@@ -466,74 +453,74 @@ const spaceRepository = {
         };
     },
 
-    async findDashboard() {
-        return await prisma.space.findMany({
-            where: {
-                is_deleted: false,
+  async findDashboard() {
+    return await prisma.space.findMany({
+      where: {
+        is_deleted: false,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar_url: true,
+          },
+        },
+        background: {
+          select: {
+            id: true,
+            background_url: true,
+            emotion: true,
+            tags: true,
+            source: true,
+          },
+        },
+        clock: {
+          select: {
+            id: true,
+            font_name: true,
+          },
+        },
+        text: {
+          select: {
+            id: true,
+            font_name: true,
+          },
+        },
+        space_tags: {
+          include: {
+            tag: true,
+          },
+        },
+        notes: {
+          where: { is_delete: false },
+          select: {
+            id: true,
+            content: true,
+            note_order: true,
+            created_at: true,
+            updated_at: true,
+          },
+          orderBy: { note_order: 'asc' },
+        },
+        playlists: {
+          where: { is_deleted: false },
+          include: {
+            playlist_tracks: {
+              where: { is_deleted: false },
+              include: { track: true },
+              orderBy: { track_order: 'asc' },
             },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        avatar_url: true,
-                    },
-                },
-                background: {
-                    select: {
-                        id: true,
-                        background_url: true,
-                        emotion: true,
-                        tags: true,
-                        source: true,
-                    },
-                },
-                clock: {
-                    select: {
-                        id: true,
-                        font_name: true,
-                    },
-                },
-                text: {
-                    select: {
-                        id: true,
-                        font_name: true,
-                    },
-                },
-                space_tags: {
-                    include: {
-                        tag: true,
-                    },
-                },
-                notes: {
-                    where: { is_delete: false },
-                    select: {
-                        id: true,
-                        content: true,
-                        note_order: true,
-                        created_at: true,
-                        updated_at: true,
-                    },
-                    orderBy: { note_order: 'asc' },
-                },
-                playlists: {
-                    where: { is_deleted: false },
-                    include: {
-                        playlist_tracks: {
-                            where: { is_deleted: false },
-                            include: { track: true },
-                            orderBy: { track_order: 'asc' },
-                        },
-                    },
-                },
-            },
-            orderBy: {
-                created_at: 'desc',
-            },
-            take: 9,
-        });
-    },
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+      take: 9,
+    });
+  },
 };
 
 export default spaceRepository;
