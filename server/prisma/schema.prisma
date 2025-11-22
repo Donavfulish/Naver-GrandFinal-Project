@@ -15,7 +15,6 @@ model User {
   email         String   @unique
   password_hash String
   avatar_url    String?
-  mind          String?
   is_deleted    Boolean  @default(false)
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
@@ -26,19 +25,18 @@ model User {
 }
 
 model Space {
-  id                 String   @id @default(uuid())
-  user_id            String
-  name               String
-  description        String?
-  mood               String
-  background_id      String?
-  clock_font_id      String?
-  text_font_id       String?
-  personalityEssence Json?
-  duration           Int      @default(0) // Seconds
-  is_deleted         Boolean  @default(false)
-  created_at         DateTime @default(now())
-  updated_at         DateTime @updatedAt
+  id            String   @id @default(uuid())
+  user_id       String
+  name          String
+  description   String?
+  mood          String
+  background_id String?
+  clock_font_id String?
+  text_font_id  String?
+  duration      Int      @default(0) // Seconds
+  is_deleted    Boolean  @default(false)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 
   user       User        @relation(fields: [user_id], references: [id])
   clock      ClockFont?  @relation(fields: [clock_font_id], references: [id])

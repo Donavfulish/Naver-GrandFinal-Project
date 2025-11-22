@@ -20,7 +20,6 @@ const spaceService = {
       background_url,
       clock_font_id,
       text_font_id,
-      personalityEssence,
       tracks, // Array of track IDs
       prompt,  // AI prompt (optional)
       notes  // Array of note content strings (optional)
@@ -156,7 +155,6 @@ const spaceService = {
       description: description || null,
       mood: mood || 'Neutral', // Add mood field with default value
       duration: duration || 0, // Add duration field with default value
-      personalityEssence: personalityEssence || null, // Add personalityEssence JSON field
       background_id: validatedBackgroundId,
       clock_font_id: validatedClockFontId,
       text_font_id: validatedTextFontId,
