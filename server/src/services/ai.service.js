@@ -317,7 +317,7 @@ export async function generateUserMind(userId) {
     orderBy: {
       created_at: 'desc'
     },
-    take: 10,
+    take: 5,
     select: {
       id: true,
       name: true,

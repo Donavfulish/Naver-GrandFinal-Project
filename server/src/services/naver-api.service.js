@@ -1,14 +1,6 @@
 import { NAVER_CLOVA_STUDIO_API_KEY, NAVER_CLOVA_STUDIO_API_URL } from '../config/env.js';
 import logger from '../config/logger.js';
 import { ErrorCodes } from '../constants/errorCodes.js';
-import { PERSONALITY_ESSENCE } from '../constants/state.js';
-
-function formatPersonalityEssence(obj) {
-  return Object.entries(obj)
-    .map(([key, arr]) => `- ${key}: ${arr.join(', ')}`)
-    .join('\n');
-}
-
 
 /**
  * NAVER API Service
@@ -312,7 +304,7 @@ class NaverApiService {
         generatedContentPreview: generatedContent.substring(0, 200) // Log first 200 chars
       });
 
-      return generatedContent;
+      return generatedContent; // Return the text content, not the response object
     } catch (error) {
       const duration = Date.now() - startTime;
       logger.error(`[NAVER API] Chat completion failed`, {
@@ -353,69 +345,43 @@ class NaverApiService {
     // Temporary implementation - will be replaced with actual AI logic
     const messages = [
       {
-        role: 'system',
-        content: `You are an expert Space Designer AI. Your goal is to generate a cohesive space configuration based on the user's prompt.
-    
-RULES:
-1. **Language**: Detect the user's language from their prompt. All output (name, description, intros) MUST be in the same language as the user prompt.
-2. **Tagging**: Analyze the user's sentiment and intent. Select the most appropriate items from the "Available emotions" and "Available tags" lists below.
-   - Select 2–4 emotions.
-   - Select 3–6 tags.
-   - You MUST ONLY use values from the provided lists. Do not invent new tags.
-3. **Mood**: Select ONE mood keyword from the Available Moods list that best represents the overall emotional atmosphere of the space.
-4. **Fonts**: 
-   - Select one "clockFont" (style name) from the Available Clock Font Styles list.
-   - Select one "textFont" (font name) from the Available Text Font Names list.
-   - Match fonts to the overall vibe and mood of the space.
-5. **Intro Pages**:
-   - You will be given 3 lists of inspirational quotes (Intro Page 1, Intro Page 2, Intro Page 3).
-   - Select EXACTLY ONE quote from EACH list that best matches the user's emotional state and intent.
-   - IMPORTANT: Translate the selected quotes into the user's language (detected from their prompt).
-   - Keep the translation poetic, warm, and emotionally resonant.
-   - Return only the translated text, without the author name.
-   - If the user's language is already the same as the quotes, you may keep them as-is or slightly adapt for better flow.
-6. **Output**: Return ONLY a valid JSON object. Do not include markdown formatting.
-    
-AVAILABLE LISTS:
-    - Emotions: ${context.emotions.join(', ')}
-    - Tags: ${context.tags.join(', ')}
-    - Moods: ${context.moods.join(', ')}
-    - Text Font Names: ${context.textFonts.join(', ')}
-    - Clock Font Styles: ${context.clockFonts.join(', ')}
-    
-INTRO PAGE OPTIONS (select one from each):
+  role: "system",
+  content: `
+You generate a JSON config for a user's “space” based on their prompt.
+Follow these strict rules:
 
-Intro Page 1 (Emotional Opening - choose ONE):
-${context.introPage1.map((item, idx) => `${idx + 1}. "${item.text}"`).join('\n')}
+1. Detect user language → output only in that language.
+2. Select:
+   - 2–4 emotions from: ${context.emotions.join(', ')}
+   - 3–6 tags from: ${context.tags.join(', ')}
+   - 1 mood from: ${context.moods.join(', ')}
+   - 1 textFont from: ${context.textFonts.join(', ')}
+   - 1 clockFont from: ${context.clockFonts.join(', ')}
+3. Choose exactly ONE quote from each list below and translate it to the user’s language:
 
-Intro Page 2 (Transition - choose ONE):
-${context.introPage2.map((item, idx) => `${idx + 1}. "${item.text}"`).join('\n')}
+Page1:
+${context.introPage1.map(i => `- "${i.text}"`).join('\n')}
 
-Intro Page 3 (Invitation - choose ONE):
-${context.introPage3.map((item, idx) => `${idx + 1}. "${item.text}"`).join('\n')}
+Page2:
+${context.introPage2.map(i => `- "${i.text}"`).join('\n')}
 
-PERSONALITY ESSENCE RULES:
-  - Output 2–5 applicable moods.
-  - Use EXACT mood keywords from the available list.
-  - Each mood receives a score from 1–10.
-  - Example: {"Happy": 8, "Inspired": 7}
-    
-JSON FORMAT TO RETURN:
+Page3:
+${context.introPage3.map(i => `- "${i.text}"`).join('\n')}
+
+4. Output JSON ONLY in this format:
+
 {
-  "name": "Short name in user's language",
-  "description": "Short description in user's language",
-  "mood": "MoodKeyword",
-  "clockFont": "Clock Font Style",
-  "textFont": "Text Font Name",
-  "emotions": ["emotion1", "emotion2"],
-  "tags": ["tag1", "tag2", "tag3"],
-  "personalityEssence": {
-    "MoodKeyword1": score1,
-    "MoodKeyword2": score2
-  },
-  "introPage1": "Translated quote 1",
-  "introPage2": "Translated quote 2",
-  "introPage3": "Translated quote 3"
+  "name": "",
+  "description": "",
+  "mood": "",
+  "clockFont": "",
+  "textFont": "",
+  "emotions": [],
+  "tags": [],
+  "personalityEssence": {},
+  "introPage1": "",
+  "introPage2": "",
+  "introPage3": ""
 }`
   },
   {
@@ -426,7 +392,6 @@ JSON FORMAT TO RETURN:
 
     const response = await this.chatCompletion(messages, {
       temperature: 0.7
-      // Removed maxTokens to match working API format
     });
 
     // Parse JSON response
@@ -467,6 +432,20 @@ JSON FORMAT TO RETURN:
         parsed.tags = [];
       }
 
+      // Add default values for intro pages if missing
+      if (!parsed.introPage1) {
+        logger.warn('[NAVER API] introPage1 missing in AI response');
+        parsed.introPage1 = context.introPage1[0]?.text || '';
+      }
+      if (!parsed.introPage2) {
+        logger.warn('[NAVER API] introPage2 missing in AI response');
+        parsed.introPage2 = context.introPage2[0]?.text || '';
+      }
+      if (!parsed.introPage3) {
+        logger.warn('[NAVER API] introPage3 missing in AI response');
+        parsed.introPage3 = context.introPage3[0]?.text || '';
+      }
+
       logger.info('[NAVER API] Successfully parsed AI response', {
         parsed: {
           name: parsed.name,
@@ -474,7 +453,10 @@ JSON FORMAT TO RETURN:
           emotionsCount: parsed.emotions?.length,
           tagsCount: parsed.tags?.length,
           clockFont: parsed.clockFont,
-          textFont: parsed.textFont
+          textFont: parsed.textFont,
+          hasIntroPage1: !!parsed.introPage1,
+          hasIntroPage2: !!parsed.introPage2,
+          hasIntroPage3: !!parsed.introPage3
         }
       });
       return parsed;
@@ -484,14 +466,19 @@ JSON FORMAT TO RETURN:
         responseLength: response.length,
         responsePreview: response.substring(0, 500) // Log first 500 chars for debugging
       });
-      // Fallback to mock response
+      // Fallback to mock response with intro pages
       return {
         name: `AI Generated Space`,
         description: `Space created based on: ${prompt.substring(0, 100)}`,
         clockFont: context.clockFonts[0],
         textFont: context.textFonts[0],
         emotions: ['calm', 'peaceful'],
-        tags: ['ambient', 'relax', 'focus']
+        tags: ['ambient', 'relax', 'focus'],
+        mood: 'Neutral',
+        personalityEssence: {},
+        introPage1: context.introPage1[0]?.text || '',
+        introPage2: context.introPage2[0]?.text || '',
+        introPage3: context.introPage3[0]?.text || ''
       };
     }
   }
@@ -653,7 +640,7 @@ ${notes || 'No notes were written during this session'}`;
    * @param {Array<string>} data.payload.availableEssenceKeys - Available essence keys
    * @param {Object} data.payload.personalityEssenceData - Full PERSONALITY_ESSENCE object with Vietnamese words
    * @param {string} data.seed - Fallback seed sentence
-   * @returns {Promise<string>} - Vietnamese poetic sentence describing user's mind
+   * @returns {Promise<string>} - Poetic sentence describing user's mind in same language as their prompts
    */
   async generateUserMind(data) {
     const { payload, seed } = data;
@@ -666,6 +653,11 @@ ${notes || 'No notes were written during this session'}`;
       availableEssenceKeys,
       personalityEssenceData
     } = payload;
+
+    // Detect language from sample prompts
+    const languageSource = samplePrompts && samplePrompts.length > 0
+      ? samplePrompts.join(' ')
+      : (sampleContents && sampleContents.length > 0 ? sampleContents.join(' ') : '');
 
     // Format personality essence data for AI prompt
     const essenceKeysDescription = availableEssenceKeys
@@ -683,43 +675,62 @@ ${notes || 'No notes were written during this session'}`;
           .join('\n')}`
       : '';
 
-    const systemPrompt = `You are a poetic AI assistant specialized in crafting beautiful, concise Vietnamese sentences that capture a person's essence.
+    const systemPrompt = `You are a poetic AI assistant specialized in crafting beautiful, concise sentences that capture a person's essence.
 
-TASK: Generate a single, poetic Vietnamese sentence that describes the user's "mind" (trạng thái tâm hồn) based on their recent creative spaces and personality.
+CRITICAL - LANGUAGE DETECTION:
+- You MUST detect the user's language from their sample prompts/content
+- Generate the output in THE SAME LANGUAGE as the user's prompts
+- If prompts are in Vietnamese → Output in Vietnamese
+- If prompts are in English → Output in English
+- If prompts are in other languages → Match that language
+- The language detection source will be provided in the user prompt
+
+TASK: Generate a single, poetic sentence that describes the user's "mind" (mental/emotional state) based on their recent creative spaces and personality.
 
 IMPORTANT - PERSONALITY ESSENCE SELECTION:
 You have access to a personality essence system with Vietnamese words. Your task is to:
 1. Analyze the user's emotional profile, tags, and content
 2. Select 2-4 most appropriate essence keys from the available list below
-3. From each selected key, pick 1-2 representative Vietnamese words
-4. Use ONLY these selected Vietnamese words to craft the poetic sentence
+3. From each selected key, pick 1-2 representative words
+4. Use ONLY these selected words to craft the poetic sentence
+5. If output language is NOT Vietnamese, translate the selected words appropriately
 
-AVAILABLE PERSONALITY ESSENCE KEYS AND WORDS:
+AVAILABLE PERSONALITY ESSENCE KEYS AND WORDS (Vietnamese):
 ${essenceKeysDescription}
 
 REQUIREMENTS:
-1. Output MUST be a single Vietnamese sentence (one sentence only)
+1. Output MUST be a single sentence (one sentence only) in the USER'S LANGUAGE
 2. Maximum 20-25 words, poetic and lyrical in style
-3. Use ONLY Vietnamese words from the personality essence keys you selected
+3. Use words from the personality essence keys you selected (translate if needed)
 4. Choose essence keys that best match the user's mood, tags, and overall personality
-5. The sentence should follow this structure: "Bạn làm từ [word1], [word2], [word3], ..." or similar poetic variations
-6. Sound natural, poetic, and meaningful in Vietnamese
-7. Do NOT use JSON format - return ONLY the plain text sentence
-8. The sentence should feel personal and insightful
+5. Sound natural, poetic, and meaningful in the target language
+6. Do NOT use JSON format - return ONLY the plain text sentence
+7. The sentence should feel personal and insightful
 
-STYLE EXAMPLES (for reference):
+STYLE EXAMPLES:
+
+Vietnamese:
 - "Bạn làm từ ánh sáng buổi sớm, yên tĩnh như làn gió qua rừng, mang trong mình sự bình yên của những ngày mưa."
 - "Tâm hồn bạn dệt từ gió nhẹ, hoa hồng và ánh trăng, êm dịu như tiếng piano trong đêm tĩnh lặng."
 - "Bạn là sự hòa quyện của cà phê đắng, sách và ánh nắng, tập trung như những dòng suy nghĩ sâu thẳm."
 
-OUTPUT FORMAT: Just the Vietnamese sentence - NO JSON, NO quotes, NO extra text`;
+English:
+- "You are made of morning light, quiet as the wind through the forest, carrying within the peace of rainy days."
+- "Your soul is woven from gentle breezes, roses and moonlight, soft as piano notes in the silent night."
+- "You are the harmony of bitter coffee, books and sunlight, focused as the depths of thought."
 
-    let userPrompt = `USER PERSONALITY DATA:
+OUTPUT FORMAT: Just the sentence in the user's language - NO JSON, NO quotes, NO extra text`;
+
+    let userPrompt = `LANGUAGE DETECTION SOURCE: "${languageSource}"
+
+IMPORTANT: Detect the language from the source above and generate your output in THE SAME LANGUAGE.
+
+USER PERSONALITY DATA:
 - Emotional Profile: ${compactPersonality}
 - Top Tags (most frequent): ${topTags.join(', ') || 'None'}${userEssenceScoresText}`;
 
     if (samplePrompts && samplePrompts.length > 0) {
-      userPrompt += `\n- Sample Space Prompts:\n${samplePrompts.map((p, i) => `  ${i + 1}. "${p}"`).join('\n')}`;
+      userPrompt += `\n- Sample Space Prompts (USE THIS TO DETECT LANGUAGE):\n${samplePrompts.map((p, i) => `  ${i + 1}. "${p}"`).join('\n')}`;
     }
 
     if (sampleContents && sampleContents.length > 0) {
@@ -727,11 +738,12 @@ OUTPUT FORMAT: Just the Vietnamese sentence - NO JSON, NO quotes, NO extra text`
     }
 
     userPrompt += `\n\nBased on this data:
-1. First, select 2-4 personality essence keys that best represent this person
-2. From each key, pick 1-2 Vietnamese words
-3. Craft ONE poetic Vietnamese sentence using only those selected words
+1. First, DETECT THE LANGUAGE from the sample prompts above
+2. Select 2-4 personality essence keys that best represent this person
+3. From each key, pick 1-2 words (Vietnamese from the list, but translate them if needed)
+4. Craft ONE poetic sentence using those words IN THE DETECTED LANGUAGE
 
-Remember: Use ONLY Vietnamese words from the personality essence system provided above.`;
+CRITICAL: Your output MUST be in the same language as the sample prompts above!`;
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -750,7 +762,8 @@ Remember: Use ONLY Vietnamese words from the personality essence system provided
       // Log raw response for debugging
       logger.info('[NAVER API] Raw mind generation response', {
         responseLength: mindSentence.length,
-        response: mindSentence
+        response: mindSentence,
+        languageSource: languageSource.substring(0, 100)
       });
 
       // Clean up any unwanted formatting
@@ -783,15 +796,6 @@ Remember: Use ONLY Vietnamese words from the personality essence system provided
       if (!mindSentence || mindSentence.length < 10 || mindSentence.length > 300) {
         logger.warn('[NAVER API] Generated mind sentence is invalid (too short/long), using seed', {
           length: mindSentence?.length,
-          sentence: mindSentence
-        });
-        return seed;
-      }
-
-      // Check if it looks like Vietnamese text
-      const vietnamesePattern = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
-      if (!vietnamesePattern.test(mindSentence)) {
-        logger.warn('[NAVER API] Generated mind sentence does not appear to be Vietnamese, using seed', {
           sentence: mindSentence
         });
         return seed;
