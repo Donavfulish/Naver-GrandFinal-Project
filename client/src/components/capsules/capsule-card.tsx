@@ -20,11 +20,14 @@ export default function CapsuleCard({ capsule, onContinue }: CapsuleCardProps) {
 
     const getMoodColor = (mood: string) => {
         const colors: Record<string, string> = {
-            inspired: "from-red-500 to-orange-500",
-            focused: "from-yellow-500 to-orange-500",
-            productive: "from-purple-500 to-pink-500",
-            peaceful: "from-green-500 to-blue-500",
-            tired: "from-indigo-500 to-purple-500",
+            exhausted: "from-gray-600 to-slate-700",    
+            frustrated: "from-red-600 to-orange-600",     
+            anxious: "from-yellow-600 to-amber-600",     
+            neutral: "from-gray-400 to-slate-400",       
+            content: "from-blue-400 to-cyan-400",        
+            happy: "from-green-400 to-emerald-400",      
+            inspired: "from-purple-500 to-pink-500",    
+            joyful: "from-yellow-400 to-orange-400"
         }
 
         for (const [key, color] of Object.entries(colors)) {

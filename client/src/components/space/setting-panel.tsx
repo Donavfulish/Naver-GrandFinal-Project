@@ -8,9 +8,8 @@ import { useSpaceFonts } from "@/hooks/useSpaceFonts"
 import { SpaceData } from "@/types/space"
 import { getFontFamily } from '@/utils/fonts'
 import { useSessionStore, SettingsPreview as SettingsPreviewType } from "@/lib/store" 
-
-
-type LayoutKey = "centered-blur" | "corner"
+import useBackgroundsData from "@/hooks/useBackground"
+import { Background } from "@/types/background"
 
 export type SettingsPreview = SettingsPreviewType; // Dùng lại type từ store
 
@@ -39,7 +38,7 @@ export default function SettingsPanel({
     const [selectedClockStyleId, setSelectedClockStyleId] = useState(space.clock_font.id)
     const [selectedTextFontId, setSelectedTextFontId] = useState(space.text_font.id)
     const [backgroundUrl, setBackgroundUrl] = useState(space.background.url)
-    const [layout, setLayout] = useState<LayoutKey>("centered-blur") 
+    const { data: bgdata, isLoading, error } = useBackgroundsData()
 
     const initialTextFontName = space.text_font.font_name || "Inter"
 
@@ -57,14 +56,9 @@ export default function SettingsPanel({
             clockFont: currentTextFontName,
             background: backgroundUrl,
         })
-    }, [currentClockStyleName, currentTextFontName, backgroundUrl, layout, onPreviewChange])
+    }, [currentClockStyleName, currentTextFontName, backgroundUrl, onPreviewChange])
 
-    const backgroundLibrary = [
-        "/img/calming-ambient-environment.png",
-        "/img/minimalist-focus-workspace.png",
-        "/img/new-custom-space.png",
-        "/img/peaceful-meditation-space.png",
-    ]
+    const backgroundLibrary = bgdata.map((b) => b.background_url);
 
     const handleSave = () => {
         const finalPreview: SettingsPreview = {
