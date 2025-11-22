@@ -1,13 +1,13 @@
 // OnboardingChat.tsx
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react" // Import useCallback
 import { motion, AnimatePresence } from "framer-motion"
 import { Send } from "lucide-react"
 import { useGenerateAISpace } from "@/hooks/useGenerateAiSpace" 
 import { SpaceData } from "@/types/space"
 import AILoadingModal from "../view-space/AILoadingModal"
-import SpacePreviewModal from "./SpacePreviewModal"
+import IntroModal from "../space/intro-modal" // Thêm import IntroModal
 
 interface OnboardingChatProps { 
     onComplete: (space: SpaceData & { sessionStartTime: number }) => void 
@@ -17,7 +17,7 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
     const [input, setInput] = useState("")
     const [lastPrompt, setLastPrompt] = useState("")
     const [generatedSpace, setGeneratedSpace] = useState<SpaceData | null>(null)
-    const [showPreviewModal, setShowPreviewModal] = useState(false)
+    const [showIntroModal, setShowIntroModal] = useState(false) // Thêm state cho IntroModal
     
     const { generateSpace, isGenerating: isLoading } = useGenerateAISpace() 
 
@@ -30,33 +30,39 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
         
         setLastPrompt(text)
         setGeneratedSpace(null)
-        setShowPreviewModal(false)
+        setShowIntroModal(false) 
 
         try {
             const spaceData = await generateSpace(text)
             setGeneratedSpace(spaceData)
-            setShowPreviewModal(true)
+            setShowIntroModal(true) 
         } catch (error) {
             console.error("Error during space generation:", error)
             alert("Could not generate space. Please check the console for details.")
         }
     }
 
-    const handleIntroStart = () => {
+    const handleIntroComplete = useCallback(() => {
         if (!generatedSpace) return
         
-        setShowPreviewModal(false)
+        setShowIntroModal(false)
         
         const finalSpace = {
             ...generatedSpace,
             sessionStartTime: Date.now(), 
+            initialSettings: { 
+                background: generatedSpace.background?.url || "/images/default-bg.jpg",
+                clockFont: generatedSpace.text_font?.font_name || "Inter",
+                clockStyle: generatedSpace.clock_font?.style || "minimal",
+                layout: "centered-blur",
+            }
         }
         onComplete(finalSpace)
-    }
+    }, [generatedSpace, onComplete])
     
     const handleRegenerate = () => {
         setGeneratedSpace(null)
-        setShowPreviewModal(false)
+        setShowIntroModal(false) // Cần đảm bảo IntroModal cũng ẩn
         inputRef.current?.focus()
     }
     
@@ -70,13 +76,10 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
             <AnimatePresence>
                 {isLoading && <AILoadingModal prompt={lastPrompt} />}
                 
-                {/* 2. MODAL PREVIEW */}
-                {showPreviewModal && generatedSpace && (
-                    <SpacePreviewModal 
-                        space={generatedSpace} 
-                        onConfirm={handleIntroStart} 
-                        onRegenerate={handleRegenerate} 
-                        isConfirming={false} 
+                {showIntroModal && generatedSpace && (
+                    <IntroModal
+                        introPages={[generatedSpace.introPage1, generatedSpace.introPage2, generatedSpace.introPage3]}
+                        onComplete={handleIntroComplete} 
                     />
                 )}
             </AnimatePresence>
@@ -101,17 +104,17 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={(e) => { 
-                                    if (e.key === "Enter" && !isLoading && !showPreviewModal) { 
+                                    if (e.key === "Enter" && !isLoading && !showIntroModal) { 
                                         handleSubmit(input);
                                     } 
                                 }}
                                 placeholder="Type how you feel..."
-                                disabled={isLoading || showPreviewModal}
+                                disabled={isLoading || showIntroModal} 
                                 className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-white/40 focus:outline-none focus:border-[#C7A36B]/50 focus:bg-white/10 transition"
                             />
                             <button 
                                 onClick={() => handleSubmit(input)} 
-                                disabled={isLoading || !input.trim() || showPreviewModal} 
+                                disabled={isLoading || !input.trim() || showIntroModal}
                                 className="bg-gradient-to-r from-[#C7A36B] to-[#7C9A92] hover:shadow-lg hover:shadow-[#C7A36B]/50 rounded-2xl p-4 text-white font-medium transition disabled:opacity-50"
                             >
                                 {isLoading ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}><Send size={24} /></motion.div> : <Send size={24} />}
@@ -124,7 +127,7 @@ export default function OnboardingChat({ onComplete }: OnboardingChatProps) {
                                     <button 
                                         key={prompt} 
                                         onClick={() => handleSubmit(prompt)} 
-                                        disabled={isLoading || showPreviewModal} 
+                                        disabled={isLoading || showIntroModal} 
                                         className="text-left bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-sm text-white/70 hover:text-white transition disabled:opacity-50"
                                     >
                                         {prompt}

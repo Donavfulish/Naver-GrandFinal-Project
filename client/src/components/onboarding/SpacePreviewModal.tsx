@@ -1,6 +1,6 @@
 // src/components/SpacePreviewModal.tsx
 "use client"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import Image from "next/image"
 import { Zap, Check, RefreshCw, Loader, Music, Type, Clock } from 'lucide-react'
 import { SpaceData } from "@/types/space"
@@ -14,15 +14,14 @@ interface SpacePreviewModalProps {
 
 export default function SpacePreviewModal({ space, onConfirm, onRegenerate, isConfirming }: SpacePreviewModalProps) {
     const trackCount = space.playlist?.tracks?.length || 0
-    
-    // Truncate text helper
+
     const truncateText = (text: string, maxLength: number) => {
         if (text.length <= maxLength) return text
         return text.slice(0, maxLength) + '...'
     }
     
-    console.log(space)
-    
+    console.log(space);
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
