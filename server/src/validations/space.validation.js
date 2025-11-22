@@ -2,44 +2,44 @@ import Joi from 'joi';
 
 // POST /space - Create space schema
 export const createSpaceSchema = Joi.object({
-    user_id: Joi.string().uuid().required().messages({
-        'string.uuid': 'Invalid user ID format',
-        'any.required': 'User ID is required',
-    }),
-    name: Joi.string().min(1).max(200).required().messages({
-        'string.min': 'Name cannot be empty',
-        'string.max': 'Name must not exceed 200 characters',
-        'any.required': 'Name is required',
-    }),
-    tags: Joi.array().items(Joi.string().min(1).max(100)).min(1).required().messages({
-        'array.min': 'At least one tag is required',
-        'any.required': 'Tags are required',
-        'string.min': 'Tag name cannot be empty',
-        'string.max': 'Tag name must not exceed 100 characters',
-    }),
-    description: Joi.string().max(1000).allow(null, '').messages({
-        'string.max': 'Description must not exceed 1000 characters',
-    }),
-    background_url: Joi.string().uri().allow(null, '').messages({
-        'string.uri': 'Invalid background URL format',
-    }),
-    clock_font_id: Joi.string().uuid().allow(null).messages({
-        'string.uuid': 'Invalid clock font ID format',
-    }),
-    text_font_id: Joi.string().uuid().allow(null).messages({
-        'string.uuid': 'Invalid text font ID format',
-    }),
-    tracks: Joi.array().items(Joi.string().uuid()).optional().messages({
-        'string.uuid': 'Invalid track ID format',
-        'array.base': 'Tracks must be an array',
-    }),
-    prompt: Joi.string().max(1000).allow(null, '').optional().messages({
-        'string.max': 'Prompt must not exceed 1000 characters',
-    }),
-    mood: Joi.any().optional(),
-    notes: Joi.array().optional(),
-    duration: Joi.any().optional(),
-
+  user_id: Joi.string().uuid().required().messages({
+    'string.uuid': 'Invalid user ID format',
+    'any.required': 'User ID is required',
+  }),
+  name: Joi.string().min(1).max(200).required().messages({
+    'string.min': 'Name cannot be empty',
+    'string.max': 'Name must not exceed 200 characters',
+    'any.required': 'Name is required',
+  }),
+  tags: Joi.array().items(Joi.string().min(1).max(100)).min(1).required().messages({
+    'array.min': 'At least one tag is required',
+    'any.required': 'Tags are required',
+    'string.min': 'Tag name cannot be empty',
+    'string.max': 'Tag name must not exceed 100 characters',
+  }),
+  description: Joi.string().max(1000).allow(null, '').messages({
+    'string.max': 'Description must not exceed 1000 characters',
+  }),
+  background_url: Joi.string().uri().allow(null, '').messages({
+    'string.uri': 'Invalid background URL format',
+  }),
+  clock_font_id: Joi.string().uuid().allow(null).messages({
+    'string.uuid': 'Invalid clock font ID format',
+  }),
+  text_font_id: Joi.string().uuid().allow(null).messages({
+    'string.uuid': 'Invalid text font ID format',
+  }),
+  tracks: Joi.array().items(Joi.string().uuid()).optional().messages({
+    'string.uuid': 'Invalid track ID format',
+    'array.base': 'Tracks must be an array',
+  }),
+  prompt: Joi.string().max(1000).allow(null, '').optional().messages({
+    'string.max': 'Prompt must not exceed 1000 characters',
+  }),
+  notes: Joi.array().items(Joi.string().max(1000)).optional().messages({
+    'array.base': 'Notes must be an array of strings',
+    'string.max': 'Note cannot exceed 1000 characters',
+  }),
 });
 
 // PATCH /space/:id - Update space schema

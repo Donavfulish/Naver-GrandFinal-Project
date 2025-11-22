@@ -9,21 +9,21 @@ import logger from '../config/logger.js';
 import prisma from '../config/prisma.js';
 
 const spaceService = {
-    async createSpace(data) {
-        const {
-            user_id,
-            name,
-            tags, // Array of tag names (strings), not IDs
-            description,
-            mood,
-            duration,
-            background_url,
-            clock_font_id,
-            text_font_id,
-            tracks = [], // Array of track IDs
-            prompt = null,  // AI prompt (optional)
-            notes = []  // Array of note content strings (optional)
-        } = data;
+  async createSpace(data) {
+    const {
+      user_id,
+      name,
+      tags, // Array of tag names (strings), not IDs
+      description,
+      mood,
+      duration,
+      background_url,
+      clock_font_id,
+      text_font_id,
+      tracks, // Array of track IDs
+      prompt,  // AI prompt (optional)
+      notes  // Array of note content strings (optional)
+    } = data;
 
         // Validate tags exist and are not empty
         if (!tags || tags.length === 0) {
@@ -159,69 +159,70 @@ const spaceService = {
             text_font_id: validatedTextFontId,
         };
 
-        // Create space with all relations (pass tracks instead of playlist_ids)
-        const createdSpace =
-            await spaceRepository.create(
-                spaceData,
-                tagIds,
-                tracks
-            );
-        // Create notes if provided
-        if (notes && notes.length > 0) {
-            const notePromises = notes.map((content, index) => {
-                return prisma.note.create({
-                    data: {
-                        space_id: createdSpace.id,
-                        content: content,
-                        note_order: index,
-                        is_delete: false,
-                    },
-                });
-            });
+    // Create space with all relations (pass tracks instead of playlist_ids)
+    const createdSpace = await spaceRepository.create(
+        spaceData,
+        tagIds,
+        tracks
+    );
+
+    // Create notes if provided
+    if (notes && notes.length > 0) {
+      const notePromises = notes.map((content, index) => {
+        return prisma.note.create({
+          data: {
+            space_id: createdSpace.id,
+            content: content,
+            note_order: index,
+            is_deleted: false,
+          },
+        });
+      });
 
             await Promise.all(notePromises);
             logger.info(`Created ${notes.length} notes for space ${createdSpace.id}`);
         }
 
-        // Save AI generated content info if prompt exists and is not empty
-        if (prompt && prompt.trim().length > 0) {
-            await prisma.aiGeneratedContent.create({
-                data: {
-                    space_id: createdSpace.id,
-                    prompt: prompt.trim(),
-                    content: JSON.stringify({
-                        user_id,
-                        name,
-                        description,
-                        background_id: validatedBackgroundId,
-                        clock_font_id: validatedClockFontId,
-                        text_font_id: validatedTextFontId,
-                        tags, // Store original tag names
-                        tracks,
-                    })
-                }
-            });
-        } else {
-            // Create AI content record with null prompt for manual spaces
-            await prisma.aiGeneratedContent.create({
-                data: {
-                    space_id: createdSpace.id,
-                    prompt: null,
-                    content: JSON.stringify({
-                        user_id,
-                        name,
-                        description,
-                        background_id: validatedBackgroundId,
-                        clock_font_id: validatedClockFontId,
-                        text_font_id: validatedTextFontId,
-                        tags,
-                        tracks,
-                    })
-                }
-            });
+    // Save AI generated content info if prompt exists and is not empty
+    if (prompt && prompt.trim().length > 0) {
+      await prisma.aiGeneratedContent.create({
+        data: {
+          space_id: createdSpace.id,
+          prompt: prompt.trim(),
+          content: JSON.stringify({
+            user_id,
+            name,
+            description,
+            background_id: validatedBackgroundId,
+            clock_font_id: validatedClockFontId,
+            text_font_id: validatedTextFontId,
+            tags, // Store original tag names
+            tracks,
+          })
         }
-        return createdSpace;
-    },
+      });
+    } else {
+      // Create AI content record with null prompt for manual spaces
+      await prisma.aiGeneratedContent.create({
+        data: {
+          space_id: createdSpace.id,
+          prompt: null,
+          content: JSON.stringify({
+            user_id,
+            name,
+            description,
+            background_id: validatedBackgroundId,
+            clock_font_id: validatedClockFontId,
+            text_font_id: validatedTextFontId,
+            tags,
+            tracks,
+          })
+        }
+      });
+    }
+
+    return createdSpace;
+  },
 
     async getSpaceById(id) {
         const space = await spaceRepository.findById(id);
@@ -480,30 +481,30 @@ const spaceService = {
             // If note_order is not provided, get the next order number
             let orderNumber = note_order;
 
-            if (orderNumber === undefined || orderNumber === null) {
-                // Find the highest note_order for this space
-                const lastNote = await prisma.note.findFirst({
-                    where: {
-                        space_id: spaceId,
-                        is_delete: false,
-                    },
-                    orderBy: {
-                        note_order: 'desc',
-                    },
-                });
+      if (orderNumber === undefined || orderNumber === null) {
+        // Find the highest note_order for this space
+        const lastNote = await prisma.note.findFirst({
+          where: {
+            space_id: spaceId,
+            is_delete: false,
+          },
+          orderBy: {
+            note_order: 'desc',
+          },
+        });
 
                 orderNumber = lastNote ? lastNote.note_order + 1 : 0;
             }
 
-            // Create the note
-            const note = await prisma.note.create({
-                data: {
-                    space_id: spaceId,
-                    content,
-                    note_order: orderNumber,
-                    is_delete: false,
-                },
-            });
+      // Create the note
+      const note = await prisma.note.create({
+        data: {
+          space_id: spaceId,
+          content,
+          note_order: orderNumber,
+          is_delete: false,
+        },
+      });
 
             logger.info(`Note created for space ${spaceId}`, {
                 noteId: note.id,
@@ -551,21 +552,21 @@ const spaceService = {
             throw error;
         }
 
-        if (note.is_delete) {
-            const error = new Error('Note is already deleted');
-            error.code = ErrorCodes.NOTE_NOT_FOUND;
-            throw error;
-        }
+    if (note.is_deleted) {
+      const error = new Error('Note is already deleted');
+      error.code = ErrorCodes.NOTE_NOT_FOUND;
+      throw error;
+    }
 
-        try {
-            // Soft delete the note
-            await prisma.note.update({
-                where: { id: noteId },
-                data: {
-                    is_delete: true,
-                    updated_at: new Date(),
-                },
-            });
+    try {
+      // Soft delete the note
+      await prisma.note.update({
+        where: { id: noteId },
+        data: {
+          is_deleted: true,
+          updated_at: new Date(),
+        },
+      });
 
             logger.info(`Note soft deleted`, {
                 noteId,

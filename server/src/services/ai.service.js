@@ -200,7 +200,7 @@ export async function checkout(spaceId) {
       mood: true,
       duration: true,
       notes: {
-        where: { is_delete: false },
+        where: { is_deleted: false },
         orderBy: { note_order: 'asc' },
         select: { content: true }
       },

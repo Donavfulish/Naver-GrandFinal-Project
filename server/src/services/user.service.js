@@ -77,7 +77,13 @@ const userService = {
             throw new Error('User not found');
         }
 
-        return await userRepository.findSpacesByUserId(userId);
+        const spaces = await userRepository.findSpacesByUserId(userId);
+
+        // Return spaces along with user's mind
+        return {
+            mind: user.mind || null,
+            spaces: spaces
+        };
     },
 
   // Cập nhật thông tin user

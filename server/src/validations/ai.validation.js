@@ -81,6 +81,17 @@ export const confirmGenerateSchema = Joi.object({
       'string.empty': 'mood không được để trống',
       'any.required': 'mood là bắt buộc'
     }),
+  personalityEssence: Joi.object()
+    .pattern(
+      Joi.string(),
+      Joi.number().min(1).max(10)
+    )
+    .allow(null)
+    .messages({
+      'object.base': 'personalityEssence phải là một object',
+      'number.min': 'Giá trị score phải từ 1 đến 10',
+      'number.max': 'Giá trị score phải từ 1 đến 10'
+    }),
   tags: Joi.array()
     .items(Joi.string())
     .default([])
@@ -100,8 +111,20 @@ export const checkoutSchema = Joi.object({
         })
 });
 
+export const mindSchema = Joi.object({
+    userId: Joi.string()
+        .uuid()
+        .required()
+        .messages({
+            'string.empty': 'userId không được để trống',
+            'string.uuid': 'userId phải là UUID hợp lệ',
+            'any.required': 'userId là bắt buộc'
+        })
+});
+
 export default {
     generateSchema,
     confirmGenerateSchema,
-    checkoutSchema
+    checkoutSchema,
+    mindSchema
 };

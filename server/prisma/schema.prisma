@@ -66,7 +66,7 @@ model Playlist {
   name       String
   is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  updated_at DateTime @default(now())
 
   space           Space?          @relation(fields: [space_id], references: [id])
   playlist_tracks PlaylistTrack[]
@@ -88,7 +88,7 @@ model Background {
   source         BackgroundSource @default(USER)
   is_deleted     Boolean          @default(false)
   created_at     DateTime         @default(now())
-  updated_at     DateTime         @updatedAt
+  updated_at     DateTime         @default(now())
 
   spaces Space[]
 
@@ -105,7 +105,7 @@ model Track {
   source     TrackSource @default(SYSTEM)
   is_deleted Boolean     @default(false)
   created_at DateTime    @default(now())
-  updated_at DateTime    @updatedAt
+  updated_at DateTime    @default(now())
 
   playlist_tracks PlaylistTrack[]
 
@@ -117,7 +117,7 @@ model Note {
   space_id   String
   content    String
   note_order Int
-  is_delete  Boolean  @default(false)
+  is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 
@@ -130,6 +130,7 @@ model Note {
 model Tag {
   id         String   @id @default(uuid())
   name       String   @unique
+  is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 
@@ -183,6 +184,7 @@ model SpaceTag {
   id         String   @id @default(uuid())
   space_id   String
   tag_id     String
+  is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 
@@ -200,6 +202,7 @@ model AiGeneratedContent {
   space_id   String   @unique // 1-1: mỗi space chỉ có 1 AI content
   prompt     String?
   content    String
+  is_deleted Boolean  @default(false)
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 

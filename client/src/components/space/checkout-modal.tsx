@@ -1,11 +1,9 @@
-// src/components/space/CheckoutModal.tsx
 "use client"
 
-import React from "react"
-import { useState, useEffect, useMemo, useRef } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState } from "react"
+import { motion } from "framer-motion"
 import { useRouter } from 'next/navigation'
-import { useSessionStore, SettingsPreview } from "@/lib/store"
+import { useSessionStore } from "@/lib/store"
 import { useGenerateAISpace } from '@/hooks/useGenerateAiSpace'
 import { useSpaceFonts } from "@/hooks/useSpaceFonts"
 import { SpaceData } from "@/types/space"
@@ -17,8 +15,6 @@ interface CheckoutModalProps {
     duration: number
     spaceData: SpaceData
 }
-
-const REDIRECT_DELAY_MS = 5000;
 
 const CheckoutModal = ({ onClose, duration, spaceData }: CheckoutModalProps) => {
     const router = useRouter()
@@ -34,8 +30,7 @@ const CheckoutModal = ({ onClose, duration, spaceData }: CheckoutModalProps) => 
     const [step, setStep] = useState<"summary" | "packaging" | "reflection_ai">("summary")
     const [aiReflection, setAiReflection] = useState<string>("")
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [isFinishing, setIsFinishing] = useState(false) // Trạng thái chờ redirect
-    const [countdown, setCountdown] = useState(REDIRECT_DELAY_MS / 3000);
+    const [isFinishing, setIsFinishing] = useState(false)
 
     const findIdByStyleName = (styleName: string) =>
         clockStyles.find(item => item.style === styleName)?.id || null;
@@ -99,7 +94,7 @@ const CheckoutModal = ({ onClose, duration, spaceData }: CheckoutModalProps) => 
             if (checkoutResult.success && checkoutResult.data?.content) {
                 setAiReflection(checkoutResult.data.content);
             } else {
-                setAiReflection("Không thể tạo Phản ánh AI. Space đã được lưu, chuyển hướng sau 3 giây.");
+                setAiReflection("Không thể tạo Phản ánh AI. Space đã được lưu.");
             }
 
         } catch (error) {
@@ -110,29 +105,6 @@ const CheckoutModal = ({ onClose, duration, spaceData }: CheckoutModalProps) => 
             setIsFinishing(false);
         }
     }
-
-    useEffect(() => {
-        let timer: NodeJS.Timeout;
-        let countdownInterval: NodeJS.Timeout;
-
-        if (step === "reflection_ai" && aiReflection && !isFinishing) {
-            setCountdown(REDIRECT_DELAY_MS / 4000);
-
-            countdownInterval = setInterval(() => {
-                setCountdown(prev => (prev > 0 ? prev - 1 : 0));
-            }, 1000);
-
-            timer = setTimeout(() => {
-                resetSession();
-                router.push("/capsules");
-            }, REDIRECT_DELAY_MS);
-        }
-
-        return () => {
-            clearTimeout(timer);
-            clearInterval(countdownInterval);
-        };
-    }, [step, aiReflection, isFinishing, resetSession, router]);
 
     const handleFinishAndRedirect = () => {
         setIsFinishing(true);
@@ -203,7 +175,7 @@ const CheckoutModal = ({ onClose, duration, spaceData }: CheckoutModalProps) => 
                     </motion.div>
                 )}
 
-                {/* ----------------- Step: Packaging Animation (Saving) ----------------- */}
+                {/* Step: Packaging Animation (Saving) */}
                 {step === "packaging" && (
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -228,7 +200,7 @@ const CheckoutModal = ({ onClose, duration, spaceData }: CheckoutModalProps) => 
                     </motion.div>
                 )}
 
-                {/* ----------------- Step: AI Reflection (NEW - CHILL UI) ----------------- */}
+                {/* Step: AI Reflection */}
                 {step === "reflection_ai" && (
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -258,21 +230,12 @@ const CheckoutModal = ({ onClose, duration, spaceData }: CheckoutModalProps) => 
                                     transition={{ delay: 0.1, duration: 0.8 }}
                                     className="bg-white/5 rounded-xl p-8 border border-white/10 shadow-2xl min-h-[150px] space-y-4"
                                 >
-                                    {/* HIỂN THỊ NỘI DUNG TĨNH (CHILL HƠN) */}
                                     <p className="text-white text-xl font-light whitespace-pre-wrap leading-relaxed">
                                         {aiReflection || "Không có phản ánh được tạo."}
                                     </p>
                                 </motion.div>
 
-                                <div className="flex justify-between items-center pt-2">
-                                    <motion.p
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        transition={{ delay: 0.8 }}
-                                        className="text-white/50 text-sm font-medium"
-                                    >
-                                        {aiReflection ? `Auto redirect in ${countdown}s` : 'Redirecting now...'}
-                                    </motion.p>
+                                <div className="flex justify-end items-center pt-2">
                                     <button
                                         onClick={handleFinishAndRedirect}
                                         disabled={isFinishing}

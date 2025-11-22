@@ -20,7 +20,7 @@ CREATE TABLE "Note" (
     "id" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "note_order" INTEGER NOT NULL,
-    "is_delete" BOOLEAN NOT NULL DEFAULT false,
+    "is_deleted" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 

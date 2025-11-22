@@ -86,7 +86,7 @@ const spaceRepository = {
             include: { tag: true },
           },
           notes: {
-            where: { is_delete: false },
+            where: { is_deleted: false },
             select: {
               id: true,
               content: true,
@@ -151,7 +151,7 @@ const spaceRepository = {
           include: { tag: true },
         },
         notes: {
-          where: { is_delete: false },
+          where: { is_deleted: false },
           select: {
             id: true,
             content: true,
@@ -205,7 +205,7 @@ const spaceRepository = {
           include: { tag: true },
         },
         notes: {
-          where: { is_delete: false },
+          where: { is_deleted: false },
           select: {
             id: true,
             content: true,
@@ -329,7 +329,7 @@ const spaceRepository = {
             include: { tag: true },
           },
           notes: {
-            where: { is_delete: false },
+            where: { is_deleted: false },
             select: {
               id: true,
               content: true,
@@ -492,7 +492,7 @@ const spaceRepository = {
           },
         },
         notes: {
-          where: { is_delete: false },
+          where: { is_deleted: false },
           select: {
             id: true,
             content: true,
