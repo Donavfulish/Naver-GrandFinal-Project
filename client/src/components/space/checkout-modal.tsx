@@ -53,7 +53,6 @@ const CheckoutModal = ({ onClose, duration, spaceData }: CheckoutModalProps) => 
         setIsSubmitting(true);
         setStep("packaging");
 
-        // Logic tạo createBody không đổi
         const finalSettingsUsed = finalSettings || {
             clockStyle: spaceData.clock_font.style || 'minimal',
             clockFont: spaceData.text_font.font_name || 'Inter',
@@ -94,8 +93,6 @@ const CheckoutModal = ({ onClose, duration, spaceData }: CheckoutModalProps) => 
 
             setStep("reflection_ai");
             setIsSubmitting(false);
-
-            // Bắt đầu loading cho API checkoutSpace
             setIsFinishing(true);
             const checkoutResult = await checkoutSpace(spaceId);
 

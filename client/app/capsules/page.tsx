@@ -32,9 +32,9 @@ const useUserSpaces = () => {
             }
 
             const result = await response.json();
-            console.log(result);
-            if (result.success && Array.isArray(result.data)) {
-                const mappedSpaces = result.data.map((c: any): CapsuleType => ({
+            console.log("kk",result);
+            if (result.success && Array.isArray(result.data.spaces)) {
+                const mappedSpaces = result.data.spaces.map((c: any): CapsuleType => ({
                     ...c,
                     notes: c.notes || [],
                     tags: c.space_tags?.map((st: { tag: { name: string } }) => st.tag.name) || [],
@@ -48,7 +48,6 @@ const useUserSpaces = () => {
                     space_tags: c.space_tags || [],
                     name: c.name
                 }));
-
                 setSpaces(mappedSpaces);
             } else {
                 throw new Error("Invalid response format from server.");

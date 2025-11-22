@@ -1,9 +1,9 @@
-// src/components/SpacePreviewModal.tsx
 "use client"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
-import { Zap, Check, RefreshCw, Loader, Music, Type, Clock } from 'lucide-react'
+import { Zap, Check, RefreshCw, Loader, Music, Type, Clock, ChevronDown } from 'lucide-react'
 import { SpaceData } from "@/types/space"
+import { useState } from "react"
 
 interface SpacePreviewModalProps {
     space: SpaceData
@@ -13,6 +13,7 @@ interface SpacePreviewModalProps {
 }
 
 export default function SpacePreviewModal({ space, onConfirm, onRegenerate, isConfirming }: SpacePreviewModalProps) {
+    const [isPlaylistOpen, setIsPlaylistOpen] = useState(false)
     const trackCount = space.playlist?.tracks?.length || 0
 
     const truncateText = (text: string, maxLength: number) => {
@@ -39,7 +40,7 @@ export default function SpacePreviewModal({ space, onConfirm, onRegenerate, isCo
                     <Image
                         src={space.background.url}
                         fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-130"
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
                         alt="Space Preview"
                         priority
                     />
@@ -77,7 +78,7 @@ export default function SpacePreviewModal({ space, onConfirm, onRegenerate, isCo
                         </div>
 
                         {/* Space Details Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 mt-4 ">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 mt-4">
                             {/* Clock Font Info */}
                             {space.clock_font && (
                                 <div className="flex items-start gap-3 p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/[0.07] transition-colors">
@@ -108,21 +109,94 @@ export default function SpacePreviewModal({ space, onConfirm, onRegenerate, isCo
                                 </div>
                             )}
 
-                            {/* Playlist Info */}
+                            {/* Playlist Dropdown */}
                             {space.playlist && (
-                                <div className="flex items-start gap-3 p-3 bg-white/5 border border-white/10 rounded-xl sm:col-span-2 hover:bg-white/[0.07] transition-colors">
-                                    <div className="mt-0.5">
-                                        <Music size={18} className="text-[#7C9A92]" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-white/50 mb-0.5">Playlist</p>
-                                        <p className="text-sm text-white/90 font-medium truncate" title={space.playlist.name}>
-                                            {space.playlist.name}
-                                        </p>
-                                        <p className="text-xs text-white/60 mt-0.5">
-                                            {trackCount} tracks curated
-                                        </p>
-                                    </div>
+                                <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden sm:col-span-2">
+                                    <button
+                                        onClick={() => setIsPlaylistOpen(!isPlaylistOpen)}
+                                        className="w-full flex items-start gap-3 p-3 hover:bg-white/[0.07] transition-colors"
+                                    >
+                                        <div className="mt-0.5">
+                                            <Music size={18} className="text-[#7C9A92]" />
+                                        </div>
+                                        <div className="flex-1 min-w-0 text-left">
+                                            <p className="text-xs text-white/50 mb-0.5">Playlist</p>
+                                            <p className="text-sm text-white/90 font-medium truncate" title={space.playlist.name}>
+                                                {space.playlist.name}
+                                            </p>
+                                            <p className="text-xs text-white/60 mt-0.5">
+                                                {trackCount} tracks curated
+                                            </p>
+                                        </div>
+                                        <motion.div
+                                            animate={{ rotate: isPlaylistOpen ? 180 : 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="mt-0.5 flex-shrink-0"
+                                        >
+                                            <ChevronDown size={18} className="text-white/60" />
+                                        </motion.div>
+                                    </button>
+
+                                    <AnimatePresence initial={false}>
+                                        {isPlaylistOpen && (
+                                            <motion.div
+                                                initial={{ height: 0 }}
+                                                animate={{ height: 'auto' }}
+                                                exit={{ height: 0 }}
+                                                transition={{ duration: 0.3, ease: "easeInOut" }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="border-t border-white/10">
+                                                    <div 
+                                                        className="max-h-[200px] overflow-y-auto px-3 py-2 space-y-1.5"
+                                                        style={{
+                                                            scrollbarWidth: 'thin',
+                                                            scrollbarColor: 'rgba(255, 255, 255, 0.2) transparent'
+                                                        }}
+                                                    >
+                                                        {space.playlist.tracks?.map((track, idx) => (
+                                                            <motion.div
+                                                                key={track.id}
+                                                                initial={{ opacity: 0, x: -10 }}
+                                                                animate={{ opacity: 1, x: 0 }}
+                                                                transition={{ delay: idx * 0.05 }}
+                                                                className="flex items-center gap-2.5 p-2.5 bg-white/5 rounded-lg hover:bg-white/10 transition-all duration-200 group cursor-pointer"
+                                                            >
+                                                                <span className="text-white/40 text-xs w-5 font-medium flex-shrink-0">
+                                                                    {idx + 1}
+                                                                </span>
+                                                                <div className="relative w-10 h-10 rounded-md overflow-hidden flex-shrink-0 shadow-md">
+                                                                    <Image
+                                                                        src={track.thumbnail}
+                                                                        alt={track.name}
+                                                                        fill
+                                                                        className="object-cover group-hover:scale-110 transition-transform duration-300"
+                                                                    />
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-xs text-white/90 font-medium truncate group-hover:text-white transition-colors">
+                                                                        {track.name}
+                                                                    </p>
+                                                                    {track.emotion && (
+                                                                        <div className="flex gap-1 mt-1">
+                                                                            {track.emotion.slice(0, 2).map((em, i) => (
+                                                                                <span
+                                                                                    key={i}
+                                                                                    className="text-[10px] text-white/50 bg-white/10 px-1.5 py-0.5 rounded"
+                                                                                >
+                                                                                    {em}
+                                                                                </span>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </motion.div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                             )}
                         </div>
