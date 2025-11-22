@@ -31,20 +31,17 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
     const [sessionDuration, setSessionDuration] = useState(0)
     const [showSettings, setShowSettings] = useState(false)
     const [showCheckout, setShowCheckout] = useState(false)
-    
-    // Logic mới: Hiển thị Preview Modal nếu finalSettings chưa có (nghĩa là lần đầu vào ViewSpacePage)
     const [showPreviewModal, setShowPreviewModal] = useState(false) 
-    const [isConfirming, setIsConfirming] = useState(false) // Trạng thái cho nút Confirm trong Preview
+    const [isConfirming, setIsConfirming] = useState(false) 
 
     const { finalSettings, setFinalSettings } = useSessionStore();
 
-    // Sử dụng initialSettings nếu có, nếu không thì dùng data từ space và fallback
     const initialBackgroundUrl = space.initialSettings?.background || finalSettings?.background || space.background?.url || "/images/default-bg.jpg"
     const initialTextFontName = space.initialSettings?.clockFont || finalSettings?.clockFont || space.text_font?.font_name || "Inter"
     const initialClockStyle = space.initialSettings?.clockStyle || finalSettings?.clockStyle || space.clock_font?.style || "minimal"
     
     const [preview, setPreview] = useState<SettingsPreview>({
-        clockStyle: initialClockStyle as any, // Cần ép kiểu nếu style là string
+        clockStyle: initialClockStyle as any, 
         clockFont: initialTextFontName,
         background: initialBackgroundUrl,
     })
@@ -52,12 +49,10 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
     const clockFontFamily = getFontFamily(preview.clockFont);
 
     useEffect(() => {
-        // Nếu đây là lần đầu vào ViewSpacePage (chưa có finalSettings)
         if (space.sessionStartTime && !finalSettings) { 
-            setShowPreviewModal(true); // Hiển thị Preview Modal
+            setShowPreviewModal(true); 
         }
         
-        // Timer tính thời gian session (giữ nguyên)
         if (space.sessionStartTime) {
             const interval = setInterval(() => {
                 setSessionDuration(Math.floor((Date.now() - space.sessionStartTime!) / 1000))
@@ -66,25 +61,19 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
         }
     }, [space.sessionStartTime, finalSettings]) 
     
-    // Thao tác Confirm từ SpacePreviewModal
     const handlePreviewConfirm = () => {
-        setIsConfirming(true); // Bắt đầu trạng thái Confirming
-        // Thường sẽ có một API call để lưu session settings
-        // Giả lập delay 1s
+        setIsConfirming(true); 
         setTimeout(() => {
-            setFinalSettings(preview); // Lưu settings hiện tại vào session store
-            setShowPreviewModal(false); // Ẩn modal
+            setFinalSettings(preview); 
+            setShowPreviewModal(false); 
             setIsConfirming(false); 
         }, 1000); 
     }
 
-    // Thao tác Regenerate (chuyển về màn hình OnboardingChat, không cần thay đổi)
     const handleRegenerate = () => {
-        // Chuyển hướng người dùng về trang Dashboard (hoặc trang Onboarding chính)
-        router.push('/') 
+        router.push('/emotional-capsules') 
     }
     
-    // ... (Các hàm khác: formatTime, detectFullscreen, layoutStyle, handlePreviewChange, handleSave) ...
     const formatTime = (seconds: number) => {
         const h = Math.floor(seconds / 3600)
         const m = Math.floor((seconds % 3600) / 60)
@@ -119,10 +108,8 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
     const handleSave = (p: SettingsPreview) => {
         setPreview(p); 
         setShowSettings(false);
-        setFinalSettings(p); // Cập nhật finalSettings khi lưu từ SettingPanel
+        setFinalSettings(p); 
     }
-    // ... (Kết thúc các hàm khác) ...
-
 
     const artistName = space.playlist?.name || space.name
     const isSessionEnded = !!space.AiGeneratedContent

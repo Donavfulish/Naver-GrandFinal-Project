@@ -20,9 +20,9 @@ export default function CapsuleCard({ capsule, onContinue }: CapsuleCardProps) {
 
     const getMoodColor = (mood: string) => {
         const colors: Record<string, string> = {
-            stressed: "from-red-500 to-orange-500",
-            happy: "from-yellow-500 to-orange-500",
-            creative: "from-purple-500 to-pink-500",
+            inspired: "from-red-500 to-orange-500",
+            focused: "from-yellow-500 to-orange-500",
+            productive: "from-purple-500 to-pink-500",
             peaceful: "from-green-500 to-blue-500",
             tired: "from-indigo-500 to-purple-500",
         }
@@ -47,22 +47,15 @@ export default function CapsuleCard({ capsule, onContinue }: CapsuleCardProps) {
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
-                    <h3 className="text-lg font-bold text-white capitalize">{capsule.mood}</h3>
+                    <h3 className="text-lg font-bold text-white capitalize">{capsule.name}</h3>
                     <p className="text-sm text-white/50">{formattedDate}</p>
                 </div>
                 {/* Tags */}
                 {tagList.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">
-                        {tagList.slice(0, 2).map((tag) => (
-                            <span key={tag} className={`bg-gradient-to-br ${getMoodColor(capsule.mood)} px-2 py-1 rounded text-white text-[11px]`}>
-                                {tag}
-                            </span>
-                        ))}
-                        {tagList.length > 2 && (
-                            <span className="text-xs bg-white/10 text-white/70 px-2 py-1 rounded">
-                                +{tagList.length - 2}
-                            </span>
-                        )}
+                        <span className={`bg-gradient-to-br ${getMoodColor(capsule.mood)} px-2 py-1 rounded text-white text-[11px]`}>
+                            {capsule.mood}
+                        </span>
                     </div>
                 )}
 

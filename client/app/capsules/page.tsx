@@ -10,8 +10,7 @@ import CapsuleOverview from "@/components/capsules/capsule-overview"
 import { USER_ID, BASE_URL } from '@/lib/constants'
 
 const useUserSpaces = () => {
-    console.log("kk", USER_ID, BASE_URL)
-    // Đã đổi type thành CapsuleType đầy đủ
+
     const [spaces, setSpaces] = useState<CapsuleType[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -33,30 +32,21 @@ const useUserSpaces = () => {
             }
 
             const result = await response.json();
-            console.log("result", result)
+            console.log(result);
             if (result.success && Array.isArray(result.data)) {
-                // THỰC HIỆN MAPPING DỮ LIỆU ĐỂ KHẮC PHỤC LỖI TRUY CẬP UNDEFINED
                 const mappedSpaces = result.data.map((c: any): CapsuleType => ({
                     ...c,
-                    // 1. NOTES: Gán mảng rỗng để tránh lỗi .length trong CapsuleOverview
                     notes: c.notes || [],
-
-                    // 2. TAGS: Chuyển đổi space_tags (Array of Objects) thành tags (Array of Strings)
                     tags: c.space_tags?.map((st: { tag: { name: string } }) => st.tag.name) || [],
-
-                    // 3. VIBE_CONFIG: Giả định theme từ tag đầu tiên (cho CapsuleOverview)
                     vibe_config: {
                         theme: c.space_tags?.[0]?.tag?.name || 'default'
                     },
-
-                    // 4. SESSION_SUMMARY: Lấy nội dung AI hoặc mô tả mặc định
                     session_summary: c.AiGeneratedContent?.content || 'No summary available.',
-
-                    // Đảm bảo các trường bắt buộc khác tồn tại:
                     description: c.description || "",
                     created_at: c.created_at || new Date().toISOString(),
                     background: c.background || { background_url: '' },
-                    space_tags: c.space_tags || []
+                    space_tags: c.space_tags || [],
+                    name: c.name
                 }));
 
                 setSpaces(mappedSpaces);
