@@ -27,7 +27,7 @@ const useBackgroundsData = (): {
       setError(null);
 
       try {
-        const response = await fetch(`${BASE_URL}/spaces/background`);
+        const response = await fetch(`${BASE_URL}/spaces/backgrounds`);
 
         if (!response.ok) {
           const errorMessage = `Lỗi HTTP: ${response.status} ${response.statusText}`;

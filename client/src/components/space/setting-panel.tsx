@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo } from "react"
 import Image from "next/image"
-import { Sliders, X, Loader } from "lucide-react"
+import { Sliders, X, Loader, ChevronLeft, ChevronRight } from "lucide-react"
 import { useSpaceFonts } from "@/hooks/useSpaceFonts"
 import { SpaceData } from "@/types/space"
 import { getFontFamily } from '@/utils/fonts'
@@ -11,14 +11,14 @@ import { useSessionStore, SettingsPreview as SettingsPreviewType } from "@/lib/s
 import useBackgroundsData from "@/hooks/useBackground"
 import { Background } from "@/types/background"
 
-export type SettingsPreview = SettingsPreviewType; // Dùng lại type từ store
+export type SettingsPreview = SettingsPreviewType;
 
 interface SettingsPanelProps {
     open: boolean
     onClose: () => void
     initial: SettingsPreview
     onPreviewChange: (p: Partial<SettingsPreview>) => void
-    onSave: (p: SettingsPreview) => void // Hàm này dùng để cập nhật state cha và đóng panel
+    onSave: (p: SettingsPreview) => void
     space: SpaceData
     spaceId: number | string
 }
@@ -39,6 +39,10 @@ export default function SettingsPanel({
     const [selectedTextFontId, setSelectedTextFontId] = useState(space.text_font.id)
     const [backgroundUrl, setBackgroundUrl] = useState(space.background.url)
     const { data: bgdata, isLoading, error } = useBackgroundsData()
+  
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1)
+    const ITEMS_PER_PAGE = 6
 
     const initialTextFontName = space.text_font.font_name || "Inter"
 
@@ -60,6 +64,12 @@ export default function SettingsPanel({
 
     const backgroundLibrary = bgdata.map((b) => b.background_url);
 
+    // Tính toán pagination
+    const totalPages = Math.ceil(backgroundLibrary.length / ITEMS_PER_PAGE)
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    const endIndex = startIndex + ITEMS_PER_PAGE
+    const currentBackgrounds = backgroundLibrary.slice(startIndex, endIndex)
+
     const handleSave = () => {
         const finalPreview: SettingsPreview = {
             clockStyle: currentClockStyleName,
@@ -67,12 +77,17 @@ export default function SettingsPanel({
             background: backgroundUrl,
         };
         
-        // 1. LƯU CẤU HÌNH CUỐI CÙNG VÀO ZUSTAND STORE
         setFinalSettings(finalPreview);
-
-        // 2. Cập nhật state cha và đóng panel
         onSave(finalPreview); 
         onClose();
+    }
+
+    const handlePrevPage = () => {
+        setCurrentPage(prev => Math.max(1, prev - 1))
+    }
+
+    const handleNextPage = () => {
+        setCurrentPage(prev => Math.min(totalPages, prev + 1))
     }
 
     if (!open) return null
@@ -164,22 +179,50 @@ export default function SettingsPanel({
                 <section className="mb-6">
                     <h3 className="font-semibold mb-3">Background</h3>
                     <p className="text-white/60 text-sm mb-2">Choose from library</p>
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                        {backgroundLibrary.map((src) => (
+                    
+                    {/* Grid ảnh */}
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                        {currentBackgrounds.map((src) => (
                             <button
                                 key={src}
                                 onClick={() => setBackgroundUrl(src)}
-                                className={`relative h-20 rounded overflow-hidden border transition ${backgroundUrl === src
-                                    ? "ring-2 ring-[#C7A36B]"
-                                    : "border-[#2A2A2A]"
-                                    }`}
+                                className={`relative h-20 rounded overflow-hidden border transition ${
+                                    backgroundUrl === src
+                                        ? "ring-2 ring-[#C7A36B]"
+                                        : "border-[#2A2A2A]"
+                                }`}
                             >
                                 <Image src={src} alt="" fill className="object-cover" />
                             </button>
                         ))}
                     </div>
 
+                    {/* Pagination controls */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between">
+                            <button
+                                onClick={handlePrevPage}
+                                disabled={currentPage === 1}
+                                className="p-2 rounded hover:bg-[#2A2A2A] disabled:opacity-30 disabled:cursor-not-allowed transition"
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                            
+                            <span className="text-sm text-white/70">
+                                Page {currentPage} of {totalPages}
+                            </span>
+                            
+                            <button
+                                onClick={handleNextPage}
+                                disabled={currentPage === totalPages}
+                                className="p-2 rounded hover:bg-[#2A2A2A] disabled:opacity-30 disabled:cursor-not-allowed transition"
+                            >
+                                <ChevronRight size={18} />
+                            </button>
+                        </div>
+                    )}
                 </section>
+
                 <button
                     onClick={handleSave}
                     disabled={isFontsLoading}

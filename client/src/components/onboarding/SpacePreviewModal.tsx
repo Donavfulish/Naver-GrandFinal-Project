@@ -19,8 +19,6 @@ export default function SpacePreviewModal({ space, onConfirm, onRegenerate, isCo
         if (text.length <= maxLength) return text
         return text.slice(0, maxLength) + '...'
     }
-    
-    console.log(space);
 
     return (
         <motion.div
