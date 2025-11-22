@@ -24,7 +24,6 @@ export function useSpaceFonts(): UseSpaceFonts {
                 }
                 setClockStyles(clockJson.data)
                 
-                // Fetch Text Fonts
                 const textRes = await fetch(`${BASE_URL}/spaces/fonts/text`)
                 const textJson: FontApiResponse = await textRes.json()
 

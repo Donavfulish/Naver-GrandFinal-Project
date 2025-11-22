@@ -1,4 +1,3 @@
-// src/components/capsules/capsule-overview.tsx
 "use client"
 
 import { motion } from "framer-motion"
@@ -12,7 +11,6 @@ interface CapsuleOverviewProps {
     capsules: Capsule[]
 }
 
-// HÀM MỚI: Chỉ sử dụng MOOD_SCORES
 function getMoodScore(mood: string): number {
     return MOOD_SCORES[mood] || 5
 }
@@ -20,7 +18,6 @@ function getMoodScore(mood: string): number {
 export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
     const router = useRouter()
 
-    // --- 1. Xử lý trường hợp mảng rỗng ngay lập tức ---
     if (!capsules || capsules.length === 0) {
         return (
             <div className="text-center py-12 text-[#B3B3B3]">
@@ -30,8 +27,6 @@ export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
     }
 
     const totalSessions = capsules.length
-
-    // Generate mood trend data
     const moodTrendData = capsules
         .slice()
         .reverse()
@@ -45,18 +40,12 @@ export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
             }
         })
 
-    // Calculate stats
     const thisWeek = capsules.filter((c) => {
         const diff = Date.now() - new Date(c.created_at).getTime()
         return diff < 7 * 24 * 60 * 60 * 1000
     }).length
 
-    // Đã an toàn vì totalSessions > 0
     const avgDuration = Math.round(capsules.reduce((acc, c) => acc + c.duration, 0) / totalSessions) / 1000
-
-    // An toàn với c.notes?.length (đã được mapping trong CapsulesPage)
-    const activeSessions = capsules.filter((c) => c.notes.length > 0).length
-    const activePct = Math.round((activeSessions / totalSessions) * 100)
 
     const moodCounts = Object.entries(
         capsules.reduce((acc: Record<string, number>, c) => {
@@ -66,19 +55,6 @@ export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
     ).sort((a, b) => b[1] - a[1])
 
     const commonMood = moodCounts[0]?.[0] || "Unknown"
-
-    // An toàn với c.vibe_config.theme (đã được mapping trong CapsulesPage)
-    const commonTheme = capsules
-        .reduce((acc: Record<string, number>, c) => {
-            // Dùng Optional Chaining cho trường hợp mapping không thành công
-            const theme = c.vibe_config?.theme;
-            if (theme) {
-                acc[theme] = (acc[theme] || 0) + 1
-            }
-            return acc
-        }, {})
-
-    const mostCommonTheme = Object.entries(commonTheme).sort((a, b) => b[1] - a[1])[0]?.[0] || "Default"
 
     return (
         <div className="space-y-12">
@@ -125,7 +101,7 @@ export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
 
             {/* Stats Grid */}
             <motion.div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
@@ -133,8 +109,7 @@ export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
                 {[
                     { label: "Sessions This Week", value: thisWeek, color: "from-[#C7A36B]" },
                     { label: "Average Duration", value: `${avgDuration}m`, color: "from-[#7C9A92]" },
-                    { label: "Active Sessions", value: `${activePct}%`, color: "from-[#C7A36B]" },
-                    { label: "Most Common Mood", value: commonMood, color: "from-[#7C9A92]" },
+                    { label: "Most Common Mood", value: commonMood, color: "from-[#5BA8A0]" },
                 ].map((stat, index) => (
                     <motion.div
                         key={stat.label}

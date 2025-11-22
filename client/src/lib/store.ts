@@ -22,11 +22,7 @@ interface VibeConfig {
     theme: string;
 }
 
-// Giả định Type Capsule để CapsuleOverview không bị lỗi
-// CHÚ Ý: Đây là cấu trúc dữ liệu LƯU TRỮ, không phải cấu trúc trả về từ API.
-// Tuy nhiên, do CapsuleOverview đang dùng nó, chúng ta phải định nghĩa nó
 export interface Capsule {
-    // Dữ liệu API gốc
     id: string;
     name: string;
     duration: number;
@@ -36,12 +32,10 @@ export interface Capsule {
     background: { background_url: string };
     space_tags: { tag: { name: string } }[];
     AiGeneratedContent: { content: string } | null;
-
-    // Các trường ĐƯỢC MAP hoặc giả định cho logic cũ
-    notes: StickyNote[]; // Phải là mảng để gọi .length
-    tags: string[]; // Cần cho CapsuleCard
-    vibe_config: VibeConfig; // Cần cho CapsuleOverview
-    session_summary: string; // Cần cho CapsuleCard
+    notes: StickyNote[]; 
+    tags: string[]; 
+    vibe_config: VibeConfig; 
+    session_summary: string; 
 }
 
 interface SessionState {
