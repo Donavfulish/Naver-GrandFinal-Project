@@ -118,19 +118,6 @@ export default function SpaceDetailModal({ isOpen, onClose, space, isLoading }: 
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Clock Style */}
-                                    <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                                                <span className="text-white text-xl font-bold">Aa</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-white/60 text-xs">Clock Style</p>
-                                                <p className="text-white font-semibold capitalize">{space.clock.style}</p>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 {/* Tags */}
@@ -152,7 +139,7 @@ export default function SpaceDetailModal({ isOpen, onClose, space, isLoading }: 
 
                                 {/* Playlist Section */}
                                 {space.playlists.length > 0 && (
-                                    <div className="bg-white/10 backdrop-blur-md rounded-xl p-5 border border-white/20">
+                                    <div className="bg-white/10 backdrop-blur-md rounded-xl px-5 pt-4 border border-white/20">
                                         <button
                                             onClick={() => setIsPlaylistOpen(!isPlaylistOpen)}
                                             className="w-full flex items-center justify-between mb-4"
