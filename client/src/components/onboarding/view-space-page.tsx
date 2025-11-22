@@ -47,7 +47,6 @@ export default function ViewSpacePage({ space, activeMode = true }: ViewSpacePag
         clockStyle: initialClockStyle as any, // Cần ép kiểu nếu style là string
         clockFont: initialTextFontName,
         background: initialBackgroundUrl,
-        layout: "centered-blur",
     })
 
     const clockFontFamily = getFontFamily(preview.clockFont);

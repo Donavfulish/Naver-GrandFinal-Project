@@ -7,8 +7,7 @@ export type LayoutKey = "centered-blur" | "corner"
 export type SettingsPreview = {
     clockStyle: string
     clockFont: string
-    background: string // URL
-    layout: LayoutKey
+    background: string
 }
 
 export interface StickyNote {

@@ -56,7 +56,6 @@ export default function SettingsPanel({
             clockStyle: currentClockStyleName,
             clockFont: currentTextFontName,
             background: backgroundUrl,
-            layout
         })
     }, [currentClockStyleName, currentTextFontName, backgroundUrl, layout, onPreviewChange])
 
@@ -66,26 +65,12 @@ export default function SettingsPanel({
         "/img/new-custom-space.png",
         "/img/peaceful-meditation-space.png",
     ]
-    
-    const fileInputRef = React.useRef<HTMLInputElement | null>(null)
-
-    const openFileDialog = () => { fileInputRef.current?.click() }
-
-    const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const f = e.target.files?.[0]
-        if (f) {
-            const url = URL.createObjectURL(f)
-            setBackgroundUrl(url)
-        }
-    }
-
 
     const handleSave = () => {
         const finalPreview: SettingsPreview = {
             clockStyle: currentClockStyleName,
             clockFont: currentTextFontName,
             background: backgroundUrl,
-            layout: layout
         };
         
         // 1. LƯU CẤU HÌNH CUỐI CÙNG VÀO ZUSTAND STORE
@@ -199,53 +184,8 @@ export default function SettingsPanel({
                             </button>
                         ))}
                     </div>
-                    
-                    <p className="text-white/60 text-xs mb-2 truncate">Current URL: <span className="text-white font-medium">{backgroundUrl}</span></p>
 
-                    <p className="text-white/60 text-sm mb-2">Upload from device</p>
-
-                    <button
-                        onClick={openFileDialog}
-                        className="w-full px-4 py-2 bg-[#2A2A2A] border border-[#444] rounded-md text-white hover:border-[#C7A36B] transition"
-                    >
-                        Choose image…
-                    </button>
-
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFile}
-                        className="hidden"
-                    />
                 </section>
-
-                {/* ---------------- LAYOUT (Giữ nguyên) ---------------- */}
-                <section className="mb-6">
-                    <h3 className="font-semibold mb-2">Layout Presets</h3>
-                    <div className="flex flex-col gap-2">
-                        <button
-                            onClick={() => setLayout("centered-blur")}
-                            className={`w-full px-3 py-2 rounded border transition ${layout === "centered-blur"
-                                ? "bg-[#C7A36B]/20 border-[#C7A36B] text-white"
-                                : "bg-[#2A2A2A] border-[#2A2A2A] text-[#B3B3B3]"
-                                }`}
-                        >
-                            Centered + Blur
-                        </button>
-
-                        <button
-                            onClick={() => setLayout("corner")}
-                            className={`w-full px-3 py-2 rounded border transition ${layout === "corner"
-                                ? "bg-[#C7A36B]/20 border-[#C7A36B] text-white"
-                                : "bg-[#2A2A2A] border-[#2A2A2A] text-[#B3B3B3]"
-                                }`}
-                        >
-                            Corner (No blur)
-                        </button>
-                    </div>
-                </section>
-
                 <button
                     onClick={handleSave}
                     disabled={isFontsLoading}
