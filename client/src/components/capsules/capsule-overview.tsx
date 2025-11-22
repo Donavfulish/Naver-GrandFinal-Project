@@ -5,7 +5,9 @@ import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, A
 import { Capsule } from "@/lib/store"
 import CapsuleCard from "./capsule-card"
 import { useRouter } from 'next/navigation'
-import { MOOD_SCORES } from '@/lib/constants' // Import MOOD_SCORES
+import { MOOD_SCORES } from '@/lib/constants'
+import { useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface CapsuleOverviewProps {
     capsules: Capsule[]
@@ -17,6 +19,8 @@ function getMoodScore(mood: string): number {
 
 export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
     const router = useRouter()
+    const [currentPage, setCurrentPage] = useState(1)
+    const ITEMS_PER_PAGE = 6
 
     if (!capsules || capsules.length === 0) {
         return (
@@ -55,6 +59,24 @@ export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
     ).sort((a, b) => b[1] - a[1])
 
     const commonMood = moodCounts[0]?.[0] || "Unknown"
+
+    // Pagination logic
+    const totalPages = Math.ceil(capsules.length / ITEMS_PER_PAGE)
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    const endIndex = startIndex + ITEMS_PER_PAGE
+    const currentCapsules = capsules.slice(startIndex, endIndex)
+
+    const handlePrevPage = () => {
+        setCurrentPage(prev => Math.max(1, prev - 1))
+    }
+
+    const handleNextPage = () => {
+        setCurrentPage(prev => Math.min(totalPages, prev + 1))
+    }
+
+    const goToPage = (page: number) => {
+        setCurrentPage(page)
+    }
 
     return (
         <div className="space-y-12">
@@ -126,23 +148,91 @@ export default function CapsuleOverview({ capsules }: CapsuleOverviewProps) {
 
             {/* Capsule List */}
             <div>
-                <h2 className="text-2xl font-bold text-[#F5F5F5] mb-6">Recent Capsules</h2>
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-[#F5F5F5]">Recent Capsules</h2>
+                    <p className="text-[#B3B3B3] text-sm">
+                        Showing {startIndex + 1}-{Math.min(endIndex, capsules.length)} of {capsules.length}
+                    </p>
+                </div>
+
                 {capsules.length > 0 && (
-                    <motion.div
-                        layout
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                    >
-                        {capsules.map((capsule, index) => (
-                            <motion.div
-                                key={capsule.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                            >
-                                <CapsuleCard capsule={capsule} onContinue={() => { }} />
-                            </motion.div>
-                        ))}
-                    </motion.div>
+                    <>
+                        <motion.div
+                            layout
+                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                        >
+                            {currentCapsules.map((capsule, index) => (
+                                <motion.div
+                                    key={capsule.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                >
+                                    <CapsuleCard capsule={capsule} onContinue={() => { }} />
+                                </motion.div>
+                            ))}
+                        </motion.div>
+
+                        {/* Pagination Controls */}
+                        {totalPages > 1 && (
+                            <div className="mt-8 flex items-center justify-center gap-2">
+                                {/* Previous Button */}
+                                <button
+                                    onClick={handlePrevPage}
+                                    disabled={currentPage === 1}
+                                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#C7A36B]/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                >
+                                    <ChevronLeft size={20} className="text-[#F5F5F5]" />
+                                </button>
+
+                                {/* Page Numbers */}
+                                <div className="flex items-center gap-2">
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                                        // Show first, last, current, and adjacent pages
+                                        const showPage = 
+                                            page === 1 || 
+                                            page === totalPages || 
+                                            (page >= currentPage - 1 && page <= currentPage + 1)
+
+                                        if (!showPage) {
+                                            // Show ellipsis
+                                            if (page === currentPage - 2 || page === currentPage + 2) {
+                                                return (
+                                                    <span key={page} className="text-[#B3B3B3] px-2">
+                                                        ...
+                                                    </span>
+                                                )
+                                            }
+                                            return null
+                                        }
+
+                                        return (
+                                            <button
+                                                key={page}
+                                                onClick={() => goToPage(page)}
+                                                className={`min-w-[40px] h-10 rounded-lg font-medium transition-all ${
+                                                    currentPage === page
+                                                        ? 'bg-gradient-to-r from-[#C7A36B] to-[#7C9A92] text-white shadow-lg shadow-[#C7A36B]/30'
+                                                        : 'bg-white/5 hover:bg-white/10 text-[#B3B3B3] hover:text-[#F5F5F5] border border-white/10 hover:border-[#C7A36B]/50'
+                                                }`}
+                                            >
+                                                {page}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+
+                                {/* Next Button */}
+                                <button
+                                    onClick={handleNextPage}
+                                    disabled={currentPage === totalPages}
+                                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#C7A36B]/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                >
+                                    <ChevronRight size={20} className="text-[#F5F5F5]" />
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>
