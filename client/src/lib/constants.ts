@@ -9,3 +9,5 @@ export const MOOD_SCORES: Record<string, number> = {
     Inspired: 7,
     Joyful: 8
 };
+
+export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;

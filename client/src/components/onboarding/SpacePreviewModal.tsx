@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { Zap, CornerDownLeft, Check, RefreshCw, Loader } from 'lucide-react'
-import { SpaceData } from "@/hooks/useGenerateAiSpace"
+import { SpaceData } from "@/types/space"
 
 interface SpacePreviewModalProps {
     space: SpaceData

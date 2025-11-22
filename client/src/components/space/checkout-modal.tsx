@@ -6,8 +6,9 @@ import { useState, useEffect, useMemo, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from 'next/navigation'
 import { useSessionStore, SettingsPreview } from "@/lib/store"
-import { useGenerateAISpace, SpaceData } from '@/hooks/useGenerateAiSpace'
-import { useSpaceFonts } from '@/hooks/useSpaceFonts'
+import { useGenerateAISpace } from '@/hooks/useGenerateAiSpace'
+import { useSpaceFonts } from "@/hooks/useSpaceFonts"
+import { SpaceData } from "@/types/space"
 import { Loader } from 'lucide-react'
 
 interface CheckoutModalProps {

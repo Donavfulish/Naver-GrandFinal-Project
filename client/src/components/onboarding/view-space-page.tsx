@@ -11,7 +11,7 @@ import RealClock from "../space/clock"
 import StickyNoteCanvas from "../space/sticky-note-canvas"
 import { useRouter } from "next/navigation"
 import CheckoutModal from "../space/checkout-modal"
-import { SpaceData } from "@/hooks/useGenerateAiSpace"
+import { SpaceData } from "@/types/space"
 import { getFontFamily } from '@/utils/fonts'
 import MusicPlayer from "../space/musicplayer"
 import IntroModal from "../space/intro-modal" // Import Intro Modal

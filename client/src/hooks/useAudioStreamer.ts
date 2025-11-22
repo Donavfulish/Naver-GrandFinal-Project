@@ -1,27 +1,9 @@
 // src/hooks/useAudioStreamer.ts
 
 import { useState, useEffect, useRef } from 'react';
-import { Track } from '@/hooks/useGenerateAiSpace'; // Import Track interface
-
-const TRACKS_BASE_URL = "http://localhost:5000/tracks";
-
-interface UseAudioStreamer {
-    currentTrack: Track | null;
-    isPlaying: boolean;
-    streamUrl: string | null;
-    play: () => void;
-    pause: () => void;
-    togglePlay: () => void;
-    nextTrack: () => void;
-    prevTrack: () => void;
-    setCurrentIndex: (index: number) => void;
-    isLoading: boolean;
-    error: string | null;
-    duration: number;
-    currentTime: number;
-    seekTo: (time: number) => void;
-    audioRef: React.MutableRefObject<HTMLAudioElement | null>;
-}
+import { BASE_URL } from '@/lib/constants';
+import { UseAudioStreamer } from '@/types/audio';
+import { Track } from '@/types/space';
 
 export function useAudioStreamer(tracks: Track[] = []): UseAudioStreamer {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -33,16 +15,15 @@ export function useAudioStreamer(tracks: Track[] = []): UseAudioStreamer {
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     const currentTrack = tracks[currentIndex] || null;
-    const streamUrl = currentTrack ? `${TRACKS_BASE_URL}/${currentTrack.id}/stream` : null;
+    const streamUrl = currentTrack ? `${BASE_URL}/tracks/${currentTrack.id}/stream` : null;
 
     useEffect(() => {
         if (!audioRef.current) {
             audioRef.current = new Audio();
-            audioRef.current.volume = 0.5; // Mặc định 50%
+            audioRef.current.volume = 0.5; 
         }
     }, []);
 
-    // Load và phát track mới
     useEffect(() => {
         if (streamUrl && audioRef.current) {
             setIsLoading(true);
@@ -127,7 +108,6 @@ export function useAudioStreamer(tracks: Track[] = []): UseAudioStreamer {
     const seekTo = (time: number) => {
         if (audioRef.current && time >= 0 && time <= duration) {
             audioRef.current.currentTime = time;
-            // Không cần gọi setCurrentTime vì event 'timeupdate' sẽ tự gọi nó
         }
     };
 

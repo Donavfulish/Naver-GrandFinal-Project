@@ -4,10 +4,9 @@
 import React, { useState, useEffect, useMemo } from "react"
 import Image from "next/image"
 import { Sliders, X, Loader } from "lucide-react"
-import { useSpaceFonts } from "@/hooks/useSpaceFonts" 
-import { SpaceData } from "@/hooks/useGenerateAiSpace" 
+import { useSpaceFonts } from "@/hooks/useSpaceFonts"
+import { SpaceData } from "@/types/space"
 import { getFontFamily } from '@/utils/fonts'
-// Import store và type
 import { useSessionStore, SettingsPreview as SettingsPreviewType } from "@/lib/store" 
 
 

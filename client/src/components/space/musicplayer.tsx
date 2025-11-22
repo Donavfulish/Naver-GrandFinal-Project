@@ -1,11 +1,10 @@
-// src/components/space/MusicPlayer.tsx
 "use client"
 
 import { motion } from "framer-motion"
 import { SkipBack, SkipForward, Play, Pause, Loader } from 'lucide-react'
-import { PlaylistConfig } from "@/hooks/useGenerateAiSpace" 
+import { PlaylistConfig } from "@/types/space"
 import { useAudioStreamer } from "@/hooks/useAudioStreamer"
-import React from "react" // Giữ import React để dùng các hàm nếu cần
+import React from "react"
 
 interface MusicPlayerProps {
     playlist: PlaylistConfig

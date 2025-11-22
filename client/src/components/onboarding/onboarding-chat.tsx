@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Send } from "lucide-react"
 
 // Import Hook và Components mới
-import { useGenerateAISpace, SpaceData } from "@/hooks/useGenerateAiSpace" 
+import { useGenerateAISpace } from "@/hooks/useGenerateAiSpace" 
+import { SpaceData } from "@/types/space"
 import AILoadingModal from "../view-space/AILoadingModal"
 import SpacePreviewModal from "./SpacePreviewModal"
 
