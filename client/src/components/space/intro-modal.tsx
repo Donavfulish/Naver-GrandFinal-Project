@@ -14,7 +14,7 @@ export default function IntroModal({ introPages, onComplete }: IntroModalProps) 
 
     useEffect(() => {
         const currentText = introPages[currentPage]
-        const readingTime = Math.max(3500, currentText.length * 50)
+        const readingTime = Math.max(5000, currentText.length * 80)
 
         const timer = setTimeout(() => {
             if (currentPage < introPages.length - 1) {
@@ -23,7 +23,7 @@ export default function IntroModal({ introPages, onComplete }: IntroModalProps) 
                 setIsComplete(true)
                 setTimeout(() => {
                     onComplete()
-                }, 1500)
+                }, 3500)
             }
         }, readingTime)
 
