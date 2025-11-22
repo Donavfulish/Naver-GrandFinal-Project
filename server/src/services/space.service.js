@@ -20,6 +20,7 @@ const spaceService = {
       background_url,
       clock_font_id,
       text_font_id,
+      personalityEssence,
       tracks = [], // Array of track IDs
       prompt = null,  // AI prompt (optional)
       notes = []  // Array of note content strings (optional)
@@ -155,6 +156,7 @@ const spaceService = {
       description: description || null,
       mood: mood || 'Neutral', // Add mood field with default value
       duration: duration || 0, // Add duration field with default value
+      personalityEssence: personalityEssence || null, // Add personalityEssence JSON field
       background_id: validatedBackgroundId,
       clock_font_id: validatedClockFontId,
       text_font_id: validatedTextFontId,
@@ -175,7 +177,7 @@ const spaceService = {
             space_id: createdSpace.id,
             content: content,
             note_order: index,
-            is_delete: false,
+            is_deleted: false,
           },
         });
       });
@@ -487,7 +489,7 @@ const spaceService = {
         const lastNote = await prisma.note.findFirst({
           where: {
             space_id: spaceId,
-            is_delete: false,
+            is_deleted: false,
           },
           orderBy: {
             note_order: 'desc',
@@ -503,7 +505,7 @@ const spaceService = {
           space_id: spaceId,
           content,
           note_order: orderNumber,
-          is_delete: false,
+          is_deleted: false,
         },
       });
 
@@ -553,7 +555,7 @@ const spaceService = {
       throw error;
     }
 
-    if (note.is_delete) {
+    if (note.is_deleted) {
       const error = new Error('Note is already deleted');
       error.code = ErrorCodes.NOTE_NOT_FOUND;
       throw error;
@@ -564,7 +566,7 @@ const spaceService = {
       await prisma.note.update({
         where: { id: noteId },
         data: {
-          is_delete: true,
+          is_deleted: true,
           updated_at: new Date(),
         },
       });

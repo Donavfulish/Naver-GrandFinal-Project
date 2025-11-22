@@ -201,3 +201,22 @@ export const MOOD_SCORES = {
     Inspired: 7,
     Joyful: 8
 };
+
+
+export const PERSONALITY_ESSENCE = {
+  sweet: ["đường", "kẹo", "bánh", "socola", "mứt", "sữa chua", "kẹo dẻo", "kẹo bơ", "kẹo bạc hà", "kẹo caramel"],
+  bitter: ["cà phê", "socola", "trà", "ca cao", "chanh đắng", "thuốc lá"],
+  fruity: ["cam", "dâu", "táo", "chuối", "nho", "lê", "xoài", "cherry", "dứa", "quả mọng"],
+  spicy: ["ớt", "tiêu", "gừng", "tỏi", "curry", "wasabi"],
+  savory: ["phô mai", "bánh mặn", "thịt xông khói", "bánh mì nướng", "trứng", "xúc xích", "hạt", "bơ lạc"],
+  soft: ["mây", "gió nhẹ", "ánh sáng", "hoa", "cánh đồng", "suối", "sương mù", "lá", "mưa rơi"],
+  warm: ["ánh nắng", "cà phê nóng", "lửa trại", "chăn ấm", "lò sưởi"],
+  cool: ["gió biển", "nước", "băng", "trăng", "sóng", "mưa lạnh"],
+  romantic: ["hoa hồng", "socola", "ánh trăng", "nhạc piano", "nến", "cánh hoa", "son môi"],
+  focus: ["sách", "cà phê", "công việc", "bút", "âm nhạc", "laptop"],
+  energetic: ["âm nhạc nhanh", "tia sáng", "bóng nảy", "sóng", "vũ điệu", "chạy bộ"],
+  calm: ["suối", "biển", "mưa", "lá rơi", "cây xanh", "khói", "gió", "sương", "trăng tròn"],
+  adultTaste: ["rượu", "bia", "thuốc lá", "cà phê", "socola đắng"],
+  material: ["gỗ", "kim loại", "đá", "thủy tinh", "vải", "da"],
+  emotional: ["nước mắt", "nỗi đau", "niềm vui", "nỗi buồn", "hạnh phúc", "sự cô đơn", "tình yêu", "ước muốn của cha mẹ", "ký ức", "hy vọng"]
+};

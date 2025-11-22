@@ -1,4 +1,4 @@
-import { CLOCK_FONTS_STYLE, EMOTION_KEYWORDS, MOOD_KEYWORDS, TAG_KEYWORDS, TEXT_FONTS } from '../constants/state.js';
+import { PERSONALITY_ESSENCE, CLOCK_FONTS_STYLE, EMOTION_KEYWORDS, MOOD_KEYWORDS, TAG_KEYWORDS, TEXT_FONTS } from '../constants/state.js';
 import { INTRO_PAGE3, INTRO_PAGE1, INTRO_PAGE2 } from '../constants/introPage.js';
 import prisma from '../config/prisma.js';
 import naverApiService from './naver-api.service.js';
@@ -152,6 +152,7 @@ export async function generateSpace(prompt) {
     name: aiResponse.name,
     description: aiResponse.description,
     mood: aiResponse.mood || 'Neutral',
+    personalityEssence: aiResponse.personalityEssence || {},
     introPage1: aiResponse.introPage1 || '',
     introPage2: aiResponse.introPage2 || '',
     introPage3: aiResponse.introPage3 || '',
@@ -200,7 +201,7 @@ export async function checkout(spaceId) {
       mood: true,
       duration: true,
       notes: {
-        where: { is_delete: false },
+        where: { is_deleted: false },
         orderBy: { note_order: 'asc' },
         select: { content: true }
       },
@@ -301,8 +302,218 @@ export async function checkout(spaceId) {
   return reflection;
 }
 
+/**
+ * Generate user mind description based on their 10 most recent spaces
+ * @param {string} userId - User ID
+ * @returns {Promise<{mind: string}>} - Generated mind description
+ */
+export async function generateUserMind(userId) {
+  // Fetch user's 10 most recent spaces with related data
+  const recentSpaces = await prisma.space.findMany({
+    where: {
+      user_id: userId,
+      is_deleted: false
+    },
+    orderBy: {
+      created_at: 'desc'
+    },
+    take: 10,
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      mood: true,
+      personalityEssence: true,
+      created_at: true,
+      notes: {
+        where: { is_deleted: false },
+        select: { content: true }
+      },
+      space_tags: {
+        where: { is_deleted: false },
+        select: {
+          tag: {
+            select: {
+              name: true
+            }
+          }
+        }
+      },
+      AiGeneratedContent: {
+        select: {
+          prompt: true,
+          content: true
+        }
+      }
+    }
+  });
+
+  // If user has no spaces, return a neutral fallback
+  if (!recentSpaces || recentSpaces.length === 0) {
+    const fallbackMind = "Bạn là người mới bắt đầu hành trình khám phá bản thân.";
+
+    // Save to user.mind
+    await prisma.user.update({
+      where: { id: userId },
+      data: { mind: fallbackMind }
+    });
+
+    logger.info(`[generateUserMind] No spaces found for user ${userId}, using fallback`);
+    return { mind: fallbackMind };
+  }
+
+  // Aggregate data from spaces
+  const moodCounts = {};
+  const allTags = [];
+  const allPrompts = [];
+  const allContents = [];
+  const allPersonalityEssences = [];
+
+  recentSpaces.forEach(space => {
+    // Count moods
+    if (space.mood) {
+      moodCounts[space.mood] = (moodCounts[space.mood] || 0) + 1;
+    }
+
+    // Collect tags from space_tags relation
+    if (space.space_tags && Array.isArray(space.space_tags)) {
+      space.space_tags.forEach(st => {
+        if (st.tag?.name) {
+          allTags.push(st.tag.name);
+        }
+      });
+    }
+
+    // Collect personality essences
+    if (space.personalityEssence && typeof space.personalityEssence === 'object') {
+      allPersonalityEssences.push(space.personalityEssence);
+    }
+
+    // Collect prompts
+    if (space.AiGeneratedContent?.prompt) {
+      allPrompts.push(space.AiGeneratedContent.prompt);
+    }
+
+    // Collect content snippets (first 100 chars of notes or AI content)
+    if (space.notes && space.notes.length > 0) {
+      const noteText = space.notes.map(n => n.content).join(' ').substring(0, 100);
+      if (noteText.trim()) {
+        allContents.push(noteText);
+      }
+    } else if (space.AiGeneratedContent?.content) {
+      allContents.push(space.AiGeneratedContent.content.substring(0, 100));
+    }
+  });
+
+  // Compute compact personality (aggregated moods)
+  const totalMoods = Object.values(moodCounts).reduce((sum, count) => sum + count, 0);
+  const compactPersonality = Object.entries(moodCounts)
+    .map(([mood, count]) => `${mood} (${Math.round((count / totalMoods) * 100)}%)`)
+    .join(', ');
+
+  // Get top tags (most frequent)
+  const tagFrequency = {};
+  allTags.forEach(tag => {
+    tagFrequency[tag] = (tagFrequency[tag] || 0) + 1;
+  });
+  const topTags = Object.entries(tagFrequency)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([tag]) => tag);
+
+  // Aggregate personality essences (combine scores from all spaces)
+  const aggregatedEssence = {};
+  allPersonalityEssences.forEach(essence => {
+    Object.entries(essence).forEach(([key, score]) => {
+      if (!aggregatedEssence[key]) {
+        aggregatedEssence[key] = [];
+      }
+      aggregatedEssence[key].push(score);
+    });
+  });
+
+  // Calculate average scores for each essence key
+  const averageEssenceScores = {};
+  Object.entries(aggregatedEssence).forEach(([key, scores]) => {
+    const avg = scores.reduce((sum, s) => sum + s, 0) / scores.length;
+    averageEssenceScores[key] = Math.round(avg * 10) / 10; // Round to 1 decimal
+  });
+
+  // Sample prompts (up to 3)
+  const samplePrompts = allPrompts.slice(0, 3);
+
+  // Sample contents (up to 3)
+  const sampleContents = allContents.slice(0, 3);
+
+  // Get available personality essence keys
+  const availableEssenceKeys = Object.keys(PERSONALITY_ESSENCE);
+
+  // Build seed fallback with default essence words
+  const defaultEssenceWords = ['ánh sáng', 'yên tĩnh', 'hòa bình', 'tự do'];
+  const seed = `Bạn làm từ ${defaultEssenceWords.join(', ')}.`;
+
+  // Prepare payload for Naver AI
+  const payload = {
+    compactPersonality: compactPersonality || 'Mixed emotions',
+    topTags,
+    samplePrompts,
+    sampleContents,
+    personalityEssenceScores: averageEssenceScores,
+    availableEssenceKeys,
+    personalityEssenceData: PERSONALITY_ESSENCE
+  };
+
+  logger.info(`[generateUserMind] Processing user ${userId}`, {
+    spacesCount: recentSpaces.length,
+    compactPersonality,
+    topTags,
+    personalityEssenceScores: averageEssenceScores,
+    seed
+  });
+
+  let mindSentence;
+
+  try {
+    // Call Naver AI service to generate mind description
+    const aiResponse = await naverApiService.generateUserMind({
+      payload,
+      seed
+    });
+
+    // Validate AI response
+    if (aiResponse && typeof aiResponse === 'string' && aiResponse.trim().length > 10) {
+      mindSentence = aiResponse.trim();
+      logger.info(`[generateUserMind] AI generated mind for user ${userId}: "${mindSentence}"`);
+    } else {
+      // AI returned empty or too short - use seed fallback
+      mindSentence = seed;
+      logger.warn(`[generateUserMind] AI returned invalid response for user ${userId}, using seed fallback: "${mindSentence}"`);
+    }
+  } catch (error) {
+    // AI service error - use seed fallback
+    mindSentence = seed;
+    logger.error(`[generateUserMind] AI service error for user ${userId}, using seed fallback`, {
+      error: error.message,
+      seed: mindSentence
+    });
+  }
+
+  // Save mind to user record
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      mind: mindSentence,
+      updated_at: new Date()
+    }
+  });
+
+  logger.info(`[generateUserMind] Saved mind for user ${userId}: "${mindSentence}"`);
+
+  return { mind: mindSentence };
+}
 
 export default {
   generateSpace,
-  checkout
+  checkout,
+  generateUserMind
 };
