@@ -1,92 +1,85 @@
 // src/config/logger.js
-import winston from 'winston';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { NODE_ENV } from './env.js';
+import winston from "winston";
+import { fileURLToPath } from "url";
+import path from "path";
+import { NODE_ENV } from "./env.js";
 
-// Chuyển import.meta.url -> __dirname chuẩn
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Thư mục logs (nằm ngoài src)
-const logsDir = path.join(__dirname, '../../logs');
+const isVercel = !!process.env.VERCEL;
 
-// Tạo thư mục logs nếu chưa có
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
-}
-
-// Định nghĩa màu sắc cho console
+// Định nghĩa màu console
 const colors = {
-  error: 'red',
-  warn: 'yellow',
-  info: 'cyan',
-  http: 'magenta',
-  debug: 'white',
+  error: "red",
+  warn: "yellow",
+  info: "cyan",
+  http: "magenta",
+  debug: "white",
 };
 winston.addColors(colors);
 
-// Format console (có màu)
+// Format console
 const consoleFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
   winston.format.colorize({ all: true }),
   winston.format.printf(
     (info) => `${info.timestamp} [${info.level}]: ${info.message}`
   )
 );
 
-// Format file (json, stack trace)
+// Format file
 const fileFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
   winston.format.errors({ stack: true }),
   winston.format.splat(),
   winston.format.json()
 );
 
-// Tạo Winston logger
-const logger = winston.createLogger({
-  level: NODE_ENV === 'development' ? 'debug' : 'info',
-  levels: winston.config.npm.levels,
-  transports: [
-    // Console output
-    new winston.transports.Console({
-      format: consoleFormat,
-    }),
-    // Error logs
+const transports = [
+  new winston.transports.Console({ format: consoleFormat }),
+];
+
+// ❗ WINSTON FILE TRANSPORT = DISABLED TRONG VERCEL
+if (!isVercel) {
+  transports.push(
     new winston.transports.File({
-      filename: path.join(logsDir, 'error.log'),
-      level: 'error',
-      format: fileFormat,
-      maxsize: 5 * 1024 * 1024, // 5MB
-      maxFiles: 5,
-    }),
-    // Combined logs
-    new winston.transports.File({
-      filename: path.join(logsDir, 'combined.log'),
+      filename: path.join(__dirname, "../../logs/error.log"),
+      level: "error",
       format: fileFormat,
       maxsize: 5 * 1024 * 1024,
       maxFiles: 5,
-    }),
-  ],
-  exitOnError: false,
+    })
+  );
+
+  transports.push(
+    new winston.transports.File({
+      filename: path.join(__dirname, "../../logs/combined.log"),
+      format: fileFormat,
+      maxsize: 5 * 1024 * 1024,
+      maxFiles: 5,
+    })
+  );
+}
+
+const logger = winston.createLogger({
+  level: NODE_ENV === "development" ? "debug" : "info",
+  levels: winston.config.npm.levels,
+  transports,
 });
 
-// Helper log request
+// Helpers
 logger.logRequest = (req) => {
-  logger.http(`${req.method} ${req.originalUrl} - IP: ${req.ip}`);
+  logger.http(`${req.method} ${req.url} - IP: ${req.ip}`);
 };
 
-// Helper log response
-logger.logResponse = (req, res, responseTime) => {
-  logger.http(`${req.method} ${req.originalUrl} - ${res.statusCode} - ${responseTime}ms`);
+logger.logResponse = (req, res, ms) => {
+  logger.http(`${req.method} ${req.url} - ${res.statusCode} - ${ms}ms`);
 };
 
-// Helper log error
-logger.logError = (error, context = '') => {
-  logger.error(`${context ? `[${context}] ` : ''}${error.message}`, {
+logger.logError = (error, ctx = "") => {
+  logger.error(`${ctx ? `[${ctx}] ` : ""}${error.message}`, {
     stack: error.stack,
-    ...error,
   });
 };
 
